@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <!-- Comma-separated tile ids, in display order. Unknown ids are ignored,
+         missing ones are appended (hidden), so new tiles appear in the
+         editor after upgrades without changing the user's layout. -->
+    <entry name="tileOrder" type="String">
+      <default>clock,specs,cpu,gpu,memory,temps,network,cores,processes,power,disk,battery</default>
+    </entry>
+    <entry name="hiddenTiles" type="String">
+      <default>cores,processes,power,disk,battery</default>
+    </entry>
+    <entry name="preset" type="String">
+      <default>essentials</default>
+    </entry>
+    <!-- True once tiles were moved, resized, shown or hidden after picking
+         the preset; Reset layout re-applies the preset. -->
+    <entry name="customized" type="Bool">
+      <default>false</default>
+    </entry>
+    <!-- auto | compact | comfortable | large | huge -->
+    <entry name="density" type="String">
+      <default>auto</default>
+    </entry>
+    <!-- Per-tile size overrides, "id:spanIndex" pairs, e.g. "cpu:2,clock:0". -->
+    <entry name="tileSpans" type="String">
+      <default></default>
+    </entry>
+    <!-- Set (e.g. by "install.sh place full") to ask the running widget to
+         move/resize itself; the widget clears it once applied. -->
+    <entry name="placeRequest" type="String">
+      <default></default>
+    </entry>
+    <entry name="weatherEnabled" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Empty means locate automatically from the IP address. -->
+    <entry name="weatherCity" type="String">
+      <default></default>
+    </entry>
+    <!-- c or f -->
+    <entry name="weatherUnit" type="String">
+      <default>c</default>
+    </entry>
+  </group>
+</kcfg>

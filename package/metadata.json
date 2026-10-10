@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Id": "io.github.solidget",
+        "Name": "Solidget",
+        "Description": "One solid widget: live system stats and your PC specs, ready in one click.",
+        "Icon": "computer",
+        "Category": "System Information",
+        "License": "GPL-2.0-or-later",
+        "Version": "0.2.0",
+        "Website": "https://github.com/livlign/solidget",
+        "Authors": [
+            { "Name": "Solidget contributors" }
+        ],
+        "FormFactors": ["desktop"]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
