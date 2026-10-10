@@ -23,6 +23,11 @@ GlassTile {
 
     // Layout modes
     readonly property bool side: hasWeather && area.width >= area.height * 2.1
+    // Weather block beside the clock: icon + a text column that must hold "26°C".
+    readonly property real weatherW: area.width * 0.42 - u
+    readonly property real weatherIcon: Math.min(topH * 0.75, weatherW * 0.3)
+    readonly property real weatherTextW: weatherW - weatherIcon - u * 0.6
+    readonly property real weatherTempSize: Math.max(Kirigami.Units.gridUnit, Math.min(topH * 0.42, u * 3.6, weatherTextW / 2.4))
     readonly property bool showForecast: hasWeather && w.daily.length > 1 && area.height > u * 9
     readonly property real forecastH: showForecast ? Math.min(area.height * 0.36, u * 5.5) : 0
     readonly property real topH: area.height - forecastH - (showForecast ? u * 0.6 : 0)
@@ -48,6 +53,7 @@ GlassTile {
     Item {
         id: area
         anchors.fill: parent
+        clip: true
 
         // ---- Time + date -------------------------------------------------
         ColumnLayout {
@@ -94,12 +100,12 @@ GlassTile {
             anchors.right: parent.right
             y: 0
             height: tile.topH
-            width: area.width * 0.42 - tile.u
+            width: tile.weatherW
             spacing: tile.u * 0.6
 
             Kirigami.Icon {
                 source: tile.w.icon
-                Layout.preferredWidth: Math.min(tile.topH * 0.75, parent.width * 0.4)
+                Layout.preferredWidth: tile.weatherIcon
                 Layout.preferredHeight: Layout.preferredWidth
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -110,11 +116,11 @@ GlassTile {
                 BigNumber {
                     text: tile.temp(tile.w.temp)
                     unit: tile.w.fahrenheit ? "F" : "C"
-                    size: Math.min(tile.topH * 0.42, tile.u * 3.6)
+                    size: tile.weatherTempSize
                 }
                 PlasmaComponents.Label {
                     text: tile.w.summary
-                    font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.9)
+                    font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, Math.min(tile.u * 0.9, tile.weatherTempSize * 0.32))
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
@@ -122,7 +128,7 @@ GlassTile {
                     visible: tile.topH > tile.u * 5.5
                     text: i18n("Feels %1 · %2%", tile.temp(tile.w.feelsLike), tile.w.humidity)
                     opacity: 0.6
-                    font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.72)
+                    font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, Math.min(tile.u * 0.72, tile.weatherTempSize * 0.27))
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
