@@ -56,13 +56,14 @@ Item {
             overlay.tileSlot.dragX = origin.x;
             overlay.tileSlot.dragY = origin.y;
             overlay.tileSlot.dragging = true;
+            overlay.boardItem.beginDrag(overlay.tileId, start);
         }
         onPositionChanged: (mouse) => {
             if (!overlay.tileSlot.dragging) return;
             var p = mapToItem(overlay.boardItem, mouse.x, mouse.y);
             overlay.tileSlot.dragX = origin.x + p.x - start.x;
             overlay.tileSlot.dragY = origin.y + p.y - start.y;
-            overlay.boardItem.dragOver(overlay.tileId, p);
+            overlay.boardItem.dragMove(overlay.tileId, p);
         }
         onReleased: {
             overlay.tileSlot.dragging = false;
@@ -126,7 +127,7 @@ Item {
         RoundButton {
             visible: overlay.manual
             iconName: "zoom-fit-best"
-            tip: i18n("Back to automatic size")
+            tip: i18n("Default size")
             onClicked: overlay.app.setTileSpan(overlay.tileId, null)
         }
         RoundButton {

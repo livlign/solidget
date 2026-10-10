@@ -77,11 +77,26 @@ PlasmoidItem {
         return m;
     }
 
-    // Live previews while dragging/resizing in edit mode; null otherwise.
-    property var dragOrder: null
-    property var dragSpans: null
-    readonly property var layoutOrder: dragOrder || order
-    readonly property var layoutSpans: dragSpans || spans
+    // Hand-edited layout: exact cell positions, "id:x,y,w,h;..." in config.
+    // Empty means the automatic (packed) layout.
+    readonly property var manualRects: {
+        var raw = Plasmoid.configuration.tileRects || "";
+        if (!raw) return null;
+        var m = {};
+        raw.split(";").forEach(function (pair) {
+            var kv = pair.split(":");
+            if (kv.length !== 2) return;
+            var n = kv[1].split(",").map(function (v) { return parseInt(v); });
+            if (n.length === 4 && n.every(function (v) { return !isNaN(v); }))
+                m[kv[0]] = { x: n[0], y: n[1], w: n[2], h: n[3] };
+        });
+        return Object.keys(m).length ? m : null;
+    }
+    // Live preview while dragging/resizing in edit mode; null otherwise.
+    property var dragRects: null
+    readonly property var layoutRects: dragRects || manualRects
+    readonly property var layoutOrder: order
+    readonly property var layoutSpans: spans
     readonly property var visibleTiles: layoutOrder.filter(function (id) { return hidden.indexOf(id) < 0 && isAvailable(id); })
 
     function isAvailable(id) {
@@ -100,6 +115,7 @@ PlasmoidItem {
         Plasmoid.configuration.tileOrder = tiles.concat(rest).join(",");
         Plasmoid.configuration.hiddenTiles = rest.join(",");
         Plasmoid.configuration.tileSpans = "";
+        Plasmoid.configuration.tileRects = "";
         Plasmoid.configuration.preset = id;
         Plasmoid.configuration.customized = false;
     }
@@ -129,22 +145,21 @@ PlasmoidItem {
         persistOrder(o);
     }
 
-    function setAllSpans(m) {
-        Plasmoid.configuration.tileSpans = Object.keys(m).map(function (k) {
-            var v = m[k];
-            return k + ":" + (typeof v === "object" ? v.w + "x" + v.h : v);
-        }).join(",");
+    function setRects(m) {
+        Plasmoid.configuration.tileRects = Object.keys(m).map(function (k) {
+            var r = m[k];
+            return k + ":" + [r.x, r.y, r.w, r.h].join(",");
+        }).join(";");
         Plasmoid.configuration.customized = true;
     }
 
-    // value: null to go back to auto, a span index, or { w, h }. Other
-    // tiles keep the size they have on screen (see Board.frozenSpans).
+    // Size from the Settings list or a tile's "default size" button.
+    // value: null for the tile's default size, a span index, or { w, h }.
+    // Goes through the board so the layout switches to fixed positions and
+    // only this tile changes.
     property var boardRef: null
     function setTileSpan(id, value) {
-        var m = boardRef ? boardRef.frozenSpans() : Object.assign({}, spans);
-        if (value === null || value === undefined || value === -1) delete m[id];
-        else m[id] = value;
-        setAllSpans(m);
+        if (boardRef) boardRef.setTileSize(id, value);
     }
 
     // Back to the last preset: its tiles, its order, automatic sizes.
@@ -360,7 +375,7 @@ PlasmoidItem {
 
     property bool editing: false
     property bool showSettings: false
-    onEditingChanged: if (!editing) { showSettings = false; dragOrder = null; dragSpans = null; }
+    onEditingChanged: if (!editing) { showSettings = false; dragRects = null; }
 
     // The glass tiles are the design; no Plasma frame behind them.
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
@@ -409,69 +424,113 @@ PlasmoidItem {
 
                 readonly property real gap: Math.max(Kirigami.Units.largeSpacing, Math.min(scroll.width, scroll.height) / 70)
                 readonly property var plan: Bento.plan(root.visibleTiles, scroll.width, scroll.height,
-                                                        Kirigami.Units.gridUnit, gap, root.density, true, root.layoutSpans)
+                                                        Kirigami.Units.gridUnit, gap, root.density, true, root.layoutSpans,
+                                                        root.layoutRects)
                 readonly property var rectsById: {
                     var m = {};
                     plan.rects.forEach(function (r) { m[r.id] = r; });
                     return m;
                 }
 
-                // ---- Drag to reorder ----
-                property string lastTarget: ""
+                // ---- Hand editing: fixed positions ----
+                // The first move/resize snapshots every tile's current spot;
+                // from then on tiles stay put. Only the tile being edited
+                // changes, and tiles it overlaps are pushed straight down.
                 function cellAt(p) {
                     return { x: Math.floor(p.x / (plan.cellW + gap)), y: Math.floor(p.y / (plan.cellH + gap)) };
                 }
                 Component.onCompleted: root.boardRef = board
 
-                // Every visible tile's size as currently shown, as exact sizes.
-                // Taken at the start of a hand edit so only the tile being
-                // edited changes size; the others keep theirs and just move.
-                function frozenSpans() {
-                    var m = Object.assign({}, root.spans);
-                    plan.rects.forEach(function (r) {
-                        var v = m[r.id];
-                        if (!(v && typeof v === "object")) m[r.id] = { w: r.w, h: r.h };
-                    });
+                // Every tile's spot as shown now (hidden tiles keep their saved spot).
+                function currentRects() {
+                    var m = {};
+                    var saved = root.manualRects || {};
+                    Object.keys(saved).forEach(function (k) { m[k] = Object.assign({}, saved[k]); });
+                    plan.rects.forEach(function (r) { m[r.id] = { x: r.x, y: r.y, w: r.w, h: r.h }; });
                     return m;
                 }
+                function copyRects(m) {
+                    var out = {};
+                    Object.keys(m).forEach(function (k) { out[k] = Object.assign({}, m[k]); });
+                    return out;
+                }
 
-                // Pointer over another tile: take its place; the rest reflow.
-                function dragOver(id, p) {
-                    if (!root.dragSpans) root.dragSpans = frozenSpans();
+                property var editBase: null     // layout when the gesture began
+                property var grab: null         // pointer offset inside the tile, in cells
+                property string draggingId: ""
+                property string lastCell: ""
+
+                function beginDrag(id, p) {
+                    editBase = currentRects();
                     var c = cellAt(p);
-                    var target = "";
-                    plan.rects.forEach(function (r) {
-                        if (r.id !== id && c.x >= r.x && c.x < r.x + r.w && c.y >= r.y && c.y < r.y + r.h)
-                            target = r.id;
-                    });
-                    if (target === lastTarget) return;
-                    lastTarget = target;
-                    if (!target) return;
-                    var o = root.layoutOrder.slice();
-                    var from = o.indexOf(id), to = o.indexOf(target);
-                    o.splice(from, 1);
-                    o.splice(to, 0, id);
-                    root.dragOrder = o;
+                    grab = { x: c.x - editBase[id].x, y: c.y - editBase[id].y };
+                    draggingId = id;
+                    lastCell = "";
+                }
+                function dragMove(id, p) {
+                    if (!editBase) return;
+                    var c = cellAt(p);
+                    var r = editBase[id];
+                    var nx = Math.max(0, Math.min(plan.cols - r.w, c.x - grab.x));
+                    var ny = Math.max(0, c.y - grab.y);
+                    var key = nx + "," + ny;
+                    if (key === lastCell) return;
+                    lastCell = key;
+                    // Always start from the layout at drag start, so tiles that
+                    // were pushed aside come back when you move on.
+                    var m = copyRects(editBase);
+                    m[id].x = nx;
+                    m[id].y = ny;
+                    root.dragRects = Bento.resolve(m, plan.cols, id);
                 }
                 function endDrag() {
-                    lastTarget = "";
-                    if (root.dragOrder) {
-                        root.setAllSpans(root.dragSpans || frozenSpans());
-                        root.persistOrder(root.dragOrder);
-                    }
-                    root.dragOrder = null;
-                    root.dragSpans = null;
+                    if (root.dragRects) root.setRects(root.dragRects);
+                    root.dragRects = null;
+                    editBase = null;
+                    draggingId = "";
                 }
 
-                // ---- Drag the corner to resize ----
                 function resizeTo(id, w, h) {
-                    var m = root.dragSpans ? Object.assign({}, root.dragSpans) : frozenSpans();
-                    m[id] = { w: Math.max(1, Math.min(plan.cols, w)), h: Math.max(1, Math.min(8, h)) };
-                    root.dragSpans = m;
+                    if (!editBase) editBase = currentRects();
+                    var m = copyRects(editBase);
+                    m[id].w = Math.max(1, Math.min(plan.cols - m[id].x, w));
+                    m[id].h = Math.max(1, Math.min(8, h));
+                    root.dragRects = Bento.resolve(m, plan.cols, id);
                 }
                 function endResize(id) {
-                    if (root.dragSpans) root.setAllSpans(root.dragSpans);
-                    root.dragSpans = null;
+                    if (root.dragRects) root.setRects(root.dragRects);
+                    root.dragRects = null;
+                    editBase = null;
+                }
+
+                // From Settings / the tile's "default size" button.
+                function setTileSize(id, value) {
+                    var m = currentRects();
+                    if (!m[id]) return;
+                    var choices = Bento.spansFor(id, plan.cols);
+                    var size = value === null || value === undefined || value === -1 ? choices[0]
+                             : typeof value === "number" ? choices[Math.min(value, choices.length - 1)]
+                             : [value.w, value.h];
+                    m[id].w = Math.max(1, Math.min(plan.cols - m[id].x, size[0]));
+                    m[id].h = Math.max(1, size[1]);
+                    root.setRects(Bento.resolve(m, plan.cols, id));
+                }
+
+                // Where the dragged tile will land.
+                Rectangle {
+                    readonly property var r: board.draggingId ? board.rectsById[board.draggingId] : null
+                    visible: !!r
+                    z: 1
+                    x: r ? r.x * (board.plan.cellW + board.gap) : 0
+                    y: r ? r.y * (board.plan.cellH + board.gap) : 0
+                    width: r ? r.w * board.plan.cellW + (r.w - 1) * board.gap : 0
+                    height: r ? r.h * board.plan.cellH + (r.h - 1) * board.gap : 0
+                    radius: Kirigami.Units.gridUnit
+                    color: Qt.rgba(0.5, 0.55, 1, 0.12)
+                    border.width: 2
+                    border.color: "#818cf8"
+                    Behavior on x { NumberAnimation { duration: Kirigami.Units.shortDuration } }
+                    Behavior on y { NumberAnimation { duration: Kirigami.Units.shortDuration } }
                 }
 
                 // One delegate per known tile, kept alive across reorders, so

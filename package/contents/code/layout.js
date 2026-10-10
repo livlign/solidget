@@ -188,9 +188,76 @@ function arrange(ids, cols, rows, forced) {
     };
 }
 
+// ---- Fixed positions (hand-edited layouts) ----------------------------------
+// Once the user moves or resizes a tile, every tile keeps an exact cell
+// position {x, y, w, h}. Nothing is re-packed: shrinking leaves a gap, and
+// growing or dropping a tile only pushes the tiles it overlaps straight down.
+
+function overlaps(a, b) {
+    return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+
+function clampRect(r, cols) {
+    var w = Math.max(1, Math.min(r.w, cols));
+    return { x: Math.max(0, Math.min(r.x, cols - w)), y: Math.max(0, r.y), w: w, h: Math.max(1, r.h) };
+}
+
+// Make `rects` ({ id: {x,y,w,h} }) overlap-free. `priority` keeps its spot;
+// the rest are settled top to bottom, each pushed down just past whatever it
+// hits. Tiles that don't collide with anything stay exactly where they are.
+function resolve(rects, cols, priority) {
+    var out = {};
+    var placed = [];
+    if (priority && rects[priority]) {
+        out[priority] = clampRect(rects[priority], cols);
+        placed.push(out[priority]);
+    }
+    Object.keys(rects).filter(function (id) { return id !== priority; })
+        .sort(function (a, b) { return rects[a].y - rects[b].y || rects[a].x - rects[b].x; })
+        .forEach(function (id) {
+            var r = clampRect(rects[id], cols);
+            for (;;) {
+                var hit = placed.filter(function (q) { return overlaps(r, q); });
+                if (!hit.length) break;
+                r.y = Math.max.apply(null, hit.map(function (q) { return q.y + q.h; }));
+            }
+            out[id] = r;
+            placed.push(r);
+        });
+    return out;
+}
+
+// Tiles with a saved spot go there; tiles without one (newly shown) take the
+// first free spot that fits their smallest size.
+function arrangeManual(ids, manual, cols) {
+    var known = {};
+    ids.forEach(function (id) { if (manual[id]) known[id] = manual[id]; });
+    var settled = resolve(known, cols, null);
+    var rects = [];
+    ids.forEach(function (id) {
+        if (settled[id]) rects.push({ id: id, x: settled[id].x, y: settled[id].y, w: settled[id].w, h: settled[id].h, manual: true });
+    });
+    ids.forEach(function (id) {
+        if (settled[id]) return;
+        var s = spansFor(id, cols)[0];
+        for (var y = 0; ; y++) {
+            for (var x = 0; x + s[0] <= cols; x++) {
+                var r = { x: x, y: y, w: s[0], h: s[1] };
+                if (!rects.some(function (q) { return overlaps(r, q); })) {
+                    rects.push({ id: id, x: x, y: y, w: s[0], h: s[1], manual: true });
+                    return;
+                }
+            }
+        }
+    });
+    var rows = rects.reduce(function (m, r) { return Math.max(m, r.y + r.h); }, 0);
+    return { rects: rects, rows: rows };
+}
+
 // Pick grid dimensions for a pixel area.
 // density: "auto" or a DENSITY key. fill: true to fit the height (no scroll).
-function plan(ids, width, height, gridUnit, gap, density, fill, forced) {
+// manual: { id: {x,y,w,h} } for a hand-edited layout, or null for automatic.
+function plan(ids, width, height, gridUnit, gap, density, fill, forced, manual) {
     function dims(key) {
         var target = DENSITY[key] * gridUnit;
         var cols = Math.max(1, Math.floor((width + gap) / (target + gap)));
@@ -210,7 +277,15 @@ function plan(ids, width, height, gridUnit, gap, density, fill, forced) {
     } else {
         chosen = dims(density);
     }
-    var result = arrange(ids, chosen.cols, chosen.rows, forced);
+    var result;
+    if (manual) {
+        result = arrangeManual(ids, manual, chosen.cols);
+        // Keep the grid at least screen-sized so cells never change size
+        // when tiles shrink (that's what made the layout "jump").
+        result.rows = Math.max(result.rows, chosen.rows);
+    } else {
+        result = arrange(ids, chosen.cols, chosen.rows, forced);
+    }
     var cellW = (width - gap * (chosen.cols - 1)) / chosen.cols;
     var cellH;
     if (fill && result.rows <= chosen.rows) cellH = (height - gap * (result.rows - 1)) / result.rows;

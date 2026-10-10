@@ -18,10 +18,11 @@ customized right inside the widget — no hunting through widget galleries.
   heatmap, Top apps, Memory, Temperatures, Network, Power & fans (spinning
   fans!), Storage, Battery.
 - **Detects your hardware** – no GPU tile without a GPU, no battery tile on a desktop.
-- **Arrange by hand** – hover, click the pencil: drag tiles to move them (the
-  others slide out of the way), drag a tile's corner to resize it in grid
-  cells, hide tiles with one click. Hand-sized tiles keep their size; the rest
-  still auto-fill. *Reset layout* forgets it all.
+- **Arrange by hand** – hover, click the pencil: drag tiles anywhere on the
+  grid (empty cells included), drag a tile's corner to resize it, hide tiles
+  with one click. Once you edit by hand, tiles stay exactly where you put
+  them: shrinking leaves a gap, and growing or dropping a tile only pushes the
+  tiles it overlaps straight down. *Reset layout* returns to the automatic layout.
 - **Settings** (from the edit toolbar) – placement, size, presets (Essentials,
   Everything, Showcase, Performance, Everyday, Minimal), weather location and
   unit, per-tile show/hide, order and size. The dashboard behind is the live preview.

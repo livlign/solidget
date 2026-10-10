@@ -232,7 +232,10 @@ GlassTile {
                             id: sizeBox
                             // Auto, the tile's suggested sizes, and the current
                             // hand-made size if it isn't one of those.
-                            readonly property var cur: panel.app.spans[row.modelData]
+                            // In a hand-edited layout, the size on screen.
+                            readonly property var cur: panel.app.manualRects && panel.app.boardRef && panel.app.boardRef.rectsById[row.modelData]
+                                ? { w: panel.app.boardRef.rectsById[row.modelData].w, h: panel.app.boardRef.rectsById[row.modelData].h }
+                                : panel.app.spans[row.modelData]
                             readonly property int match: {
                                 if (cur === undefined) return 0;
                                 if (typeof cur === "number") return cur + 1;
@@ -257,6 +260,7 @@ GlassTile {
                         }
                         PlasmaComponents.ToolButton {
                             icon.name: "go-up"
+                            visible: !panel.app.manualRects   // order only matters in the automatic layout
                             enabled: row.index > 0
                             onClicked: panel.app.moveTile(row.modelData, -1)
                             QQC2.ToolTip.text: i18n("Move up")
@@ -264,6 +268,7 @@ GlassTile {
                         }
                         PlasmaComponents.ToolButton {
                             icon.name: "go-down"
+                            visible: !panel.app.manualRects   // order only matters in the automatic layout
                             enabled: row.index < panel.app.order.length - 1
                             onClicked: panel.app.moveTile(row.modelData, 1)
                             QQC2.ToolTip.text: i18n("Move down")

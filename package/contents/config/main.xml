@@ -31,6 +31,11 @@
     </entry>
     <!-- Set (e.g. by "install.sh place full") to ask the running widget to
          move/resize itself; the widget clears it once applied. -->
+    <!-- Hand-edited layout: "id:x,y,w,h;..." in grid cells. Empty means
+         the automatic layout. -->
+    <entry name="tileRects" type="String">
+      <default></default>
+    </entry>
     <entry name="placeRequest" type="String">
       <default></default>
     </entry>

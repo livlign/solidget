@@ -56,3 +56,31 @@ console.log("\nall layout tests passed");
     assert.strictEqual(big.rects[0].w, 2);
     console.log("exact-size tests passed");
 }
+
+// Fixed positions: shrinking leaves a gap, nothing else moves
+{
+    const L2 = new Function(src + "; return { resolve, arrangeManual, plan };")();
+    const start = { a: { x: 0, y: 0, w: 2, h: 2 }, b: { x: 2, y: 0, w: 2, h: 1 }, c: { x: 0, y: 2, w: 1, h: 1 } };
+    const shrunk = L2.resolve(Object.assign({}, start, { a: { x: 0, y: 0, w: 1, h: 1 } }), 4, "a");
+    assert.deepStrictEqual(shrunk.b, start.b);
+    assert.deepStrictEqual(shrunk.c, start.c);
+    // Growing pushes only the overlapped tile down
+    const grown = L2.resolve(Object.assign({}, start, { a: { x: 0, y: 0, w: 2, h: 3 } }), 4, "a");
+    assert.deepStrictEqual(grown.b, start.b, "b doesn't overlap, stays");
+    assert.deepStrictEqual(grown.c, { x: 0, y: 3, w: 1, h: 1 }, "c pushed just below a");
+    // Dropping onto another tile pushes it down, others untouched
+    const moved = L2.resolve(Object.assign({}, start, { c: { x: 2, y: 0, w: 1, h: 1 } }), 4, "c");
+    assert.deepStrictEqual(moved.c, { x: 2, y: 0, w: 1, h: 1 });
+    assert.deepStrictEqual(moved.b, { x: 2, y: 1, w: 2, h: 1 });
+    assert.deepStrictEqual(moved.a, start.a);
+    // A tile without a saved spot takes the first free one
+    const m = L2.arrangeManual(["a", "b", "cpu"], { a: start.a, b: start.b }, 4);
+    const cpu = m.rects.find(r => r.id === "cpu");
+    assert.deepStrictEqual([cpu.x, cpu.y], [2, 1]);
+    // Cell size doesn't change when the bottom tile shrinks
+    const p1 = L2.plan(["a", "b"], 1000, 800, 18, 12, "large", true, {}, { a: { x: 0, y: 0, w: 2, h: 3 }, b: { x: 2, y: 0, w: 1, h: 1 } });
+    const p2 = L2.plan(["a", "b"], 1000, 800, 18, 12, "large", true, {}, { a: { x: 0, y: 0, w: 2, h: 1 }, b: { x: 2, y: 0, w: 1, h: 1 } });
+    assert.strictEqual(p1.cellH, p2.cellH);
+    assert.strictEqual(p1.cellW, p2.cellW);
+    console.log("fixed-position tests passed");
+}
