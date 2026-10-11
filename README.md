@@ -21,7 +21,21 @@ and the little everyday things, all in one good-looking board.
 
 ## Install
 
-You need KDE Plasma 6 (Fedora KDE, Kubuntu 25.04+, KDE neon, Arch…) and `python3`.
+You need KDE Plasma 6 (Fedora KDE, Kubuntu 25.04+, KDE neon, Arch…).
+
+**From Plasma (easiest).** Right-click your desktop → **Add Widgets…** →
+**Get New Widgets** → **Download New Plasma Widgets**. Search for
+"Solidget" and click **Install**. Updates show up in Discover.
+
+**From a file.** Download `solidget-….plasmoid` from the
+[latest release](https://github.com/livlign/solidget/releases/latest). Then
+**Add Widgets…** → **Get New Widgets** → **Install Widget From Local File**.
+
+Then drag Solidget from **Add Widgets** onto your desktop. Hover over it and
+click **Settings** to change the look, the tiles and where it sits.
+
+<details>
+<summary>From source (for tinkerers)</summary>
 
 ```sh
 git clone https://github.com/livlign/solidget.git
@@ -29,19 +43,13 @@ cd solidget
 ./install.sh
 ```
 
-Solidget appears on your desktop. Hover over it and click **Settings** to
-change the look, the tiles and where it sits.
-
-To remove it: `./install.sh --uninstall`
-
-<details>
-<summary>More install options</summary>
-
 | Command | What it does |
 |---|---|
-| `./install.sh --no-add` | Install or update, but don't add it to the desktop |
+| `./install.sh` | Install or update, and put it on your desktop |
+| `./install.sh --no-add` | Install or update only |
 | `./install.sh --place full` | Move it: `full`, `left`, `right`, `top`, `bottom`, `tl`, `tr`, `bl`, `br`, `corner` |
 | `./install.sh --ram` | Show your RAM type and speed (asks for your password once) |
+| `./install.sh --uninstall` | Remove it |
 
 After updating, restart Plasma to load the new version:
 `systemctl --user restart plasma-plasmashell`

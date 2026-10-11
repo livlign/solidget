@@ -78,6 +78,12 @@ See errors: `journalctl --user -u plasma-plasmashell -f | grep -i solidget`
 - Commit messages: short and in the present tense, like `Add moon phase to calendar`.
 - `./tests/run.sh` must pass. GitHub runs it on every pull request too.
 
+## Releasing (maintainers)
+
+Bump `Version` in `package/metadata.json`, add a section to `CHANGELOG.md`,
+then push a tag like `v0.4.0`. GitHub builds and publishes the release.
+Then upload the file to the KDE Store: see [docs/kde-store.md](docs/kde-store.md).
+
 ## Where things are
 
 | Path | What's in it |
@@ -91,3 +97,4 @@ See errors: `journalctl --user -u plasma-plasmashell -f | grep -i solidget`
 | `package/contents/code/specs.py` | Reads your hardware, prints JSON |
 | `package/contents/config/main.xml` | Every saved setting |
 | `tests/` | All checks; `run.sh` runs them |
+| `tools/package.sh` | Builds the `.plasmoid` file |

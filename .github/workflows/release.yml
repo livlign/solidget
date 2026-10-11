@@ -1,0 +1,55 @@
+name: Release
+
+# Push a tag like v0.3.0 and this builds solidget-0.3.0.plasmoid and
+# publishes it on the Releases page, with notes from CHANGELOG.md.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write   # only this job can create the release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Tag must match the version in metadata.json
+        run: |
+          version=$(python3 -c 'import json; print(json.load(open("package/metadata.json"))["KPlugin"]["Version"])')
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME but metadata.json says $version"; exit 1; }
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Tests and security guard
+        run: ./tests/run.sh
+
+      - name: Build the .plasmoid
+        run: ./tools/package.sh
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v v="## $VERSION" '$0 == v {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md
+          [ -s notes.md ] || { echo "CHANGELOG.md has no '## $VERSION' section"; exit 1; }
+          cat >> notes.md <<'NOTES'
+
+          ### Install
+          Download **solidget-*.plasmoid** below. Then right-click your desktop,
+          choose **Add Widgets… → Get New Widgets → Install Widget From Local File**,
+          and pick the file. Or in a terminal: `kpackagetool6 -t Plasma/Applet -i solidget-*.plasmoid`
+          NOTES
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "dist/solidget-$VERSION.plasmoid" \
+            --repo "$GITHUB_REPOSITORY" --title "Solidget $VERSION" --notes-file notes.md --verify-tag

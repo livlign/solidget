@@ -12,7 +12,7 @@ check "code and config" node tests/code.test.js
 check "hardware script" python3 tests/test_specs.py
 check "security guard"  python3 tests/guard.py
 if command -v shellcheck >/dev/null; then
-    check "shell scripts"   shellcheck install.sh tests/run.sh
+    check "shell scripts"   shellcheck install.sh tests/run.sh tools/package.sh
 fi
 
 [ -z "$failed" ] && echo "All good." || exit 1

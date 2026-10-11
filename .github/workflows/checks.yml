@@ -24,4 +24,4 @@ jobs:
       - name: Tests and security guard
         run: ./tests/run.sh
       - name: Shell scripts
-        run: shellcheck install.sh tests/run.sh
+        run: shellcheck install.sh tests/run.sh tools/package.sh

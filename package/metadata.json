@@ -2,7 +2,7 @@
     "KPlugin": {
         "Id": "io.github.solidget",
         "Name": "Solidget",
-        "Description": "One solid widget: live system stats and your PC specs, ready in one click.",
+        "Description": "Live stats, your PC's specs and your day, in one good-looking board.",
         "Icon": "computer",
         "Category": "System Information",
         "License": "GPL-2.0-or-later",
