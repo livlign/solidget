@@ -140,7 +140,7 @@ test("pet sprites are well formed", () => {
     sets.forEach(([, name, body]) => {
         const rows = [...body.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
         assert.ok(rows.every((r) => r.length === rows[0].length), name + " has uneven rows");
-        assert.ok(rows.every((r) => /^[.kbscmewntpd]+$/.test(r)), name + " uses an unknown color");
+        assert.ok(rows.every((r) => /^[.kbqscmewngtvypd]+$/.test(r)), name + " uses an unknown color");
     });
 });
 test("every tile has a QML file and a name", () => {

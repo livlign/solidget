@@ -7,11 +7,13 @@
 - Aurora is now the default theme, so new boards look the same as before.
 - Fixed the Follow Plasma card in Settings showing white text on a light
   background.
-- **New desk pet:** an apricot poodle with a teddy-bear cut. It naps, walks,
-  runs and pants with its tongue out when the PC is hot. The cat is still
+- **New desk pet:** an apricot poodle with a teddy-bear cut, purple collar
+  and yellow bell. It naps, trots, bounces and pants with its tongue out
+  when the PC is hot. The cat is still
   there: Settings → General → Desk pet.
-- Music controls no longer spill out of a small Now playing tile; the cover
-  shrinks to make room.
+- Music controls no longer spill out of a small Now playing tile: the
+  buttons sit next to the times, and the title and cover shrink to fit.
+- Photo of the day captions are a sensible size on big tiles.
 - Theme and look cards keep the same size when you pick one.
 
 ## 0.4.0

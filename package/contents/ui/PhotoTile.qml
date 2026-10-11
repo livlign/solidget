@@ -108,9 +108,12 @@ GlassTile {
                 text: tile.caption
                 textFormat: Text.PlainText   // text from outside; never render it as HTML
                 color: "white"
-                font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.05)
+                // A caption, not a headline: grows a little with the tile, then stops.
+                font.pixelSize: Math.min(Kirigami.Theme.defaultFont.pixelSize * 1.35, Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 0.75))
                 font.weight: Font.DemiBold
                 font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
                 elide: Text.ElideRight
             }
             PlasmaComponents.Label {
@@ -120,7 +123,7 @@ GlassTile {
                 visible: text !== ""
                 color: "white"
                 opacity: 0.7
-                font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.7)
+                font.pixelSize: Math.min(Kirigami.Theme.defaultFont.pixelSize, Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.55))
                 elide: Text.ElideRight
             }
         }

@@ -44,11 +44,24 @@ GlassTile {
     accent2: app.accent2("media")
     level: playing ? 0.6 : 0.2
 
+    // Fit the text and controls to the tile height: drop to one title line,
+    // then hide the artist, then shrink the buttons.
+    FontMetrics { id: titleFm; font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.15); font.weight: Font.DemiBold }
+    FontMetrics { id: artistFm; font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.85) }
+    readonly property real btnBase: Math.max(Kirigami.Units.gridUnit * 0.8, tile.u)
+    readonly property real barH: Math.max(3, tile.u * 0.22) + 4
+    readonly property real gap: tile.u * 0.2
+    readonly property real fitH: content.height - (content.columns === 1 ? tile.u * 3 + content.rowSpacing : 0)
+    function needH(lines, artist, btn) { return lines * titleFm.height + (artist ? artistFm.height + gap : 0) + barH + btn + gap * 2; }
+    readonly property int titleLines: needH(2, true, btnBase * 2.6) <= fitH ? 2 : 1
+    readonly property bool showArtist: needH(titleLines, true, btnBase * 2.6) <= fitH
+    readonly property real bigSide: Math.max(btnBase * 1.5, Math.min(btnBase * 2.6, fitH - needH(titleLines, showArtist, 0)))
+
     component CtlButton: QQC2.AbstractButton {
         id: cb
         property string iconName
         property bool big: false
-        implicitWidth: (big ? 2.6 : 2) * Math.max(Kirigami.Units.gridUnit * 0.8, tile.u)
+        implicitWidth: big ? tile.bigSide : tile.bigSide * 0.77
         implicitHeight: implicitWidth
         hoverEnabled: true
         opacity: enabled ? 1 : 0.35
@@ -60,7 +73,7 @@ GlassTile {
             source: cb.iconName
             isMask: true
             color: cb.big ? (tile.accent.hslLightness > 0.6 ? "#111111" : "#ffffff") : Kirigami.Theme.textColor
-            implicitWidth: cb.big ? Kirigami.Units.iconSizes.medium : Kirigami.Units.iconSizes.small
+            implicitWidth: Math.min(cb.big ? Kirigami.Units.iconSizes.medium : Kirigami.Units.iconSizes.small, cb.width * 0.6)
             implicitHeight: implicitWidth
         }
     }
@@ -75,6 +88,7 @@ GlassTile {
     }
 
     GridLayout {
+        id: content
         anchors.fill: parent
         visible: tile.hasPlayer
         columns: tile.width > tile.height * 1.2 ? 2 : 1
@@ -138,51 +152,48 @@ GlassTile {
                 font.weight: Font.DemiBold
                 font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
                 elide: Text.ElideRight
-                maximumLineCount: 2
+                maximumLineCount: tile.titleLines
                 wrapMode: Text.Wrap
             }
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: tile.hasPlayer ? (tile.player.artist || tile.player.identity || "") : ""
                 textFormat: Text.PlainText
+                visible: tile.showArtist
                 opacity: 0.7
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.85)
                 elide: Text.ElideRight
             }
 
-            // Progress
-            ColumnLayout {
+            // Progress bar, then elapsed · controls · length on one row.
+            Rectangle {
                 Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(3, tile.u * 0.22)
                 visible: tile.lengthUs > 0
-                spacing: 2
+                radius: tile.radius > 0 ? height / 2 : 0
+                color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.12)
                 Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(3, tile.u * 0.22)
-                    radius: tile.radius > 0 ? height / 2 : 0
-                    color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.12)
-                    Rectangle {
-                        height: parent.height
-                        radius: parent.radius
-                        width: parent.width * Math.min(1, tile.positionUs / Math.max(1, tile.lengthUs))
-                        Behavior on width { NumberAnimation { duration: Kirigami.Units.longDuration } }
-                        gradient: Gradient {
-                            orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: tile.accent }
-                            GradientStop { position: 1; color: tile.accent2 }
-                        }
+                    height: parent.height
+                    radius: parent.radius
+                    width: parent.width * Math.min(1, tile.positionUs / Math.max(1, tile.lengthUs))
+                    Behavior on width { NumberAnimation { duration: Kirigami.Units.longDuration } }
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0; color: tile.accent }
+                        GradientStop { position: 1; color: tile.accent2 }
                     }
                 }
-                RowLayout {
-                    Layout.fillWidth: true
-                    PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.positionUs); opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 } }
-                    Item { Layout.fillWidth: true }
-                    PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.lengthUs); opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 } }
-                }
             }
-
             RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: tile.u * 0.4
+                Layout.fillWidth: true
+                spacing: tile.u * 0.3
+                PlasmaComponents.Label {
+                    textFormat: Text.PlainText
+                    Layout.preferredWidth: tile.lengthUs > 0 ? implicitWidth : 0
+                    text: tile.lengthUs > 0 ? tile.mmss(tile.positionUs) : ""
+                    opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 }
+                }
+                Item { Layout.fillWidth: true }
                 CtlButton {
                     iconName: "media-skip-backward"
                     enabled: tile.hasPlayer && tile.player.canGoPrevious
@@ -197,6 +208,13 @@ GlassTile {
                     iconName: "media-skip-forward"
                     enabled: tile.hasPlayer && tile.player.canGoNext
                     onClicked: tile.player.container.Next()
+                }
+                Item { Layout.fillWidth: true }
+                PlasmaComponents.Label {
+                    textFormat: Text.PlainText
+                    Layout.preferredWidth: tile.lengthUs > 0 ? implicitWidth : 0
+                    text: tile.lengthUs > 0 ? tile.mmss(tile.lengthUs) : ""
+                    opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 }
                 }
             }
             Item { Layout.fillHeight: true }
