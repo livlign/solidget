@@ -1,6 +1,6 @@
 # What's new
 
-## Unreleased
+## 0.4.0
 
 - **Works on more distros and hardware.** The hardware check is tested on
   Arch, Debian, Ubuntu, Fedora and openSUSE, plus simulated Raspberry Pi and
