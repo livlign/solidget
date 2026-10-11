@@ -18,7 +18,7 @@ Item {
     default property alias content: center.data
 
     property real shown: value
-    Behavior on shown { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
+    Behavior on shown { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
 
     readonly property real size: Math.min(width, height)
     readonly property real cx: width / 2

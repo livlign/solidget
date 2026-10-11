@@ -78,13 +78,8 @@ GlassTile {
         topApps = rows.slice(0, 20);
     }
 
-    Timer {
-        interval: 2000
-        running: tile.visible
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: tile.refresh()
-    }
+    // Every other shared tick.
+    Connections { target: app; function onTickChanged() { if (app.tick % 2 === 0 && tile.visible) tile.refresh(); } }
 
     ColumnLayout {
         id: list
@@ -145,7 +140,7 @@ GlassTile {
                             height: parent.height
                             radius: parent.radius
                             width: parent.width * row.share
-                            Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
+                            Behavior on width { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
                                 GradientStop { position: 0; color: tile.accent }

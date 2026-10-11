@@ -17,7 +17,7 @@ Item {
     property color color: "#38bdf8"
     property color colorEnd: color
     property color color2: "#f472b6"
-    property real lineWidth: Math.max(1.5, height / 40)
+    property real lineWidth: Math.max(1.5, Math.min(2.5, height / 70))
     property bool glow: true
 
     implicitHeight: Kirigami.Units.gridUnit * 2.5
@@ -46,8 +46,25 @@ Item {
     }
     readonly property var line1: points(values)
     readonly property var line2: points(values2)
-    readonly property var area1: line1.length
-        ? line1.concat([Qt.point(line1[line1.length - 1].x, height), Qt.point(line1[0].x, height)]) : []
+
+    // Smooth SVG path through the points: each segment is a cubic whose
+    // control points sit at the horizontal midpoint, so the curve never
+    // overshoots (no fake dips below zero) the way Catmull-Rom would.
+    function svg(pts) {
+        if (pts.length < 2) return "";
+        var d = "M " + pts[0].x.toFixed(1) + " " + pts[0].y.toFixed(1);
+        for (var i = 1; i < pts.length; i++) {
+            var mx = ((pts[i - 1].x + pts[i].x) / 2).toFixed(1);
+            d += " C " + mx + " " + pts[i - 1].y.toFixed(1) + " " + mx + " " + pts[i].y.toFixed(1)
+               + " " + pts[i].x.toFixed(1) + " " + pts[i].y.toFixed(1);
+        }
+        return d;
+    }
+    readonly property string path1: svg(line1)
+    readonly property string path2: svg(line2)
+    readonly property string area1: line1.length
+        ? path1 + " L " + line1[line1.length - 1].x.toFixed(1) + " " + height.toFixed(1)
+                + " L " + line1[0].x.toFixed(1) + " " + height.toFixed(1) + " Z" : ""
 
     Shape {
         anchors.fill: parent
@@ -62,16 +79,16 @@ Item {
                 GradientStop { position: 0; color: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, 0.30) }
                 GradientStop { position: 1; color: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, 0.0) }
             }
-            PathPolyline { path: chart.area1 }
+            PathSvg { path: chart.area1 }
         }
         // Glow + line, main series
         ShapePath {
             fillColor: "transparent"
-            strokeColor: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, chart.glow ? 0.16 : 0)
-            strokeWidth: chart.lineWidth * 4
+            strokeColor: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, chart.glow ? 0.12 : 0)
+            strokeWidth: chart.lineWidth * 3
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
-            PathPolyline { path: chart.line1 }
+            PathSvg { path: chart.path1 }
         }
         ShapePath {
             fillColor: "transparent"
@@ -79,24 +96,16 @@ Item {
             strokeWidth: chart.lineWidth
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
-            PathPolyline { path: chart.line1 }
+            PathSvg { path: chart.path1 }
         }
-        // Second series
+        // Second series: plain line, so it doesn't compete with the main one
         ShapePath {
             fillColor: "transparent"
-            strokeColor: Qt.rgba(chart.color2.r, chart.color2.g, chart.color2.b, chart.glow ? 0.16 : 0)
-            strokeWidth: chart.lineWidth * 4
-            joinStyle: ShapePath.RoundJoin
-            capStyle: ShapePath.RoundCap
-            PathPolyline { path: chart.line2 }
-        }
-        ShapePath {
-            fillColor: "transparent"
-            strokeColor: chart.color2
+            strokeColor: Qt.rgba(chart.color2.r, chart.color2.g, chart.color2.b, 0.9)
             strokeWidth: chart.lineWidth
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
-            PathPolyline { path: chart.line2 }
+            PathSvg { path: chart.path2 }
         }
     }
 
@@ -104,7 +113,7 @@ Item {
     Rectangle {
         visible: chart.line1.length > 0
         readonly property point p: chart.line1.length ? chart.line1[chart.line1.length - 1] : Qt.point(0, 0)
-        width: chart.lineWidth * 3.2; height: width; radius: width / 2
+        width: chart.lineWidth * 2.6; height: width; radius: width / 2
         x: p.x - width; y: p.y - height / 2
         color: chart.colorEnd
     }

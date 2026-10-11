@@ -62,9 +62,12 @@ GlassTile {
                     Layout.fillWidth: true
                     spacing: tile.u * 0.5
 
-                    Sensors.Sensor { id: rpm; sensorId: fanRow.modelData.id; updateRateLimit: 2000 }
+                    Sensors.Sensor { id: rpmSensor; sensorId: fanRow.modelData.id; updateRateLimit: 2000 }
+                    QtObject { id: rpm; property real value: 0 }
+                    Connections { target: app; function onTickChanged() { rpm.value = rpmSensor.value || 0; fanIcon.advance(); } }
 
                     FanIcon {
+                        id: fanIcon
                         rpm: rpm.value || 0
                         color: tile.accent
                         Layout.preferredWidth: Math.max(Kirigami.Units.iconSizes.small, tile.u * 1.5)

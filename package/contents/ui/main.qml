@@ -102,7 +102,10 @@ PlasmoidItem {
     readonly property var layoutRects: dragRects || manualRects
     readonly property var layoutOrder: order
     readonly property var layoutSpans: spans
-    readonly property var visibleTiles: layoutOrder.filter(function (id) { return hidden.indexOf(id) < 0 && isAvailable(id); })
+    // As a string first: QML only signals a string when it really changes, so
+    // the layout isn't recomputed every time a sensor ticks.
+    readonly property string visibleKey: layoutOrder.filter(function (id) { return hidden.indexOf(id) < 0 && isAvailable(id); }).join(",")
+    readonly property var visibleTiles: visibleKey ? visibleKey.split(",") : []
 
     function isAvailable(id) {
         switch (id) {
@@ -256,50 +259,30 @@ PlasmoidItem {
 
     // ---- Live sensors (ksystemstats) -------------------------------------
 
-    Sensors.Sensor { id: cpuUsage;     sensorId: "cpu/all/usage";               updateRateLimit: 1000 }
-    Sensors.Sensor { id: cpuFreq;      sensorId: "cpu/all/averageFrequency";    updateRateLimit: 2000 }
-    Sensors.Sensor { id: cpuTempAvg;   sensorId: "cpu/all/averageTemperature";  updateRateLimit: 2000 }
-    Sensors.Sensor { id: cpuTempMax;   sensorId: "cpu/all/maximumTemperature";  updateRateLimit: 2000 }
-    Sensors.Sensor { id: gpuUsage;     sensorId: "gpu/all/usage";               updateRateLimit: 1000 }
-    Sensors.Sensor { id: gpuVramUsed;  sensorId: "gpu/all/usedVram";            updateRateLimit: 2000 }
-    Sensors.Sensor { id: gpuVramTotal; sensorId: "gpu/all/totalVram";           updateRateLimit: 10000 }
-    Sensors.Sensor { id: gpuTemp;      sensorId: "gpu/gpu0/temperature";        updateRateLimit: 2000 }
-    Sensors.Sensor { id: gpuPower;     sensorId: "gpu/gpu0/power";              updateRateLimit: 1000 }
-    Sensors.Sensor { id: memUsed;      sensorId: "memory/physical/used";        updateRateLimit: 2000 }
-    Sensors.Sensor { id: memTotal;     sensorId: "memory/physical/total";       updateRateLimit: 10000 }
-    Sensors.Sensor { id: memCache;     sensorId: "memory/physical/cache";       updateRateLimit: 5000 }
-    Sensors.Sensor { id: netDown;      sensorId: "network/all/download";        updateRateLimit: 1000 }
-    Sensors.Sensor { id: netUp;        sensorId: "network/all/upload";          updateRateLimit: 1000 }
-    Sensors.Sensor { id: netName;      sensorId: specs.sensors && specs.sensors.netIface ? "network/" + specs.sensors.netIface + "/network" : "";     updateRateLimit: 30000 }
-    Sensors.Sensor { id: netIp;        sensorId: specs.sensors && specs.sensors.netIface ? "network/" + specs.sensors.netIface + "/ipv4address" : ""; updateRateLimit: 30000 }
-    Sensors.Sensor { id: diskUsed;     sensorId: "disk/all/used";               updateRateLimit: 10000 }
-    Sensors.Sensor { id: diskTotal;    sensorId: "disk/all/total";              updateRateLimit: 10000 }
-    Sensors.Sensor { id: diskRead;     sensorId: "disk/all/read";               updateRateLimit: 1000 }
-    Sensors.Sensor { id: diskWrite;    sensorId: "disk/all/write";              updateRateLimit: 1000 }
-    Sensors.Sensor { id: nvmeTemp;     sensorId: specs.sensors ? specs.sensors.nvmeTemp : ""; updateRateLimit: 5000 }
-    Sensors.Sensor { id: uptimeSensor; sensorId: "os/system/uptime";            updateRateLimit: 30000 }
+    Sensors.Sensor { id: cpuUsageS;     sensorId: "cpu/all/usage";               updateRateLimit: 1000 }
+    Sensors.Sensor { id: cpuFreqS;      sensorId: "cpu/all/averageFrequency";    updateRateLimit: 2000 }
+    Sensors.Sensor { id: cpuTempAvgS;   sensorId: "cpu/all/averageTemperature";  updateRateLimit: 2000 }
+    Sensors.Sensor { id: cpuTempMaxS;   sensorId: "cpu/all/maximumTemperature";  updateRateLimit: 2000 }
+    Sensors.Sensor { id: gpuUsageS;     sensorId: "gpu/all/usage";               updateRateLimit: 1000 }
+    Sensors.Sensor { id: gpuVramUsedS;  sensorId: "gpu/all/usedVram";            updateRateLimit: 2000 }
+    Sensors.Sensor { id: gpuVramTotalS; sensorId: "gpu/all/totalVram";           updateRateLimit: 10000 }
+    Sensors.Sensor { id: gpuTempS;      sensorId: "gpu/gpu0/temperature";        updateRateLimit: 2000 }
+    Sensors.Sensor { id: gpuPowerS;     sensorId: "gpu/gpu0/power";              updateRateLimit: 1000 }
+    Sensors.Sensor { id: memUsedS;      sensorId: "memory/physical/used";        updateRateLimit: 2000 }
+    Sensors.Sensor { id: memTotalS;     sensorId: "memory/physical/total";       updateRateLimit: 10000 }
+    Sensors.Sensor { id: memCacheS;     sensorId: "memory/physical/cache";       updateRateLimit: 5000 }
+    Sensors.Sensor { id: netDownS;      sensorId: "network/all/download";        updateRateLimit: 1000 }
+    Sensors.Sensor { id: netUpS;        sensorId: "network/all/upload";          updateRateLimit: 1000 }
+    Sensors.Sensor { id: netNameS;      sensorId: specs.sensors && specs.sensors.netIface ? "network/" + specs.sensors.netIface + "/network" : "";     updateRateLimit: 30000 }
+    Sensors.Sensor { id: netIpS;        sensorId: specs.sensors && specs.sensors.netIface ? "network/" + specs.sensors.netIface + "/ipv4address" : ""; updateRateLimit: 30000 }
+    Sensors.Sensor { id: diskUsedS;     sensorId: "disk/all/used";               updateRateLimit: 10000 }
+    Sensors.Sensor { id: diskTotalS;    sensorId: "disk/all/total";              updateRateLimit: 10000 }
+    Sensors.Sensor { id: diskReadS;     sensorId: "disk/all/read";               updateRateLimit: 1000 }
+    Sensors.Sensor { id: diskWriteS;    sensorId: "disk/all/write";              updateRateLimit: 1000 }
+    Sensors.Sensor { id: nvmeTempS;     sensorId: specs.sensors ? specs.sensors.nvmeTemp : ""; updateRateLimit: 5000 }
+    Sensors.Sensor { id: uptimeSensorS; sensorId: "os/system/uptime";            updateRateLimit: 30000 }
 
     // Exposed to tiles through `app: root`.
-    readonly property alias cpuUsage: cpuUsage
-    readonly property alias cpuFreq: cpuFreq
-    readonly property alias gpuUsage: gpuUsage
-    readonly property alias gpuVramUsed: gpuVramUsed
-    readonly property alias gpuVramTotal: gpuVramTotal
-    readonly property alias gpuTemp: gpuTemp
-    readonly property alias gpuPower: gpuPower
-    readonly property alias memUsed: memUsed
-    readonly property alias memTotal: memTotal
-    readonly property alias memCache: memCache
-    readonly property alias netDown: netDown
-    readonly property alias netUp: netUp
-    readonly property alias netName: netName
-    readonly property alias netIp: netIp
-    readonly property alias diskUsed: diskUsed
-    readonly property alias diskTotal: diskTotal
-    readonly property alias diskRead: diskRead
-    readonly property alias diskWrite: diskWrite
-    readonly property alias nvmeTemp: nvmeTemp
-    readonly property alias uptime: uptimeSensor
     readonly property real cpuTempValue: cpuTempAvg.value > 0 ? cpuTempAvg.value : (cpuTempMax.value || 0)
 
     History { id: cpuHistory }
@@ -311,15 +294,69 @@ PlasmoidItem {
     readonly property alias downHistory: downHistory
     readonly property alias upHistory: upHistory
 
+    // One shared tick: sensors report whenever they like, but tiles only see
+    // new values here, all at once. Plasma redraws the whole window for any
+    // change, so staggered updates kept it drawing nonstop (~130 fps);
+    // batched, it draws once a second plus a short transition.
+    property int tick: 0
+    property var cpuUsage: ({ value: 0 })
+    property var cpuFreq: ({ value: 0 })
+    property var cpuTempAvg: ({ value: 0 })
+    property var cpuTempMax: ({ value: 0 })
+    property var gpuUsage: ({ value: 0 })
+    property var gpuVramUsed: ({ value: 0 })
+    property var gpuVramTotal: ({ value: 0 })
+    property var gpuTemp: ({ value: 0 })
+    property var gpuPower: ({ value: 0 })
+    property var memUsed: ({ value: 0 })
+    property var memTotal: ({ value: 0 })
+    property var memCache: ({ value: 0 })
+    property var netDown: ({ value: 0 })
+    property var netUp: ({ value: 0 })
+    property var netName: ({ value: 0 })
+    property var netIp: ({ value: 0 })
+    property var diskUsed: ({ value: 0 })
+    property var diskTotal: ({ value: 0 })
+    property var diskRead: ({ value: 0 })
+    property var diskWrite: ({ value: 0 })
+    property var nvmeTemp: ({ value: 0 })
+    property var uptime: ({ value: 0 })
+    function sampleSensors() {
+        cpuUsage = { value: cpuUsageS.value };
+        cpuFreq = { value: cpuFreqS.value };
+        cpuTempAvg = { value: cpuTempAvgS.value };
+        cpuTempMax = { value: cpuTempMaxS.value };
+        gpuUsage = { value: gpuUsageS.value };
+        gpuVramUsed = { value: gpuVramUsedS.value };
+        gpuVramTotal = { value: gpuVramTotalS.value };
+        gpuTemp = { value: gpuTempS.value };
+        gpuPower = { value: gpuPowerS.value };
+        memUsed = { value: memUsedS.value };
+        memTotal = { value: memTotalS.value };
+        memCache = { value: memCacheS.value };
+        netDown = { value: netDownS.value };
+        netUp = { value: netUpS.value };
+        netName = { value: netNameS.value };
+        netIp = { value: netIpS.value };
+        diskUsed = { value: diskUsedS.value };
+        diskTotal = { value: diskTotalS.value };
+        diskRead = { value: diskReadS.value };
+        diskWrite = { value: diskWriteS.value };
+        nvmeTemp = { value: nvmeTempS.value };
+        uptime = { value: uptimeSensorS.value };
+    }
     Timer {
         interval: 1000
         running: true
         repeat: true
+        triggeredOnStart: true
         onTriggered: {
+            root.sampleSensors();
             cpuHistory.push(cpuUsage.value);
             gpuHistory.push(gpuUsage.value);
             downHistory.push(netDown.value);
             upHistory.push(netUp.value);
+            root.tick++;
         }
     }
 
@@ -777,19 +814,49 @@ PlasmoidItem {
             Behavior on x { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
         }
 
-        // Pencil appears on hover, so the dashboard stays clean otherwise.
-        PlasmaComponents.ToolButton {
+        // "Settings" pill, top center: shown on hover, and for a few seconds
+        // after loading so it's discoverable. Hidden otherwise to keep the
+        // dashboard clean.
+        property bool introHint: true
+        Timer { interval: 5000; running: true; onTriggered: full.introHint = false }
+
+        QQC2.AbstractButton {
+            id: settingsPill
             anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.margins: Kirigami.Units.smallSpacing
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.topMargin: Kirigami.Units.smallSpacing
             z: 20
-            visible: !root.editing && !root.showSettings
-            opacity: hover.hovered ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: Kirigami.Units.shortDuration } }
-            icon.name: "document-edit"
+            visible: !root.editing && !root.showSettings && opacity > 0
+            opacity: hover.hovered || full.introHint ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration } }
+            hoverEnabled: true
             onClicked: root.showSettings = true
-            QQC2.ToolTip.text: i18n("Settings")
-            QQC2.ToolTip.visible: hovered
+            padding: Kirigami.Units.smallSpacing * 1.5
+            leftPadding: Kirigami.Units.largeSpacing * 1.5
+            rightPadding: Kirigami.Units.largeSpacing * 1.5
+
+            background: Rectangle {
+                radius: height / 2
+                color: settingsPill.hovered ? Qt.rgba(0.39, 0.4, 0.95, 0.95) : Qt.rgba(0.07, 0.08, 0.12, 0.92)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, settingsPill.hovered ? 0.5 : 0.22)
+                Behavior on color { ColorAnimation { duration: Kirigami.Units.shortDuration } }
+            }
+            contentItem: RowLayout {
+                spacing: Kirigami.Units.smallSpacing
+                Kirigami.Icon {
+                    source: "configure"
+                    color: "white"
+                    isMask: true
+                    Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                    Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                }
+                PlasmaComponents.Label {
+                    text: i18n("Settings")
+                    color: "white"
+                    font.weight: Font.DemiBold
+                }
+            }
         }
     }
 

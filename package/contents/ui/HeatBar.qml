@@ -46,7 +46,7 @@ ColumnLayout {
             height: parent.height
             radius: parent.radius
             width: parent.width * bar.frac
-            Behavior on width { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
+            Behavior on width { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop { position: 0; color: bar.coolColor }

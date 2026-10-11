@@ -40,17 +40,11 @@ Item {
     readonly property real radius: Math.min(Kirigami.Units.gridUnit * (look ? look.radius : 1.2), Math.min(width, height) * 0.12)
 
     property real shownLevel: level
-    Behavior on shownLevel { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
+    Behavior on shownLevel { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
 
-    // Slow breathing when the tile is working hard.
-    property real breath: 0
-    SequentialAnimation on breath {
-        running: tile.glowOn && tile.level > 0.85 && tile.visible
-        loops: Animation.Infinite
-        NumberAnimation { to: 1; duration: 1600; easing.type: Easing.InOutSine }
-        NumberAnimation { to: 0; duration: 1600; easing.type: Easing.InOutSine }
-        onRunningChanged: if (!running) tile.breath = 0
-    }
+    // Extra glow when the tile is working hard. (This used to "breathe",
+    // but any endless animation keeps the whole desktop redrawing.)
+    readonly property real breath: glowOn && level > 0.85 ? 1 : 0
 
     RectangularShadow {
         visible: tile.shadowOn

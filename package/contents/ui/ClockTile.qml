@@ -42,13 +42,8 @@ GlassTile {
     Behavior on accent { ColorAnimation { duration: 1200 } }
     Behavior on accent2 { ColorAnimation { duration: 1200 } }
 
-    Timer {
-        interval: 1000
-        running: tile.visible
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: tile.now = new Date()
-    }
+    // Updated on the shared tick (same frame as everything else).
+    Connections { target: app; function onTickChanged() { tile.now = new Date(); } }
 
     function temp(v) { return isNaN(v) ? "–" : Math.round(v) + "°"; }
 

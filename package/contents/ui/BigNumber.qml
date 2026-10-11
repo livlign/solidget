@@ -16,7 +16,7 @@ Row {
     property string family: ""      // "monospace" for the Pixel style
 
     property real shown: value
-    Behavior on shown { enabled: big.animated; NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
+    Behavior on shown { enabled: big.animated; NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
 
     spacing: size * 0.06
 

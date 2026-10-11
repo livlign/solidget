@@ -43,7 +43,9 @@ GlassTile {
             Rectangle {
                 id: cell
                 required property int index
-                readonly property real load: sensor.value || 0
+                // Sampled on the shared tick so all cells change in one frame.
+                property real load: 0
+                Connections { target: app; function onTickChanged() { cell.load = sensor.value || 0; } }
                 x: (index % tile.cols) * (grid.cellW + grid.gap)
                 y: Math.floor(index / tile.cols) * (grid.cellH + grid.gap)
                 width: grid.cellW
@@ -61,8 +63,8 @@ GlassTile {
                     radius: parent.radius
                     color: app.heat(cell.load / 100)
                     opacity: 0.12 + Math.min(1, cell.load / 100) * 0.85
-                    Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-                    Behavior on color { ColorAnimation { duration: 250 } }
+                    Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: Kirigami.Units.longDuration } }
                 }
                 PlasmaComponents.Label {
                     anchors.centerIn: parent
