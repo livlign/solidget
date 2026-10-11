@@ -11,7 +11,7 @@ For maintainers. Takes about 10 minutes the first time.
 
    | Field | Value |
    |---|---|
-   | Category | Plasma 6 Extensions → **Plasma Widgets** |
+   | Category | **Plasma 6 Applets** (under Plasma 6 Extensions) |
    | Title | Solidget |
    | Summary | Live stats, your PC's specs and your day, in one good-looking board. |
    | Description | Copy the text below |
