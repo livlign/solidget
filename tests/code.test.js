@@ -134,14 +134,16 @@ test("network download and upload colors differ", () => {
 // ---- QML <-> files <-> settings -------------------------------------------
 test("pet sprites are well formed", () => {
     const pet = read("ui/PetTile.qml");
-    const sets = [...pet.matchAll(/(\w+):\s*\[((?:\s*"[^"]*",?)+)\]/g)]
-        .filter((m) => m[1] !== "text");   // skip the Zzz label
-    assert.ok(sets.length >= 12, "found " + sets.length + " frames");
-    sets.forEach(([, name, body]) => {
-        const rows = [...body.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
-        assert.ok(rows.every((r) => r.length === rows[0].length), name + " has uneven rows");
-        assert.ok(rows.every((r) => /^[.kbqscmewngtvypd]+$/.test(r)), name + " uses an unknown color");
+    // Every [ "row", "row", ... ] list of sprite rows (the Zzz label's short strings aside).
+    const frames = [...pet.matchAll(/\[((?:\s*"[^"]*",?)+)\]/g)]
+        .map((m) => [...m[1].matchAll(/"([^"]*)"/g)].map((r) => r[1]))
+        .filter((rows) => rows[0].length > 5);
+    assert.ok(frames.length >= 16, "found " + frames.length + " frames");
+    frames.forEach((rows, i) => {
+        assert.ok(rows.every((r) => r.length === rows[0].length), "frame " + i + " has uneven rows");
+        assert.ok(rows.every((r) => /^[.kbqscmewngtvypd]+$/.test(r)), "frame " + i + " uses an unknown color");
     });
+    for (const mood of ["walk", "run", "sleep"]) assert.ok(new RegExp("\\b" + mood + ": \\[").test(pet), "no " + mood + " frames");
 });
 test("every tile has a QML file and a name", () => {
     const files = fs.readdirSync(path.join(root, "ui"));

@@ -8,11 +8,13 @@
 - Fixed the Follow Plasma card in Settings showing white text on a light
   background.
 - **New desk pet:** an apricot poodle with a teddy-bear cut, purple collar
-  and yellow bell. It naps, trots, bounces and pants with its tongue out
-  when the PC is hot. The cat is still
+  and yellow bell. It naps curled up, trots and gallops across the tile
+  (smooth 4-step animations), and lies down panting when the PC is hot. The cat is still
   there: Settings → General → Desk pet.
-- Music controls no longer spill out of a small Now playing tile: the
-  buttons sit next to the times, and the title and cover shrink to fit.
+- **Redesigned Now playing:** the cover fills the tile's height, the song
+  name drops the repeated artist ("Artist - Song"), calmer buttons with the
+  time beside them, and a thin progress line. Video thumbnails lose their
+  black bars. Nothing spills out of small tiles anymore.
 - Photo of the day captions are a sensible size on big tiles.
 - **Top apps shows memory and CPU** for every app. Click "by CPU" in its
   corner to sort by memory instead.

@@ -39,42 +39,51 @@ GlassTile {
     readonly property real lengthUs: hasPlayer ? (player.length || 0) : 0
     function mmss(us) { var s = Math.max(0, Math.floor(us / 1e6)); return Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2); }
 
-    title: hasPlayer ? (player.identity || i18n("Now playing")) : i18n("Now playing")
+    title: i18n("Now playing")
+    subtitle: hasPlayer ? (player.identity || "") : ""
+    readonly property string artist: hasPlayer ? (player.artist || "") : ""
+    // Video sites title tracks "Artist - Song"; the artist is shown below, so drop it.
+    readonly property string track: {
+        var t = hasPlayer ? String(player.track || "") : "";
+        if (artist && t.toLowerCase().indexOf(artist.toLowerCase() + " - ") === 0) t = t.slice(artist.length + 3);
+        return t;
+    }
     accent: app.accent("media")
     accent2: app.accent2("media")
     level: playing ? 0.6 : 0.2
 
-    // Fit the text and controls to the tile height: drop to one title line,
-    // then hide the artist, then shrink the buttons.
-    FontMetrics { id: titleFm; font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.15); font.weight: Font.DemiBold }
-    FontMetrics { id: artistFm; font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.85) }
-    readonly property real btnBase: Math.max(Kirigami.Units.gridUnit * 0.8, tile.u)
-    readonly property real barH: Math.max(3, tile.u * 0.22) + 4
-    readonly property real gap: tile.u * 0.2
-    readonly property real fitH: content.height - (content.columns === 1 ? tile.u * 3 + content.rowSpacing : 0)
-    function needH(lines, artist, btn) { return lines * titleFm.height + (artist ? artistFm.height + gap : 0) + barH + btn + gap * 2; }
-    readonly property int titleLines: needH(2, true, btnBase * 2.6) <= fitH ? 2 : 1
-    readonly property bool showArtist: needH(titleLines, true, btnBase * 2.6) <= fitH
-    readonly property real bigSide: Math.max(btnBase * 1.5, Math.min(btnBase * 2.6, fitH - needH(titleLines, showArtist, 0)))
+    // ---- Sizes ----
+    // Side by side when there's width to spare, otherwise the cover on top.
+    readonly property bool sideBySide: body.width > body.height * 1.25
+    readonly property real btn: Math.max(Kirigami.Units.gridUnit * 1.3, Math.min(tile.u * 1.9, Kirigami.Units.gridUnit * 2.2))
+    FontMetrics { id: titleFm; font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.0); font.weight: Font.DemiBold }
+    FontMetrics { id: smallFm; font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.75) }
+    // Height of everything but the title: artist, controls, progress line.
+    readonly property real restH: smallFm.height + btn * 1.15 + tile.u * 0.9
+    readonly property int titleLines: (sideBySide ? body.height : body.height - tile.u * 4) - restH >= titleFm.height * 2 ? 2 : 1
 
     component CtlButton: QQC2.AbstractButton {
         id: cb
         property string iconName
-        property bool big: false
-        implicitWidth: big ? tile.bigSide : tile.bigSide * 0.77
+        property bool main: false
+        implicitWidth: tile.btn * (main ? 1.15 : 1)
         implicitHeight: implicitWidth
         hoverEnabled: true
-        opacity: enabled ? 1 : 0.35
+        opacity: enabled ? 1 : 0.3
         background: Rectangle {
             radius: tile.radius > 0 ? width / 2 : 0
-            color: cb.big ? tile.accent : (cb.hovered ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.14) : "transparent")
+            color: cb.main ? tile.accent
+                 : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, cb.hovered ? 0.16 : 0)
+            opacity: cb.main && !cb.hovered ? 0.9 : 1
         }
-        contentItem: Kirigami.Icon {
-            source: cb.iconName
-            isMask: true
-            color: cb.big ? (tile.accent.hslLightness > 0.6 ? "#111111" : "#ffffff") : Kirigami.Theme.textColor
-            implicitWidth: Math.min(cb.big ? Kirigami.Units.iconSizes.medium : Kirigami.Units.iconSizes.small, cb.width * 0.6)
-            implicitHeight: implicitWidth
+        contentItem: Item {
+            Kirigami.Icon {
+                anchors.centerIn: parent
+                width: Math.round(cb.width * 0.5); height: width
+                source: cb.iconName
+                isMask: true
+                color: cb.main ? (tile.accent.hslLightness > 0.6 ? "#111111" : "#ffffff") : Kirigami.Theme.textColor
+            }
         }
     }
 
@@ -87,25 +96,21 @@ GlassTile {
         font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u)
     }
 
-    GridLayout {
-        id: content
+    Item {
+        id: body
         anchors.fill: parent
         visible: tile.hasPlayer
-        columns: tile.width > tile.height * 1.2 ? 2 : 1
-        columnSpacing: tile.u
-        rowSpacing: tile.u * 0.5
 
-        // Cover art
+        // ---- Cover ----
         Item {
             id: art
-            // Stacked: the cover gets whatever height the text and buttons
-            // leave, so the controls never spill out of the tile.
-            readonly property real side: parent.columns === 2 ? Math.min(parent.height, parent.width * 0.42)
-                : Math.max(0, Math.min(parent.width, parent.height - info.implicitHeight - parent.rowSpacing))
+            readonly property real side: tile.sideBySide ? body.height
+                : Math.min(body.width, body.height - info.implicitHeight - tile.u * 0.6)
             visible: side >= tile.u * 3
-            Layout.preferredWidth: side
-            Layout.preferredHeight: side
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+            width: visible ? side : 0
+            height: width
+            x: tile.sideBySide ? 0 : (body.width - width) / 2
+            y: 0
             Rectangle {
                 id: artMask
                 anchors.fill: parent
@@ -124,51 +129,94 @@ GlassTile {
                     visible: cover.status !== Image.Ready
                 }
             }
-            Image {
-                id: cover
+            Item {
                 anchors.fill: parent
-                // Players hand us any URL; only load local files and web images.
-                source: tile.hasPlayer && /^(file|https?):\/\//.test(String(tile.player.artUrl || "")) ? tile.player.artUrl : ""
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                visible: status === Image.Ready
+                visible: cover.status === Image.Ready
+                clip: true
                 layer.enabled: artMask.radius > 0
                 layer.effect: MultiEffect { maskEnabled: true; maskSource: artMask }
+                Image {
+                    id: cover
+                    anchors.fill: parent
+                    // Players hand us any URL; only load local files and web images.
+                    source: tile.hasPlayer && /^(file|https?):\/\//.test(String(tile.player.artUrl || "")) ? tile.player.artUrl : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    // 4:3 video thumbnails carry black bars around a 16:9
+                    // picture; zooming by 4/3 pushes them out of the box.
+                    scale: Math.abs(implicitWidth / Math.max(1, implicitHeight) - 4 / 3) < 0.02 ? 4 / 3 : 1
+                }
             }
         }
 
+        // ---- Title, artist, controls, progress ----
         ColumnLayout {
             id: info
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: tile.u * 0.2
+            x: tile.sideBySide ? art.width + (art.visible ? tile.u * 0.9 : 0) : 0
+            width: body.width - x
+            anchors.bottom: parent.bottom
+            height: tile.sideBySide ? body.height : implicitHeight
+            spacing: tile.u * 0.15
 
-            Item { Layout.fillHeight: true }
             PlasmaComponents.Label {
                 Layout.fillWidth: true
-                text: tile.hasPlayer ? tile.player.track : ""
+                text: tile.track
                 textFormat: Text.PlainText   // text from outside; never render it as HTML
-                font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.15)
+                font.pixelSize: titleFm.font.pixelSize
                 font.weight: Font.DemiBold
                 font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
-                elide: Text.ElideRight
-                maximumLineCount: tile.titleLines
+                horizontalAlignment: tile.sideBySide ? Text.AlignLeft : Text.AlignHCenter
                 wrapMode: Text.Wrap
+                maximumLineCount: tile.titleLines
+                elide: Text.ElideRight
+                lineHeight: 0.95
             }
             PlasmaComponents.Label {
                 Layout.fillWidth: true
-                text: tile.hasPlayer ? (tile.player.artist || tile.player.identity || "") : ""
+                text: tile.artist || (tile.hasPlayer ? tile.player.identity || "" : "")
                 textFormat: Text.PlainText
-                visible: tile.showArtist
-                opacity: 0.7
-                font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.85)
+                opacity: 0.65
+                font.pixelSize: smallFm.font.pixelSize
+                horizontalAlignment: tile.sideBySide ? Text.AlignLeft : Text.AlignHCenter
                 elide: Text.ElideRight
             }
+            Item { Layout.fillHeight: true; Layout.minimumHeight: tile.u * 0.3 }
 
-            // Progress bar, then elapsed · controls · length on one row.
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: tile.u * 0.2
+                Item { visible: !tile.sideBySide; Layout.fillWidth: true }
+                CtlButton {
+                    iconName: "media-skip-backward"
+                    enabled: tile.hasPlayer && tile.player.canGoPrevious
+                    onClicked: tile.player.container.Previous()
+                }
+                CtlButton {
+                    main: true
+                    iconName: tile.playing ? "media-playback-pause" : "media-playback-start"
+                    onClicked: tile.player.container.PlayPause()
+                }
+                CtlButton {
+                    iconName: "media-skip-forward"
+                    enabled: tile.hasPlayer && tile.player.canGoNext
+                    onClicked: tile.player.container.Next()
+                }
+                Item { Layout.fillWidth: true }
+                PlasmaComponents.Label {
+                    visible: tile.lengthUs > 0 && tile.sideBySide
+                    textFormat: Text.PlainText
+                    text: tile.mmss(tile.positionUs) + " / " + tile.mmss(tile.lengthUs)
+                    opacity: 0.55
+                    font.pixelSize: smallFm.font.pixelSize * 0.9
+                    font.features: { "tnum": 1 }
+                }
+            }
+
+            // Thin progress line
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(3, tile.u * 0.22)
+                Layout.topMargin: tile.u * 0.2
+                Layout.preferredHeight: Math.max(2, Math.round(tile.u * 0.16))
                 visible: tile.lengthUs > 0
                 radius: tile.radius > 0 ? height / 2 : 0
                 color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.12)
@@ -185,39 +233,12 @@ GlassTile {
                 }
             }
             RowLayout {
+                visible: tile.lengthUs > 0 && !tile.sideBySide
                 Layout.fillWidth: true
-                spacing: tile.u * 0.3
-                PlasmaComponents.Label {
-                    textFormat: Text.PlainText
-                    Layout.preferredWidth: tile.lengthUs > 0 ? implicitWidth : 0
-                    text: tile.lengthUs > 0 ? tile.mmss(tile.positionUs) : ""
-                    opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 }
-                }
+                PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.positionUs); opacity: 0.55; font.pixelSize: smallFm.font.pixelSize * 0.9; font.features: { "tnum": 1 } }
                 Item { Layout.fillWidth: true }
-                CtlButton {
-                    iconName: "media-skip-backward"
-                    enabled: tile.hasPlayer && tile.player.canGoPrevious
-                    onClicked: tile.player.container.Previous()
-                }
-                CtlButton {
-                    big: true
-                    iconName: tile.playing ? "media-playback-pause" : "media-playback-start"
-                    onClicked: tile.player.container.PlayPause()
-                }
-                CtlButton {
-                    iconName: "media-skip-forward"
-                    enabled: tile.hasPlayer && tile.player.canGoNext
-                    onClicked: tile.player.container.Next()
-                }
-                Item { Layout.fillWidth: true }
-                PlasmaComponents.Label {
-                    textFormat: Text.PlainText
-                    Layout.preferredWidth: tile.lengthUs > 0 ? implicitWidth : 0
-                    text: tile.lengthUs > 0 ? tile.mmss(tile.lengthUs) : ""
-                    opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 }
-                }
+                PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.lengthUs); opacity: 0.55; font.pixelSize: smallFm.font.pixelSize * 0.9; font.features: { "tnum": 1 } }
             }
-            Item { Layout.fillHeight: true }
         }
     }
 }
