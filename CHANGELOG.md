@@ -7,11 +7,11 @@
 - Aurora is now the default theme, so new boards look the same as before.
 - Fixed the Follow Plasma card in Settings showing white text on a light
   background.
-- **New desk pet:** a fluffy apricot poodle with a teddy-bear cut, purple
-  collar and yellow bell. It has a little routine: sits, wags, sniffs
-  around, yawns, play-bows, trots and naps. When the PC gets busy it hops,
-  plays fetch, chases its tail and does zoomies; when it's hot it lies down
-  panting. The cat is still there: Settings → General → Desk pet.
+- **New desk pet:** an apricot teddy-cut poodle with round bear ears and
+  short legs. It keeps busy: sits, wiggles, sniffs around, yawns,
+  play-bows, trots and takes short naps. When the PC gets busy it hops,
+  plays fetch, spins and does zoomies; when it's hot it lies down panting.
+  The cat is still there: Settings → General → Desk pet.
 - **Redesigned Now playing:** the cover fills the tile's height, the song
   name drops the repeated artist ("Artist - Song"), calmer buttons with the
   time beside them, and a thin progress line. Video thumbnails lose their
@@ -21,6 +21,8 @@
   corner to sort by memory instead.
 - The Temperatures tile no longer cuts off its last bar when it's small.
 - Theme and look cards keep the same size when you pick one.
+- Fans spin smoothly again (a little more CPU than the one-step-a-second
+  turn).
 
 ## 0.4.0
 

@@ -66,7 +66,7 @@ GlassTile {
 
                     Sensors.Sensor { id: rpmSensor; sensorId: fanRow.modelData.id; updateRateLimit: 2000 }
                     QtObject { id: rpm; property real value: 0 }
-                    Connections { target: app; function onTickChanged() { rpm.value = rpmSensor.value || 0; fanIcon.advance(); } }
+                    Connections { target: app; function onTickChanged() { rpm.value = rpmSensor.value || 0; } }
 
                     FanIcon {
                         id: fanIcon

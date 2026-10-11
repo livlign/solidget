@@ -1,5 +1,4 @@
 import QtQuick
-import org.kde.kirigami as Kirigami
 import QtQuick.Shapes
 
 // Three-blade fan that spins faster as RPM rises (scaled down to stay calm).
@@ -43,11 +42,16 @@ Item {
         }
     }
 
-    // Turns in one short eased step per second (on the shared tick) instead
-    // of spinning nonstop: a continuous animation makes Plasma redraw the
-    // whole desktop every frame. Step size follows the RPM.
-    property real angle: 0
-    Behavior on angle { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
-    function advance() { if (rpm > 0) angle += Math.min(150, 30 + rpm / 20); }
-    Binding { target: blades; property: "rotation"; value: fan.angle }
+    // Spins smoothly. A RotationAnimator runs on the render thread, so it
+    // doesn't wake the rest of the widget. Speed comes in a few steps: a
+    // change restarts the spin, so it shouldn't follow every RPM wobble.
+    readonly property int band: rpm <= 0 ? 0 : rpm < 900 ? 1 : rpm < 1800 ? 2 : rpm < 3000 ? 3 : 4
+    RotationAnimator {
+        target: blades
+        from: blades.rotation
+        to: blades.rotation + 360
+        loops: Animation.Infinite
+        duration: [1000, 2400, 1500, 1000, 700][fan.band]
+        running: fan.band > 0 && fan.visible
+    }
 }

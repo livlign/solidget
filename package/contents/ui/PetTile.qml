@@ -6,7 +6,7 @@ import org.kde.plasma.components as PlasmaComponents
 // A pixel pet that lives in the tile.
 // - Poodle: keeps busy with a little routine (sits, wags, sniffs, yawns,
 //   play-bows, trots, naps) and gets livelier with the CPU: hops at medium
-//   load; zooms, chases its tail and its ball when busy; lies down panting
+//   load; zooms, spins and chases its ball when busy; lies down panting
 //   when hot. Frames come from images/poodle.png (made by tools/poodle.py).
 // - Cat: naps, strolls or sprints with the CPU, in the theme's color.
 // It animates at a few frames per second and stands still while asleep
@@ -99,7 +99,7 @@ GlassTile {
         run:   { row: "run",   ms: 140, speed: 0.045, calm: 0, busy: 1, zoom: 3 },
         spin:  { row: "run",   ms: 140, speed: 0,     calm: 0, busy: 0, zoom: 2 },
         ball:  { row: "run",   ms: 140, speed: 0.04,  calm: 1, busy: 2, zoom: 2 },
-        sleep: { row: "sleep", ms: 0,   speed: 0,     calm: 2, busy: 0, zoom: 0 },
+        sleep: { row: "sleep", ms: 0,   speed: 0,     calm: 1, busy: 0, zoom: 0 },
         hot:   { row: "hot",   ms: 450, speed: 0 }
     })
     readonly property var sheetRows: ["walk", "run", "sit", "wag", "sniff", "bow", "yawn", "sleep", "hot"]
@@ -121,9 +121,9 @@ GlassTile {
             r -= acts[names[i]][mood] || 0;
             if (r < 0) { activity = names[i]; break; }
         }
-        // A nap lasts 20-45 s; everything else 2-5 s worth of frames.
-        remaining = activity === "sleep" ? 20 + Math.floor(Math.random() * 25)
-             : Math.round((2000 + Math.random() * 3000) / Math.max(120, acts[activity].ms));
+        // A short nap (8-15 s); everything else 3-6 s worth of frames.
+        remaining = activity === "sleep" ? 8 + Math.floor(Math.random() * 8)
+             : Math.round((3000 + Math.random() * 3000) / Math.max(120, acts[activity].ms));
         if (activity === "spin" || Math.random() < 0.3) facingLeft = !facingLeft;
     }
     // A big change in the PC wakes the pet and changes plans right away.
@@ -144,7 +144,7 @@ GlassTile {
         case "bow":   return i18n("Wants to play!");
         case "walk":  return i18n("Trotting about");
         case "hop":   return i18n("Bouncy · CPU %1%", Math.round(load));
-        case "spin":  return i18n("Chasing its tail!");
+        case "spin":  return i18n("Spinning around!");
         case "ball":  return i18n("Fetch!");
         }
         return i18n("Zoomies! · CPU %1%", Math.round(load));
