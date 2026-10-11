@@ -29,6 +29,9 @@ Item {
 
     property string title
     property string subtitle
+    // A tile can make its subtitle a switch (Top apps: by CPU / by memory).
+    property bool subtitleClickable: false
+    signal subtitleClicked()
     property color accent: "#38bdf8"
     property color accent2: "#6366f1"
     property real level: 0.3
@@ -195,9 +198,19 @@ Item {
                 // Drop the subtitle rather than truncate the title.
                 visible: text !== "" && titleLabel.implicitWidth + Math.min(implicitWidth, tile.u * 4) + tile.u * 2 < tile.width - tile.pad * 2
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.72)
-                opacity: 0.55
+                opacity: subtitleMouse.containsMouse ? 0.9 : 0.55
+                font.underline: subtitleMouse.containsMouse
                 elide: Text.ElideRight
                 Layout.maximumWidth: tile.width * 0.5
+                MouseArea {
+                    id: subtitleMouse
+                    anchors.fill: parent
+                    anchors.margins: -tile.u * 0.3
+                    enabled: tile.subtitleClickable
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: tile.subtitleClicked()
+                }
             }
         }
 

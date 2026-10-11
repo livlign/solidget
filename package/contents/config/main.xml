@@ -68,6 +68,10 @@
     <entry name="worldClocks" type="String">
       <default>London|Europe/London;New York|America/New_York;Tokyo|Asia/Tokyo</default>
     </entry>
+    <!-- Top apps sort order: cpu or memory -->
+    <entry name="processSort" type="String">
+      <default>cpu</default>
+    </entry>
     <!-- Desk pet: dog (apricot poodle) or cat -->
     <entry name="petKind" type="String">
       <default>dog</default>

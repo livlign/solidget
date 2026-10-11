@@ -14,6 +14,9 @@
 - Music controls no longer spill out of a small Now playing tile: the
   buttons sit next to the times, and the title and cover shrink to fit.
 - Photo of the day captions are a sensible size on big tiles.
+- **Top apps shows memory and CPU** for every app. Click "by CPU" in its
+  corner to sort by memory instead.
+- The Temperatures tile no longer cuts off its last bar when it's small.
 - Theme and look cards keep the same size when you pick one.
 
 ## 0.4.0

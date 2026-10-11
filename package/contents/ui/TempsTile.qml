@@ -33,9 +33,14 @@ GlassTile {
             value: app.tempValue(tile.hottest)
             unit: app.tempUnit
             color: tile.hotColor
-            size: Math.min(tile.u * (tile.wide ? 4.2 : 3.4), (tile.wide ? parent.height : parent.height * 0.42))
+            // Stacked: the number gets the height the bars leave (its line is
+            // about 1.2x the font size), and steps aside if that's too little.
+            readonly property real fit: tile.wide ? parent.height : (parent.height - bars.implicitHeight - parent.rowSpacing) / 1.2
+            size: Math.min(tile.u * (tile.wide ? 4.2 : 3.4), fit)
+            visible: size >= tile.u * 1.4
         }
         ColumnLayout {
+            id: bars
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignBottom
             spacing: tile.u * 0.5

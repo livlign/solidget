@@ -3,11 +3,13 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.ksysguard.process as Process
+import org.kde.plasma.plasmoid
 import "../code/palette.js" as Palette
 import "../code/format.js" as Fmt
 
-// Apps using the most CPU right now, grouped per application like
-// System Monitor does (all Chrome processes count as one "Google Chrome").
+// Apps using the most CPU (or memory) right now, grouped per application
+// like System Monitor does (all Chrome processes count as one "Google Chrome").
+// Each row shows both; clicking the subtitle switches what the list sorts by.
 GlassTile {
     id: tile
     required property var app
@@ -19,11 +21,18 @@ GlassTile {
     readonly property real lu: rowH / 2.2
     readonly property int maxRows: Math.max(1, Math.floor(list.height / rowH))
 
+    readonly property bool byMemory: Plasmoid.configuration.processSort === "memory"
     title: i18n("Top apps")
-    subtitle: i18n("by CPU")
+    subtitle: byMemory ? i18n("by memory ⇅") : i18n("by CPU ⇅")
+    subtitleClickable: true
+    onSubtitleClicked: {
+        Plasmoid.configuration.processSort = byMemory ? "cpu" : "memory";
+        refresh();
+    }
     accent: app.accent("processes")
     accent2: app.accent2("processes")
     level: topApps.length ? Math.min(1, topApps[0].cpu / 25) : 0.2
+    function key(row) { return byMemory ? row.mem : row.cpu; }
 
     Process.ApplicationDataModel {
         id: apps
@@ -77,7 +86,7 @@ GlassTile {
             row.cpu = row.cpu / threads;
             row.cpuText = row.cpu.toFixed(1) + "%";
         });
-        rows.sort(function (a, b) { return b.cpu - a.cpu; });
+        rows.sort(function (a, b) { return tile.key(b) - tile.key(a); });
         topApps = rows.slice(0, 20);
     }
 
@@ -98,7 +107,7 @@ GlassTile {
                 id: row
                 required property int index
                 readonly property var modelData: tile.topApps[index] || ({ name: "", icon: "", cpu: 0, memText: "", cpuText: "" })
-                readonly property real share: tile.topApps.length && tile.topApps[0].cpu > 0 ? modelData.cpu / tile.topApps[0].cpu : 0
+                readonly property real share: tile.topApps.length && tile.key(tile.topApps[0]) > 0 ? tile.key(modelData) / tile.key(tile.topApps[0]) : 0
                 Layout.fillWidth: true
                 Layout.preferredHeight: tile.rowH
                 spacing: tile.lu * 0.6
@@ -121,19 +130,23 @@ GlassTile {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                         }
+                        // Both numbers, the one the list is sorted by in bold.
                         PlasmaComponents.Label {
                             textFormat: Text.PlainText
                             text: row.modelData.memText
-                            visible: tile.width > Kirigami.Units.gridUnit * 18
-                            opacity: 0.55
-                            font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.lu * 0.75)
+                            opacity: tile.byMemory ? 1 : 0.55
+                            font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.lu * (tile.byMemory ? 0.85 : 0.75))
+                            font.weight: tile.byMemory ? Font.DemiBold : Font.Normal
                             font.features: { "tnum": 1 }
+                            Layout.minimumWidth: tile.lu * 4
+                            horizontalAlignment: Text.AlignRight
                         }
                         PlasmaComponents.Label {
                             textFormat: Text.PlainText
                             text: row.modelData.cpuText
-                            font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.lu * 0.85)
-                            font.weight: Font.DemiBold
+                            opacity: tile.byMemory ? 0.55 : 1
+                            font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.lu * (tile.byMemory ? 0.75 : 0.85))
+                            font.weight: tile.byMemory ? Font.Normal : Font.DemiBold
                             font.features: { "tnum": 1 }
                             Layout.minimumWidth: tile.lu * 3
                             horizontalAlignment: Text.AlignRight
