@@ -50,7 +50,7 @@ GlassTile {
                 y: Math.floor(index / tile.cols) * (grid.cellH + grid.gap)
                 width: grid.cellW
                 height: grid.cellH
-                radius: Math.min(width, height) * 0.18
+                radius: tile.radius > 0 ? Math.min(width, height) * 0.18 : 0
                 color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.06)
 
                 Sensors.Sensor {

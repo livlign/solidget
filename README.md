@@ -10,8 +10,9 @@ customized right inside the widget — no hunting through widget galleries.
 
 - **Aurora glass design** – frosted tiles with soft color glows that brighten
   with load, gradient ring gauges, thin oversized numbers that count smoothly.
-- **Styles × themes** – 4 styles (Glass, Flat, Clear, Pixel) for shape and
-  material, 9 color themes (Aurora, Glacier Mint, Sandstone, Ember Dusk, Deep
+- **Styles × themes** – 4 styles for shape and material (Glass: frosted with
+  glows; Flat: sharp solid tiles in their own colors; Clear: barely-there
+  cards; Pixel: chunky beveled blocks, block gauges and a pixel font), 9 color themes (Aurora, Glacier Mint, Sandstone, Ember Dusk, Deep
   Lagoon, Plum Velvet, Moss Lantern, Ink & Paper, Lotus Pond) or *Follow
   Plasma*, and one-click looks like *Retro Terminal* (Pixel + Moss Lantern).
 - **Fills any space** – a bento layout engine sizes tiles to the space they
@@ -99,4 +100,5 @@ Logs: `journalctl --user -u plasma-plasmashell -f | grep -i solidget`
 
 ## License
 
-GPL-2.0-or-later
+GPL-2.0-or-later. The bundled Silkscreen font (`package/contents/fonts`) is
+under the SIL Open Font License 1.1, see `fonts/OFL.txt`.

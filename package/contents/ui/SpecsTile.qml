@@ -113,7 +113,7 @@ GlassTile {
                     Layout.preferredWidth: badge.implicitWidth + tile.su * 0.9
                     Layout.preferredHeight: tile.nameSize * 1.25
                     Layout.alignment: Qt.AlignTop
-                    radius: height * 0.28
+                    radius: tile.radius > 0 ? height * 0.28 : 0
                     color: Qt.rgba(vc.r, vc.g, vc.b, 0.16)
                     border.width: 1
                     border.color: Qt.rgba(vc.r, vc.g, vc.b, 0.55)

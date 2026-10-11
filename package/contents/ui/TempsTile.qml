@@ -49,6 +49,7 @@ GlassTile {
                     valueText: app.tempText(modelData.value)
                     hotColor: app.tempColor(modelData.value)
                     coolColor: app.heat(0)
+                    square: tile.radius === 0
                 }
             }
         }

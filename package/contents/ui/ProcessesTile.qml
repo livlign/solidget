@@ -134,7 +134,7 @@ GlassTile {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: Math.max(2, tile.lu * 0.18)
-                        radius: height / 2
+                        radius: tile.radius > 0 ? height / 2 : 0
                         color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.06)
                         Rectangle {
                             height: parent.height

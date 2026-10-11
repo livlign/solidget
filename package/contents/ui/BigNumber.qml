@@ -13,7 +13,7 @@ Row {
     property real size: Kirigami.Units.gridUnit * 2.5
     property color color: Kirigami.Theme.textColor
     property bool animated: true
-    property string family: ""      // "monospace" for the Pixel style
+    property string family: ""      // the Pixel style's pixel font
 
     property real shown: value
     Behavior on shown { enabled: big.animated; NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
@@ -27,7 +27,7 @@ Row {
         font.family: big.family || Kirigami.Theme.defaultFont.family
         font.pixelSize: big.size
         font.weight: big.family ? Font.Normal : Font.Light
-        font.letterSpacing: -big.size * 0.03
+        font.letterSpacing: big.family ? 0 : -big.size * 0.03
         font.features: { "tnum": 1 }
     }
     PlasmaComponents.Label {

@@ -50,16 +50,23 @@ function tempLevel(c) {
 // ---- Styles: shape and material (no colors) --------------------------------
 // radius is in grid units; bodyAlpha null = the theme's default opacity.
 var STYLES = {
+    // tint: how much of the tile's own color tints its card (0..1).
+    // font: "" = system, "pixel" = bundled Silkscreen (numbers and titles).
+    // meter: "ring" or "blocks"; chart: "line" or "bars".
     glass: { name: "Glass", hint: "Frosted cards with soft glows",
-             radius: 1.2, bodyAlpha: null, glow: true, shadow: true, border: 1, highlight: true, roundCaps: true, mono: false },
-    flat:  { name: "Flat", hint: "Solid cards, no effects",
-             radius: 0.55, bodyAlpha: 0.97, glow: false, shadow: false, border: 0, highlight: false, roundCaps: true, mono: false },
+             radius: 1.2, bodyAlpha: null, tint: 0, glow: true, shadow: true, hardShadow: false, bevel: false,
+             border: 1, highlight: true, roundCaps: true, font: "", meter: "ring", chart: "line" },
+    flat:  { name: "Flat", hint: "Sharp, solid tiles in their own colors, no effects",
+             radius: 0, bodyAlpha: 0.97, tint: 0.2, glow: false, shadow: false, hardShadow: false, bevel: false,
+             border: 0, highlight: false, roundCaps: false, font: "", meter: "ring", chart: "line" },
     clear: { name: "Clear", hint: "Barely-there cards that let the wallpaper through",
              // Light themes put dark text on the card, so it must stay fairly
              // opaque to stay readable over dark wallpapers.
-             radius: 1.5, bodyAlpha: { dark: 0.32, light: 0.62 }, glow: false, shadow: false, border: 1, highlight: true, roundCaps: true, mono: false },
-    pixel: { name: "Pixel", hint: "Square corners, thick borders, monospace numbers",
-             radius: 0, bodyAlpha: 0.94, glow: false, shadow: false, border: 2, highlight: false, roundCaps: false, mono: true }
+             radius: 1.5, bodyAlpha: { dark: 0.32, light: 0.62 }, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
+             border: 1, highlight: true, roundCaps: true, font: "", meter: "ring", chart: "line" },
+    pixel: { name: "Pixel", hint: "Chunky blocks, bevels and a pixel font, like a voxel game",
+             radius: 0, bodyAlpha: 1.0, tint: 0.12, glow: false, shadow: false, hardShadow: true, bevel: true,
+             border: 0, highlight: false, roundCaps: false, font: "pixel", meter: "blocks", chart: "bars" }
 };
 var STYLE_ORDER = ["glass", "flat", "clear", "pixel"];
 

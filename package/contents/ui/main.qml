@@ -418,9 +418,14 @@ PlasmoidItem {
                      : typeof st.bodyAlpha === "object" ? (dark ? st.bodyAlpha.dark : st.bodyAlpha.light)
                      : st.bodyAlpha,
             radius: st.radius, glow: st.glow, shadow: st.shadow, border: st.border,
-            highlight: st.highlight, roundCaps: st.roundCaps, mono: st.mono
+            highlight: st.highlight, roundCaps: st.roundCaps,
+            tint: st.tint, bevel: st.bevel, hardShadow: st.hardShadow,
+            fontFamily: st.font === "pixel" && pixelFont.status === FontLoader.Ready ? pixelFont.name : "",
+            meter: st.meter, chart: st.chart
         };
     }
+    // Bundled pixel font (Silkscreen, SIL OFL; see fonts/OFL.txt).
+    FontLoader { id: pixelFont; source: "../fonts/Silkscreen-Regular.ttf" }
     // Plasma's own colors, read here where nothing overrides them.
     readonly property color plasmaText: Kirigami.Theme.textColor
     readonly property color boardText: look.text !== "" ? look.text : plasmaText
@@ -756,10 +761,12 @@ PlasmoidItem {
             z: 20
             width: toolRow.implicitWidth + Kirigami.Units.largeSpacing * 2
             height: toolRow.implicitHeight + Kirigami.Units.smallSpacing * 2
-            radius: height / 2
-            color: Qt.rgba(0.07, 0.08, 0.12, 0.92)
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.12)
+            radius: root.look.radius === 0 ? 0 : height / 2
+            color: Qt.rgba(Qt.color(root.look.body).r, Qt.color(root.look.body).g, Qt.color(root.look.body).b, 0.95)
+            border.width: root.look.bevel ? 2 : 1
+            border.color: Qt.rgba(root.boardText.r, root.boardText.g, root.boardText.b, 0.2)
+            Kirigami.Theme.inherit: false
+            Kirigami.Theme.textColor: root.boardText
 
             RowLayout {
                 id: toolRow
@@ -835,25 +842,31 @@ PlasmoidItem {
             leftPadding: Kirigami.Units.largeSpacing * 1.5
             rightPadding: Kirigami.Units.largeSpacing * 1.5
 
+            // Theme colors: accent fill on hover, card color otherwise.
+            readonly property color accentColor: root.accent("cpu")
+            readonly property color fg: hovered ? (accentColor.hslLightness > 0.6 ? "#111111" : "#ffffff") : root.boardText
             background: Rectangle {
-                radius: height / 2
-                color: settingsPill.hovered ? Qt.rgba(0.39, 0.4, 0.95, 0.95) : Qt.rgba(0.07, 0.08, 0.12, 0.92)
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, settingsPill.hovered ? 0.5 : 0.22)
+                radius: root.look.radius === 0 ? 0 : height / 2
+                color: settingsPill.hovered ? settingsPill.accentColor
+                     : Qt.rgba(Qt.color(root.look.body).r, Qt.color(root.look.body).g, Qt.color(root.look.body).b, 0.95)
+                border.width: root.look.bevel ? 2 : 1
+                border.color: settingsPill.hovered ? Qt.darker(settingsPill.accentColor, 1.3)
+                    : Qt.rgba(root.boardText.r, root.boardText.g, root.boardText.b, 0.25)
                 Behavior on color { ColorAnimation { duration: Kirigami.Units.shortDuration } }
             }
             contentItem: RowLayout {
                 spacing: Kirigami.Units.smallSpacing
                 Kirigami.Icon {
                     source: "configure"
-                    color: "white"
+                    color: settingsPill.fg
                     isMask: true
                     Layout.preferredWidth: Kirigami.Units.iconSizes.small
                     Layout.preferredHeight: Kirigami.Units.iconSizes.small
                 }
                 PlasmaComponents.Label {
                     text: i18n("Settings")
-                    color: "white"
+                    color: settingsPill.fg
+                    font.family: root.look.fontFamily || Kirigami.Theme.defaultFont.family
                     font.weight: Font.DemiBold
                 }
             }

@@ -14,6 +14,7 @@ ColumnLayout {
     property string valueText: Fmt.temp(celsius)   // shown text, in the user's unit
     property color hotColor: Palette.heat(Palette.tempLevel(celsius))
     property color coolColor: Palette.heat(0)
+    property bool square: false
     property real u: Kirigami.Units.gridUnit
 
     readonly property real frac: Math.max(0, Math.min(1, celsius / 100))
@@ -40,7 +41,7 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: Math.max(3, bar.u * 0.32)
-        radius: height / 2
+        radius: bar.square ? 0 : height / 2
         color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.08)
         Rectangle {
             height: parent.height

@@ -70,6 +70,7 @@ GlassTile {
             minAutoMax: 64 * 1024
             sqrtScale: true
             glow: tile.glowOn
+            bars: tile.look ? tile.look.chart === "bars" : false
             color: tile.downColor
             colorEnd: tile.downColor
             color2: tile.upColor

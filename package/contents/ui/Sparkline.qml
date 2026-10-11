@@ -19,6 +19,7 @@ Item {
     property color color2: "#f472b6"
     property real lineWidth: Math.max(1.5, Math.min(2.5, height / 70))
     property bool glow: true
+    property bool bars: false       // Pixel: blocky columns snapped to a grid
 
     implicitHeight: Kirigami.Units.gridUnit * 2.5
 
@@ -66,7 +67,34 @@ Item {
         ? path1 + " L " + line1[line1.length - 1].x.toFixed(1) + " " + height.toFixed(1)
                 + " L " + line1[0].x.toFixed(1) + " " + height.toFixed(1) + " Z" : ""
 
+    // Pixel: one column per sample, heights snapped to whole blocks.
+    readonly property real block: Math.max(3, Math.round(lineWidth * 2))
+    Repeater {
+        model: chart.bars ? chart.line1.length : 0
+        Rectangle {
+            required property int index
+            readonly property point p: chart.line1[index]
+            readonly property real colW: chart.width / (chart.capacity - 1)
+            readonly property real h: Math.round((chart.height - p.y) / chart.block) * chart.block
+            x: p.x - colW / 2; width: Math.max(1, colW - 1)
+            y: chart.height - h; height: h
+            color: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, 0.35 + 0.65 * index / Math.max(1, chart.line1.length - 1))
+        }
+    }
+    Repeater {   // second series: a block on top of each column
+        model: chart.bars ? chart.line2.length : 0
+        Rectangle {
+            required property int index
+            readonly property point p: chart.line2[index]
+            width: chart.block; height: chart.block
+            x: p.x - width / 2
+            y: Math.round(p.y / chart.block) * chart.block - height / 2
+            color: chart.color2
+        }
+    }
+
     Shape {
+        visible: !chart.bars
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
 
@@ -111,7 +139,7 @@ Item {
 
     // Live dot at the newest sample
     Rectangle {
-        visible: chart.line1.length > 0
+        visible: !chart.bars && chart.line1.length > 0
         readonly property point p: chart.line1.length ? chart.line1[chart.line1.length - 1] : Qt.point(0, 0)
         width: chart.lineWidth * 2.6; height: width; radius: width / 2
         x: p.x - width; y: p.y - height / 2

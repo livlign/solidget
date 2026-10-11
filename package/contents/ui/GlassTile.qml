@@ -17,8 +17,15 @@ Item {
     readonly property bool shadowOn: look ? look.shadow : true
     readonly property bool highlightOn: look ? look.highlight : true
     readonly property int borderWidth: look ? look.border : 1
-    readonly property string numberFamily: look && look.mono ? "monospace" : ""
-    readonly property color bodyColor: look ? look.body : (dark ? "#12141f" : "#ffffff")
+    readonly property string numberFamily: look ? look.fontFamily : ""
+    readonly property bool bevelOn: look ? look.bevel : false
+    readonly property bool hardShadowOn: look ? look.hardShadow : false
+    readonly property real tintAmount: look ? look.tint : 0
+    readonly property color baseColor: look ? look.body : (dark ? "#12141f" : "#ffffff")
+    // Flat and Pixel tint each card with its tile's own color.
+    readonly property color bodyColor: tintAmount > 0
+        ? Qt.tint(baseColor, Qt.rgba(accent.r, accent.g, accent.b, tintAmount)) : baseColor
+    readonly property real bevelW: Math.max(3, Kirigami.Units.gridUnit * 0.22)
 
     property string title
     property string subtitle
@@ -45,6 +52,14 @@ Item {
     // Extra glow when the tile is working hard. (This used to "breathe",
     // but any endless animation keeps the whole desktop redrawing.)
     readonly property real breath: glowOn && level > 0.85 ? 1 : 0
+
+    // Pixel: a hard, offset block shadow.
+    Rectangle {
+        visible: tile.hardShadowOn
+        x: tile.bevelW * 1.5; y: tile.bevelW * 1.5
+        width: parent.width; height: parent.height
+        color: Qt.rgba(0, 0, 0, tile.dark ? 0.55 : 0.28)
+    }
 
     RectangularShadow {
         visible: tile.shadowOn
@@ -128,6 +143,16 @@ Item {
             GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, tile.dark ? 0.28 : 0.9) }
             GradientStop { position: 1; color: "transparent" }
         }
+    }
+
+    // Pixel: a block bevel, light on the top/left edges, dark on bottom/right.
+    Item {
+        visible: tile.bevelOn
+        anchors.fill: parent
+        Rectangle { x: 0; y: 0; width: parent.width; height: tile.bevelW; color: Qt.rgba(1, 1, 1, tile.dark ? 0.16 : 0.55) }
+        Rectangle { x: 0; y: 0; width: tile.bevelW; height: parent.height; color: Qt.rgba(1, 1, 1, tile.dark ? 0.16 : 0.55) }
+        Rectangle { x: 0; y: parent.height - tile.bevelW; width: parent.width; height: tile.bevelW; color: Qt.rgba(0, 0, 0, tile.dark ? 0.45 : 0.22) }
+        Rectangle { x: parent.width - tile.bevelW; y: 0; width: tile.bevelW; height: parent.height; color: Qt.rgba(0, 0, 0, tile.dark ? 0.45 : 0.22) }
     }
 
     ColumnLayout {
