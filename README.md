@@ -9,7 +9,7 @@ and the little everyday things, all in one good-looking board.
 
 - **20 tiles.** CPU, GPU, memory, temperatures, network, storage, fans, top apps,
   clock and weather, calendar, music controls, photo of the day, world clocks,
-  focus timer, sticky note, quote of the day, and a pixel cat that reacts to your CPU.
+  focus timer, sticky note, quote of the day, and a pixel pet (a poodle or a cat) that reacts to your CPU.
 - **Your look.** 4 styles (Glass, Flat, Clear, Pixel) × 10 color themes, or
   pick a ready-made look like *Retro Terminal* or *Paper*.
 - **Fits any space.** A corner card, a sidebar, or a whole spare monitor,

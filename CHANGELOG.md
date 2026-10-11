@@ -1,6 +1,6 @@
 # What's new
 
-## Unreleased
+## 0.5.0
 
 - **Follow Plasma** now really follows Plasma: your system's background,
   text and accent color. Before, it looked just like Aurora.

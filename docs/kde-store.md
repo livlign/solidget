@@ -26,7 +26,7 @@ For maintainers. Takes about 10 minutes the first time.
 ## Each new version
 
 1. Update `Version` in `package/metadata.json` and add a section to `CHANGELOG.md`.
-2. Tag it: `git tag v0.4.0 && git push origin v0.4.0`. GitHub builds the
+2. Tag it: `git tag v0.5.0 && git push origin v0.5.0`. GitHub builds the
    `.plasmoid` and makes a release by itself.
 3. On the store page: **Edit → Files**, upload the new `.plasmoid`, set its
    version, and paste the changelog section. Users get it as an update in Discover.
@@ -37,7 +37,7 @@ For maintainers. Takes about 10 minutes the first time.
 One solid widget for your KDE desktop: live system stats, your PC's specs, and the little everyday things, all in one good-looking board.
 
 WHAT YOU GET
-- 20 tiles: CPU, GPU, memory, temperatures, network, storage, fans, top apps, clock and weather, calendar, music controls, photo of the day, world clocks, focus timer, sticky note, quote of the day, and a pixel cat that reacts to your CPU.
+- 20 tiles: CPU, GPU, memory, temperatures, network, storage, fans, top apps, clock and weather, calendar, music controls, photo of the day, world clocks, focus timer, sticky note, quote of the day, and a pixel pet (a poodle or a cat) that reacts to your CPU.
 - 4 styles (Glass, Flat, Clear, Pixel) x 10 color themes, or one-click looks like Retro Terminal and Paper.
 - Fits any space: a corner card, a sidebar, or a whole spare monitor, landscape or portrait.
 - Drag and resize tiles. They stay exactly where you put them.
