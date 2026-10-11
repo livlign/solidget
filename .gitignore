@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 dist/
+
+# Maintainer-only notes, kept locally
+docs/kde-store.md

@@ -82,7 +82,7 @@ See errors: `journalctl --user -u plasma-plasmashell -f | grep -i solidget`
 
 Bump `Version` in `package/metadata.json`, add a section to `CHANGELOG.md`,
 then push a tag like `v0.4.0`. GitHub builds and publishes the release.
-Then upload the file to the KDE Store: see [docs/kde-store.md](docs/kde-store.md).
+Then upload the file to the KDE Store.
 
 ## Where things are
 
