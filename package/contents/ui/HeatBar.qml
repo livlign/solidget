@@ -10,7 +10,8 @@ ColumnLayout {
     id: bar
 
     property string label
-    property real celsius: 0
+    property real celsius: 0              // drives the color ramp
+    property string valueText: Fmt.temp(celsius)   // shown text, in the user's unit
     property real u: Kirigami.Units.gridUnit
 
     readonly property real frac: Math.max(0, Math.min(1, celsius / 100))
@@ -27,7 +28,7 @@ ColumnLayout {
             elide: Text.ElideRight
         }
         PlasmaComponents.Label {
-            text: Fmt.temp(bar.celsius)
+            text: bar.valueText
             color: Palette.heat(Palette.tempLevel(bar.celsius))
             font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, bar.u * 0.9)
             font.weight: Font.DemiBold

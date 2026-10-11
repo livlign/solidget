@@ -66,7 +66,7 @@ GlassTile {
             byName[name] = { name: name, icon: apps.data(apps.index(r, iconCol), Qt.DisplayRole) || "", cpu: cpu, mem: mem };
             rows.push(byName[name]);
         }
-        rows.forEach(function (row) { row.memText = row.mem > 0 ? Fmt.bytes(row.mem) : ""; });
+        rows.forEach(function (row) { row.memText = row.mem > 0 ? app.bytesText(row.mem) : ""; });
         // The model reports per-core percent (one busy thread = 100%);
         // show share of the whole CPU like System Monitor does.
         var threads = app.specs.cpu ? app.specs.cpu.threads : 1;

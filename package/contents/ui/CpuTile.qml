@@ -13,7 +13,7 @@ GaugeTile {
     history: app.cpuHistory.values
     details: [
         { label: i18n("Clock"), value: Fmt.ghz(app.cpuFreq.value) },
-        { label: i18n("Temperature"), value: Fmt.temp(app.cpuTempValue), dot: Palette.heat(Palette.tempLevel(app.cpuTempValue)) },
+        { label: i18n("Temperature"), value: app.tempText(app.cpuTempValue), dot: Palette.heat(Palette.tempLevel(app.cpuTempValue)) },
         { label: i18n("Threads"), value: app.specs.cpu ? String(app.specs.cpu.threads) : "–" }
     ]
 }

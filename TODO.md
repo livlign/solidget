@@ -1,7 +1,7 @@
 # Solidget TODO
 
 ## Editing flow
-- [ ] Pencil opens the **Settings panel** first. The panel has an **Edit layout**
+- [x] Pencil opens the **Settings panel** first. The panel has an **Edit layout**
       button that switches to edit-layout mode (drag/resize on the board).
       Today the pencil goes straight to edit-layout mode and Settings is in its toolbar.
 
@@ -40,11 +40,11 @@ Keep them as **two independent settings**, shown together in one
 - Default theme option: **Follow Plasma** (light/dark from the system colors).
 
 ## Privacy
-- [ ] **Mask sensitive information** option, **on by default**: hostname,
+- [x] **Mask sensitive information** option, **on by default**: hostname,
       Wi-Fi name, IP address, weather location (and anything similar added
       later) are hidden/blurred on the board and in "Copy specs".
 
 ## Units
-- [ ] **Units** settings: temperature (°C / °F), data rates (bytes vs bits,
+- [x] **Units** settings: temperature (°C / °F), data rates (bytes vs bits,
       binary KiB vs decimal KB), maybe wind speed for weather. The weather
       °C/°F toggle exists already; generalize it so every tile uses the same choice.

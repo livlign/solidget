@@ -6,13 +6,13 @@ GaugeTile {
     required property var app
 
     title: i18n("Memory")
-    subtitle: app.memTotal.value > 0 ? Fmt.bytes(app.memTotal.value, 0) : ""
+    subtitle: app.memTotal.value > 0 ? app.bytesText(app.memTotal.value, 0) : ""
     accent: Palette.accent("memory")
     accent2: Palette.accent2("memory")
     value: app.memTotal.value > 0 ? app.memUsed.value / app.memTotal.value * 100 : 0
     details: [
-        { label: i18n("In use"), value: Fmt.bytes(app.memUsed.value) },
-        { label: i18n("Available"), value: Fmt.bytes(app.memTotal.value - app.memUsed.value) },
-        { label: i18n("Cached"), value: Fmt.bytes(app.memCache.value) }
+        { label: i18n("In use"), value: app.bytesText(app.memUsed.value) },
+        { label: i18n("Available"), value: app.bytesText(app.memTotal.value - app.memUsed.value) },
+        { label: i18n("Cached"), value: app.bytesText(app.memCache.value) }
     ]
 }

@@ -33,7 +33,7 @@ GlassTile {
     readonly property real topH: area.height - forecastH - (showForecast ? u * 0.6 : 0)
 
     title: hour < 5 ? i18n("Good night") : hour < 12 ? i18n("Good morning") : hour < 18 ? i18n("Good afternoon") : i18n("Good evening")
-    subtitle: hasWeather && w.place ? w.place : (app.uptime.value ? i18n("Up %1", Fmt.uptime(app.uptime.value)) : "")
+    subtitle: hasWeather && app.shownPlace ? app.shownPlace : (app.uptime.value ? i18n("Up %1", Fmt.uptime(app.uptime.value)) : "")
     accent: mood[0]
     accent2: mood[1]
     level: hasWeather ? 0.5 : 0.35

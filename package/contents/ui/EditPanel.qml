@@ -12,7 +12,7 @@ GlassTile {
     id: panel
     required property var app
 
-    title: i18n("Customize")
+    title: i18n("Settings")
     accent: "#818cf8"
     accent2: "#c084fc"
     level: 0.35
@@ -25,6 +25,26 @@ GlassTile {
         font.weight: Font.DemiBold
         font.capitalization: Font.AllUppercase
         font.letterSpacing: 0.8
+    }
+
+    component Choice: RowLayout {
+        id: choice
+        property string label
+        property var options: []      // [{ value, text }]
+        property var current
+        signal picked(var value)
+        Layout.fillWidth: true
+        PlasmaComponents.Label { text: choice.label; Layout.fillWidth: true; elide: Text.ElideRight }
+        Repeater {
+            model: choice.options
+            PlasmaComponents.Button {
+                required property var modelData
+                text: modelData.text
+                checkable: true
+                checked: choice.current === modelData.value
+                onClicked: choice.picked(modelData.value)
+            }
+        }
     }
 
     PlasmaComponents.ToolButton {
@@ -47,8 +67,20 @@ GlassTile {
             width: scroller.availableWidth
             spacing: Kirigami.Units.smallSpacing
 
+            // ---- Edit layout ----
+            PlasmaComponents.Button {
+                Layout.fillWidth: true
+                visible: !panel.app.editing
+                icon.name: "transform-move"
+                text: i18n("Edit layout")
+                onClicked: { panel.app.showSettings = false; panel.app.editing = true; }
+                QQC2.ToolTip.text: i18n("Drag tiles to move them, drag a corner to resize")
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+            }
+
             // ---- Placement ----
-            SectionLabel { text: i18n("Place on this screen"); Layout.topMargin: 0 }
+            SectionLabel { text: i18n("Place on this screen") }
             PlasmaComponents.Label {
                 visible: !panel.app.canPlace()
                 text: i18n("Placement works when Solidget is on the desktop.")
@@ -137,17 +169,10 @@ GlassTile {
                     id: cityField
                     Layout.fillWidth: true
                     enabled: weatherSwitch.checked
-                    placeholderText: panel.app.weather.place
-                        ? i18n("Automatic (%1)", panel.app.weather.place) : i18n("Automatic location")
+                    placeholderText: panel.app.shownPlace
+                        ? i18n("Automatic (%1)", panel.app.shownPlace) : i18n("Automatic location")
                     text: Plasmoid.configuration.weatherCity
                     onEditingFinished: Plasmoid.configuration.weatherCity = text.trim()
-                }
-                PlasmaComponents.Button {
-                    enabled: weatherSwitch.checked
-                    text: panel.app.weather.fahrenheit ? "°F" : "°C"
-                    onClicked: Plasmoid.configuration.weatherUnit = panel.app.weather.fahrenheit ? "c" : "f"
-                    QQC2.ToolTip.text: i18n("Switch temperature unit")
-                    QQC2.ToolTip.visible: hovered
                 }
             }
             PlasmaComponents.Label {
@@ -158,6 +183,49 @@ GlassTile {
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
+            }
+
+            // ---- Units ----
+            SectionLabel { text: i18n("Units") }
+            Choice {
+                label: i18n("Temperature")
+                options: [{ value: false, text: "°C" }, { value: true, text: "°F" }]
+                current: panel.app.useFahrenheit
+                onPicked: (v) => Plasmoid.configuration.weatherUnit = v ? "f" : "c"
+            }
+            Choice {
+                label: i18n("Sizes")
+                options: [{ value: false, text: "GiB" }, { value: true, text: "GB" }]
+                current: panel.app.decimalUnits
+                onPicked: (v) => Plasmoid.configuration.dataUnits = v ? "decimal" : "binary"
+            }
+            Choice {
+                label: i18n("Network speed")
+                options: [{ value: false, text: "MB/s" }, { value: true, text: "Mbps" }]
+                current: panel.app.networkBits
+                onPicked: (v) => Plasmoid.configuration.networkBits = v
+            }
+
+            // ---- Privacy ----
+            SectionLabel { text: i18n("Privacy") }
+            RowLayout {
+                Layout.fillWidth: true
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+                    PlasmaComponents.Label { text: i18n("Hide personal info"); Layout.fillWidth: true }
+                    PlasmaComponents.Label {
+                        text: i18n("Computer name, network name, IP address and weather location. Keep on to share screenshots safely.")
+                        opacity: 0.6
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                }
+                PlasmaComponents.Switch {
+                    checked: Plasmoid.configuration.maskSensitive
+                    onToggled: Plasmoid.configuration.maskSensitive = checked
+                }
             }
 
             // ---- Presets ----

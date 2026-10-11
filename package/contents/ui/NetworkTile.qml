@@ -13,16 +13,14 @@ GlassTile {
     readonly property color upColor: Palette.accent2("network")
 
     title: i18n("Network")
-    subtitle: width > u * 22 && app.netName.value && app.netIp.value
-        ? app.netName.value + " · " + app.netIp.value
-        : (app.netName.value || app.netIp.value || "")
+    subtitle: app.shownNetwork
     accent: downColor
     accent2: upColor
     // Glow follows how busy the link is, on a log scale up to ~100 MB/s.
     level: Math.min(1, Math.log(1 + (app.netDown.value + app.netUp.value) / 1024) / Math.log(1 + 100 * 1024))
 
     function split(rate) {
-        var s = Fmt.rate(rate);
+        var s = app.netRateText(rate);
         var i = s.indexOf(" ");
         return { n: s.slice(0, i), unit: s.slice(i + 1) };
     }

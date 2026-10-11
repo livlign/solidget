@@ -36,6 +36,18 @@
     <entry name="tileRects" type="String">
       <default></default>
     </entry>
+    <!-- binary (KiB, GiB) or decimal (kB, GB) -->
+    <entry name="dataUnits" type="String">
+      <default>binary</default>
+    </entry>
+    <!-- Network speeds in bits per second (Mbps) instead of bytes -->
+    <entry name="networkBits" type="Bool">
+      <default>false</default>
+    </entry>
+    <!-- Hide hostname, network name, IP and weather location -->
+    <entry name="maskSensitive" type="Bool">
+      <default>true</default>
+    </entry>
     <entry name="placeRequest" type="String">
       <default></default>
     </entry>
@@ -46,7 +58,7 @@
     <entry name="weatherCity" type="String">
       <default></default>
     </entry>
-    <!-- c or f -->
+    <!-- Temperature unit for every tile and the weather: c or f -->
     <entry name="weatherUnit" type="String">
       <default>c</default>
     </entry>

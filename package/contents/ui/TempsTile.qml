@@ -29,8 +29,8 @@ GlassTile {
 
         BigNumber {
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
-            value: tile.hottest
-            unit: "°C"
+            value: app.tempValue(tile.hottest)
+            unit: app.tempUnit
             color: tile.hotColor
             size: Math.min(tile.u * (tile.wide ? 4.2 : 3.4), (tile.wide ? parent.height : parent.height * 0.42))
         }
@@ -45,6 +45,7 @@ GlassTile {
                     u: tile.u
                     label: modelData.label
                     celsius: modelData.value
+                    valueText: app.tempText(modelData.value)
                 }
             }
         }

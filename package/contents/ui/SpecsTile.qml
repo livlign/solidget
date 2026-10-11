@@ -15,7 +15,7 @@ GlassTile {
     readonly property var s: app.specs
     readonly property var gpu: s.gpus && s.gpus.length ? s.gpus[0] : null
 
-    title: s.system ? s.system.hostname : i18n("This PC")
+    title: app.shownHostname
     subtitle: s.system ? s.system.os : ""
     accent: s.cpu && Palette.VENDOR[s.cpu.vendor] ? Palette.VENDOR[s.cpu.vendor] : Palette.accent("specs")
     accent2: gpu && Palette.VENDOR[gpu.vendor] ? Palette.VENDOR[gpu.vendor] : Palette.accent2("specs")
@@ -35,7 +35,7 @@ GlassTile {
             h.push({ kind: i18n("Processor"), name: s.cpu.name, detail: d.join(" · "), vendor: s.cpu.vendor });
         }
         (s.gpus || []).forEach(function (g) {
-            h.push({ kind: i18n("Graphics"), name: g.name, detail: g.vramBytes ? i18n("%1 VRAM", Fmt.bytes(g.vramBytes, 0)) : "", vendor: g.vendor });
+            h.push({ kind: i18n("Graphics"), name: g.name, detail: g.vramBytes ? i18n("%1 VRAM", app.bytesText(g.vramBytes, 0)) : "", vendor: g.vendor });
         });
         return h;
     }
@@ -56,7 +56,7 @@ GlassTile {
         return f;
     }
     function asText() {
-        var lines = [(s.system ? s.system.hostname : "My PC") + " — specs"];
+        var lines = [app.shownHostname + " — specs"];
         heroes().forEach(function (h) { lines.push(h.kind + ": " + h.name + (h.detail ? " (" + h.detail + ")" : "")); });
         facts().forEach(function (f) { lines.push(f.label + ": " + f.value + (f.detail ? " (" + f.detail + ")" : "")); });
         lines.push("Shared with Solidget");

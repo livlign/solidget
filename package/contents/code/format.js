@@ -1,18 +1,30 @@
 .pragma library
 
-// Binary sizes (what the OS actually reports for RAM and data rates).
-function bytes(b, decimals) {
+// Sizes. Binary (KiB, MiB…, base 1024) by default; `decimal` gives kB, MB…
+// (base 1000). Tiles go through main.qml's bytesText/rateText, which pass
+// the user's unit settings.
+function bytes(b, decimals, decimal) {
     if (b === undefined || b === null || isNaN(b)) return "–";
-    var units = ["B", "KiB", "MiB", "GiB", "TiB"];
+    var base = decimal ? 1000 : 1024;
+    var units = decimal ? ["B", "kB", "MB", "GB", "TB"] : ["B", "KiB", "MiB", "GiB", "TiB"];
     var i = 0;
-    while (Math.abs(b) >= 1024 && i < units.length - 1) { b /= 1024; i++; }
+    while (Math.abs(b) >= base && i < units.length - 1) { b /= base; i++; }
     var d = decimals !== undefined ? decimals : (i === 0 ? 0 : (b < 10 ? 1 : 0));
     return b.toFixed(d) + " " + units[i];
 }
 
-function rate(b) {
-    return bytes(b) + "/s";
+// Bytes per second; `bits` shows network-style bit rates (kbps, Mbps…).
+function rate(b, decimal, bits) {
+    if (!bits) return bytes(b, undefined, decimal) + "/s";
+    if (b === undefined || b === null || isNaN(b)) return "–";
+    var v = b * 8;
+    var units = ["bps", "kbps", "Mbps", "Gbps"];
+    var i = 0;
+    while (v >= 1000 && i < units.length - 1) { v /= 1000; i++; }
+    return v.toFixed(i === 0 ? 0 : (v < 10 ? 1 : 0)) + " " + units[i];
 }
+
+function toFahrenheit(c) { return c * 9 / 5 + 32; }
 
 // Decimal sizes, matching what drive vendors print on the box ("512 GB").
 function driveSize(b) {
@@ -26,9 +38,9 @@ function percent(v) {
     return (v < 10 ? v.toFixed(1) : Math.round(v)) + "%";
 }
 
-function temp(c) {
+function temp(c, fahrenheit) {
     if (!c || isNaN(c)) return "–";
-    return Math.round(c) + "°C";
+    return fahrenheit ? Math.round(toFahrenheit(c)) + "°F" : Math.round(c) + "°C";
 }
 
 function ghz(mhz) {

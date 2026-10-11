@@ -8,6 +8,7 @@ import org.kde.plasma.plasma5support as P5Support
 import org.kde.kirigami as Kirigami
 import org.kde.ksysguard.sensors as Sensors
 import "../code/layout.js" as Bento
+import "../code/format.js" as Fmt
 
 PlasmoidItem {
     id: root
@@ -346,14 +347,40 @@ PlasmoidItem {
     }
     readonly property real gpuWatts: gpuPowerSysfs > 0 ? gpuPowerSysfs : (gpuPower.value || 0)
 
+    // ---- Units & privacy --------------------------------------------------
+    // Every tile formats through these, so one setting changes the whole board.
+
+    readonly property bool useFahrenheit: Plasmoid.configuration.weatherUnit === "f"
+        || (Plasmoid.configuration.weatherUnit === "auto" && Qt.locale().measurementSystem === Locale.ImperialUSSystem)
+    readonly property bool decimalUnits: Plasmoid.configuration.dataUnits === "decimal"
+    readonly property bool networkBits: Plasmoid.configuration.networkBits
+    readonly property string tempUnit: useFahrenheit ? "°F" : "°C"
+    function tempText(c) { return Fmt.temp(c, useFahrenheit); }
+    function tempValue(c) { return useFahrenheit && c ? Fmt.toFahrenheit(c) : c; }
+    function bytesText(b, decimals) { return Fmt.bytes(b, decimals, decimalUnits); }
+    function rateText(b) { return Fmt.rate(b, decimalUnits, false); }
+    function netRateText(b) { return Fmt.rate(b, decimalUnits, networkBits); }
+
+    // Hide what identifies you or your network (on by default), so the
+    // dashboard is safe to screenshot and share.
+    readonly property bool masked: Plasmoid.configuration.maskSensitive
+    readonly property string hostname: specs.system ? specs.system.hostname : ""
+    readonly property string shownHostname: masked || !hostname ? i18n("This PC") : hostname
+    readonly property string shownNetwork: {
+        var iface = specs.sensors ? specs.sensors.netIface || "" : "";
+        var kind = iface.indexOf("wl") === 0 ? i18n("Wi-Fi") : iface ? i18n("Ethernet") : "";
+        if (masked) return kind;
+        return [netName.value || kind, netIp.value || ""].filter(Boolean).join(" · ");
+    }
+    readonly property string shownPlace: masked ? "" : weatherModel.place
+
     // ---- Weather -----------------------------------------------------------
 
     Weather {
         id: weatherModel
         enabled: Plasmoid.configuration.weatherEnabled && root.visibleTiles.indexOf("clock") >= 0
         city: Plasmoid.configuration.weatherCity
-        fahrenheit: Plasmoid.configuration.weatherUnit === "f"
-            || (Plasmoid.configuration.weatherUnit === "auto" && Qt.locale().measurementSystem === Locale.ImperialUSSystem)
+        fahrenheit: root.useFahrenheit
     }
     readonly property alias weather: weatherModel
 
@@ -381,9 +408,14 @@ PlasmoidItem {
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
     Plasmoid.contextualActions: [
         PlasmaCore.Action {
-            text: i18n("Customize Solidget…")
+            text: i18n("Solidget Settings…")
             icon.name: "document-edit"
-            onTriggered: root.editing = true
+            onTriggered: root.showSettings = true
+        },
+        PlasmaCore.Action {
+            text: i18n("Edit Layout")
+            icon.name: "transform-move"
+            onTriggered: { root.showSettings = false; root.editing = true; }
         },
         PlasmaCore.Action {
             text: i18n("Copy PC Specs")
@@ -692,12 +724,12 @@ PlasmoidItem {
             anchors.right: parent.right
             anchors.margins: Kirigami.Units.smallSpacing
             z: 20
-            visible: !root.editing
+            visible: !root.editing && !root.showSettings
             opacity: hover.hovered ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Kirigami.Units.shortDuration } }
             icon.name: "document-edit"
-            onClicked: root.editing = true
-            QQC2.ToolTip.text: i18n("Edit layout")
+            onClicked: root.showSettings = true
+            QQC2.ToolTip.text: i18n("Settings")
             QQC2.ToolTip.visible: hovered
         }
     }
