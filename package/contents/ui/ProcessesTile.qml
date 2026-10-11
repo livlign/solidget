@@ -55,7 +55,10 @@ GlassTile {
         for (var r = 0; r < apps.rowCount(); r++) {
             var pids = apps.data(apps.index(r, 0), Process.ProcessDataModel.PIDs);
             if (!pids || pids.length === 0) continue;
-            var name = apps.data(apps.index(r, nameCol), Qt.DisplayRole) || "";
+            // Normalize so look-alike names (odd spaces, zero-width
+            // characters) merge into one entry.
+            var name = String(apps.data(apps.index(r, nameCol), Qt.DisplayRole) || "")
+                .replace(/[\u200B-\u200D\uFEFF]/g, "").replace(/\s+/g, " ").trim();
             var cpu = Number(apps.data(apps.index(r, cpuCol), Process.ProcessDataModel.Value)) || 0;
             var mem = parseSize(apps.data(apps.index(r, memCol), Qt.DisplayRole));
             if (byName[name]) {

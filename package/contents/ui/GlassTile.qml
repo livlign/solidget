@@ -13,7 +13,7 @@ Item {
 
     property var look: null
     // Defaults reproduce Glass on the Plasma colors when no look is given.
-    readonly property bool glowOn: look ? look.glow : true
+    readonly property bool glowOn: !solid && (look ? look.glow : true)
     readonly property bool shadowOn: look ? look.shadow : true
     readonly property bool highlightOn: look ? look.highlight : true
     readonly property int borderWidth: look ? look.border : 1
@@ -32,7 +32,8 @@ Item {
     property color accent: "#38bdf8"
     property color accent2: "#6366f1"
     property real level: 0.3
-    property real bodyOpacity: look ? look.bodyAlpha : (dark ? 0.66 : 0.72)
+    property bool solid: false      // e.g. the Settings panel: never see-through
+    property real bodyOpacity: solid ? 1.0 : look ? look.bodyAlpha : (dark ? 0.66 : 0.72)
     property bool showHeader: true
     default property alias content: body.data
 

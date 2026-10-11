@@ -814,7 +814,7 @@ PlasmoidItem {
             id: editor
             app: root
             z: 30
-            width: Math.min(full.width, Kirigami.Units.gridUnit * 24)
+            width: Math.min(full.width, Kirigami.Units.gridUnit * 26)
             height: full.height
             x: root.showSettings ? full.width - width : full.width + Kirigami.Units.gridUnit
             visible: x < full.width

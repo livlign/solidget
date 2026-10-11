@@ -25,7 +25,8 @@ Row {
         text: big.text !== "" ? big.text : (isNaN(big.shown) ? "–" : big.shown.toFixed(big.decimals))
         color: big.color
         font.family: big.family || Kirigami.Theme.defaultFont.family
-        font.pixelSize: big.size
+        // Pixel glyphs are much wider than the system font's.
+        font.pixelSize: big.family ? big.size * 0.72 : big.size
         font.weight: big.family ? Font.Normal : Font.Light
         font.letterSpacing: big.family ? 0 : -big.size * 0.03
         font.features: { "tnum": 1 }
@@ -35,7 +36,7 @@ Row {
         visible: text !== ""
         color: big.color
         opacity: 0.6
-        font.pixelSize: big.size * 0.38
+        font.pixelSize: (big.family ? big.size * 0.72 : big.size) * 0.38
         font.weight: Font.Normal
         anchors.baseline: number.baseline
     }
