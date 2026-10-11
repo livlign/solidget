@@ -104,12 +104,13 @@ GlassTile {
         // ---- Cover ----
         Item {
             id: art
-            readonly property real side: tile.sideBySide ? body.height
-                : Math.min(body.width, body.height - info.implicitHeight - tile.u * 0.6)
+            // Whole pixels, so the cover isn't resampled half a pixel off.
+            readonly property real side: Math.floor(tile.sideBySide ? body.height
+                : Math.min(body.width, body.height - info.implicitHeight - tile.u * 0.6))
             visible: side >= tile.u * 3
             width: visible ? side : 0
             height: width
-            x: tile.sideBySide ? 0 : (body.width - width) / 2
+            x: tile.sideBySide ? 0 : Math.round((body.width - width) / 2)
             y: 0
             Rectangle {
                 id: artMask
@@ -135,16 +136,37 @@ GlassTile {
                 clip: true
                 layer.enabled: artMask.radius > 0
                 layer.effect: MultiEffect { maskEnabled: true; maskSource: artMask }
+                // Browsers hand over tiny wide thumbnails (Chrome: 150×83).
+                // Cropping one to a square stretches it to twice its size, so
+                // show it whole instead, over a blurred copy that fills the box.
+                // Measured on the backdrop: the cover's own size follows its
+                // fill mode, which would loop.
+                readonly property real aspect: backdrop.implicitWidth / Math.max(1, backdrop.implicitHeight)
+                readonly property bool small: aspect > 1.4
+                    && art.side > backdrop.implicitHeight * 1.5
+                Image {
+                    id: backdrop
+                    anchors.fill: parent
+                    opacity: parent.small ? 1 : 0
+                    source: cover.source
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    layer.enabled: parent.small
+                    layer.effect: MultiEffect {
+                        blurEnabled: true; blur: 1.0; blurMax: 32
+                        brightness: -0.15
+                    }
+                }
                 Image {
                     id: cover
                     anchors.fill: parent
                     // Players hand us any URL; only load local files and web images.
                     source: tile.hasPlayer && /^(file|https?):\/\//.test(String(tile.player.artUrl || "")) ? tile.player.artUrl : ""
-                    fillMode: Image.PreserveAspectCrop
+                    fillMode: parent.small ? Image.PreserveAspectFit : Image.PreserveAspectCrop
                     asynchronous: true
                     // 4:3 video thumbnails carry black bars around a 16:9
                     // picture; zooming by 4/3 pushes them out of the box.
-                    scale: Math.abs(implicitWidth / Math.max(1, implicitHeight) - 4 / 3) < 0.02 ? 4 / 3 : 1
+                    scale: Math.abs(parent.aspect - 4 / 3) < 0.02 ? 4 / 3 : 1
                 }
             }
         }

@@ -1,5 +1,11 @@
 # What's new
 
+## Unreleased
+
+- Small video thumbnails from browsers (Chrome sends tiny ones) are no
+  longer stretched and blurry in Now playing. They show whole, over a
+  soft blurred copy of themselves.
+
 ## 0.5.0
 
 - **Follow Plasma** now really follows Plasma: your system's background,
