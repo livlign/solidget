@@ -429,15 +429,15 @@ PlasmoidItem {
     // ---- Appearance: style (shape/material) x theme (colors) -------------
 
     readonly property string styleId: Palette.STYLES[Plasmoid.configuration.style] ? Plasmoid.configuration.style : "glass"
-    readonly property string themeId: Palette.THEMES[Plasmoid.configuration.theme] ? Plasmoid.configuration.theme : "plasma"
+    readonly property string themeId: Palette.THEMES[Plasmoid.configuration.theme] ? Plasmoid.configuration.theme : "aurora"
     // Everything a tile needs to draw itself, in one object.
     readonly property var look: {
         var st = Palette.STYLES[styleId];
         var th = Palette.THEMES[themeId];
-        var dark = th.dark === null ? Kirigami.Theme.backgroundColor.hslLightness < 0.5 : th.dark;
+        var dark = th.dark === null ? plasmaDark : th.dark;
         return {
             style: styleId, theme: themeId, dark: dark,
-            body: th.body || (dark ? "#12141f" : "#ffffff"),
+            body: th.body || plasmaBody,
             text: th.text || "",
             bodyAlpha: st.bodyAlpha === null ? (dark ? 0.66 : 0.72)
                      : typeof st.bodyAlpha === "object" ? (dark ? st.bodyAlpha.dark : st.bodyAlpha.light)
@@ -453,10 +453,15 @@ PlasmoidItem {
     FontLoader { id: pixelFont; source: "../fonts/Silkscreen-Regular.ttf" }
     // Plasma's own colors, read here where nothing overrides them.
     readonly property color plasmaText: Kirigami.Theme.textColor
+    readonly property color plasmaBody: Kirigami.Theme.backgroundColor
+    readonly property bool plasmaDark: plasmaBody.hslLightness < 0.5
+    readonly property var plasmaPalette: Palette.plasmaPalette(Kirigami.Theme.highlightColor.toString(), plasmaDark)
     readonly property color boardText: look.text !== "" ? look.text : plasmaText
-    function accent(id) { return Palette.accentPair(themeId, id)[0]; }
-    function accent2(id) { return Palette.accentPair(themeId, id)[1]; }
-    function heat(t) { return Palette.heatFor(themeId, t); }
+    // Colors for any theme (the Settings previews show themes not in use).
+    function accentPair(themeKey, id) { return Palette.accentPair(themeKey, id, plasmaPalette); }
+    function accent(id) { return accentPair(themeId, id)[0]; }
+    function accent2(id) { return accentPair(themeId, id)[1]; }
+    function heat(t) { return Palette.heatFor(themeId, t, look.dark); }
     function tempColor(c) { return heat(Palette.tempLevel(c)); }
     function vendorColor(v) { return Palette.vendorColor(themeId, v); }
     function applyLook(styleKey, themeKey) {

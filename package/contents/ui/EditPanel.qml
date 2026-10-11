@@ -263,9 +263,9 @@ GlassTile {
         property string themeKey: "plasma"
         readonly property var st: Palette.STYLES[styleKey]
         readonly property var th: Palette.THEMES[themeKey]
-        readonly property color body: th.body || panel.app.look.body
-        readonly property color acc: Palette.accentPair(themeKey, "cpu")[0]
-        readonly property color acc2: Palette.accentPair(themeKey, "cpu")[1]
+        readonly property color body: th.body || panel.app.plasmaBody
+        readonly property color acc: panel.app.accentPair(themeKey, "cpu")[0]
+        readonly property color acc2: panel.app.accentPair(themeKey, "cpu")[1]
         readonly property real r: st.radius === 0 ? 0 : Math.min(width, height) * 0.22
         implicitWidth: Kirigami.Units.gridUnit * 2.6
         implicitHeight: implicitWidth
@@ -478,7 +478,7 @@ GlassTile {
 
                 Section {
                     title: i18n("Theme")
-                    hint: i18n("Colors only. Follow Plasma uses your system's light or dark colors.")
+                    hint: i18n("Colors only. Follow Plasma uses your system's colors and accent.")
                     GridLayout {
                         Layout.fillWidth: true
                         columns: 2
@@ -497,7 +497,7 @@ GlassTile {
                                 onClicked: Plasmoid.configuration.theme = modelData
                                 background: Rectangle {
                                     radius: panel.pRadius
-                                    color: swatch.th.body || panel.app.look.body
+                                    color: swatch.th.body || panel.app.plasmaBody
                                     border.width: swatch.current ? 2 : panel.pBorder
                                     border.color: swatch.current ? panel.pAccent : panel.tint(swatch.hovered ? 0.45 : 0.15)
                                 }
@@ -512,7 +512,7 @@ GlassTile {
                                                 required property string modelData
                                                 width: Kirigami.Units.gridUnit * 0.55; height: width
                                                 radius: panel.pSharp ? 0 : width / 2
-                                                color: Palette.accentPair(swatch.modelData, modelData)[0]
+                                                color: panel.app.accentPair(swatch.modelData, modelData)[0]
                                             }
                                         }
                                     }

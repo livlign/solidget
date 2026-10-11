@@ -80,7 +80,8 @@ var STYLE_ORDER = ["glass", "flat", "clear", "pixel"];
 
 // ---- Themes: colors only ------------------------------------------------------
 // body/text null = follow Plasma. palette = six hues the tiles draw from;
-// null = the hand-tuned Aurora pairs above. heat = [cool, hot] override.
+// null = the hand-tuned Aurora pairs above ("plasma" builds one from the
+// system accent instead, see plasmaPalette). heat = [cool, hot] override.
 var THEMES = {
     plasma:    { name: "Follow Plasma", dark: null,  body: null,      text: null,      palette: null },
     aurora:    { name: "Aurora",        dark: true,  body: "#11141f", text: "#e8ecf8", palette: null },
@@ -108,20 +109,46 @@ var TILE_HUE = { cpu: 0, gpu: 1, memory: 2, network: 0, disk: 3, battery: 1, clo
                  specs: 2, processes: 3, power: 4, cores: 0, temps: 4,
                  pet: 4, photo: 5, media: 3, calendar: 1, quote: 2, note: 5, worldclock: 0, focus: 4 };
 
-function accentPair(themeId, id) {
+// Follow Plasma: six hues spread around the system accent color, made
+// lighter on dark backgrounds and deeper on light ones so they stay readable.
+var PLASMA_SPREAD = [0, 130, 45, -45, 180, 90];
+function plasmaPalette(accentHex, dark) {
+    var c = hexToRgb(/^#[0-9a-f]{6}$/i.test(accentHex || "") ? accentHex : "#3daee9");
+    var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min, h = 0;
+    if (d > 0) {
+        h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+        h *= 60;
+    }
+    var l = (max + min) / 2;
+    var s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    s = Math.max(0.55, Math.min(0.85, s));     // a grey accent still gives colors
+    l = dark ? 0.64 : 0.42;
+    return PLASMA_SPREAD.map(function (off) { return hsl((h + off + 360) % 360, s, l); });
+}
+function hsl(h, s, l) {
+    var k = function (n) { return (n + h / 30) % 12; };
+    var a = s * Math.min(l, 1 - l);
+    var f = function (n) { return Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)))); };
+    return "#" + ((1 << 24) | (f(0) << 16) | (f(8) << 8) | f(4)).toString(16).slice(1);
+}
+
+// plasma = the palette from plasmaPalette(), used by the "plasma" theme.
+function accentPair(themeId, id, plasma) {
     var t = THEMES[themeId];
-    if (!t || !t.palette) return ACCENTS[id] || ACCENTS.cpu;
-    var p = t.palette;
+    var p = t && (t.palette || (themeId === "plasma" ? plasma : null));
+    if (!p) return ACCENTS[id] || ACCENTS.cpu;
     if (id === "network") return [p[0], p[3]];   // download / upload must differ
     var i = TILE_HUE[id] || 0;
     return [p[i % p.length], p[(i + 2) % p.length]];
 }
 
-function heatFor(themeId, t) {
+// dark: whether the board is dark, for themes that follow Plasma.
+function heatFor(themeId, t, dark) {
     var th = THEMES[themeId];
     if (th && th.heat) return mix(th.heat[0], th.heat[1], Math.max(0, Math.min(1, t || 0)));
     // Yellows and cyans wash out on light cards; deepen them there.
-    if (th && th.dark === false) return mix(heat(t), "#000000", 0.28);
+    if (th && (th.dark === false || (th.dark === null && dark === false))) return mix(heat(t), "#000000", 0.28);
     return heat(t);
 }
 
@@ -134,7 +161,7 @@ function vendorColor(themeId, vendor) {
 
 // ---- Looks: one click sets a style and a theme --------------------------------
 var LOOKS = [
-    { name: "Aurora Glass",   style: "glass", theme: "plasma" },
+    { name: "Aurora Glass",   style: "glass", theme: "aurora" },
     { name: "Retro Terminal", style: "pixel", theme: "moss" },
     { name: "Paper",          style: "flat",  theme: "ink" },
     { name: "Frost",          style: "clear", theme: "glacier" },

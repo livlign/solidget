@@ -1,5 +1,13 @@
 # What's new
 
+## Unreleased
+
+- **Follow Plasma** now really follows Plasma: your system's background,
+  text and accent color. Before, it looked just like Aurora.
+- Aurora is now the default theme, so new boards look the same as before.
+- Fixed the Follow Plasma card in Settings showing white text on a light
+  background.
+
 ## 0.4.0
 
 - **Works on more distros and hardware.** The hardware check is tested on
