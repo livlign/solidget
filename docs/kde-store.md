@@ -19,8 +19,8 @@ For maintainers. Takes about 10 minutes the first time.
    | Description | Copy the text below |
    | License | GPLv2 or later |
    | Link to source | https://github.com/livlign/solidget |
-   | Logo | `docs/screenshots/aurora-glass.jpg` (crop to square) |
-   | Gallery | `docs/hero.png`, then the three files in `docs/screenshots/` |
+   | Logo | `docs/screenshots/plasma.jpg` (crop to square) |
+   | Gallery | `docs/hero.png`, then `docs/screenshots/` in this order: `plasma.jpg`, `aurora-glass.jpg`, `retro-terminal.jpg`, `paper.jpg` |
    | Files | the `.plasmoid` file, version from `package/metadata.json` |
 
 4. Save. It shows up in Plasma's **Get New Widgets** within an hour or so.

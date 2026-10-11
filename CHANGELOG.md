@@ -12,6 +12,8 @@
   fields and tabs, on a Plasma dialog background. Media and focus timer
   buttons are flat like Plasma's, and every tile has the same padding.
 - The right-click menu says **Configure Solidget…**, like other widgets.
+- Now playing no longer pushes the song title and time past the tile's
+  edge on wide, short tiles; the cover shrinks to make room.
 - The Temperatures tile no longer pushes its last bar (SSD) past the
   bottom edge when it's short.
 - Small video thumbnails from browsers (Chrome sends tiny ones) are no

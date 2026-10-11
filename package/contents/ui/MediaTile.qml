@@ -58,6 +58,10 @@ GlassTile {
     readonly property real btn: Math.max(Kirigami.Units.gridUnit * 1.3, Math.min(tile.u * 1.9, Kirigami.Units.gridUnit * 2.2))
     FontMetrics { id: titleFm; font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.0); font.weight: Font.DemiBold }
     FontMetrics { id: smallFm; font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.75) }
+    // Beside the cover, the text needs room for the buttons and the time
+    // (the controls row can't shrink); the cover shrinks rather than push
+    // them past the tile's edge.
+    readonly property real infoMinW: controls.implicitWidth
     // Height of everything but the title: artist, controls, progress line.
     readonly property real restH: smallFm.height + btn * 1.15 + tile.u * 0.9
     readonly property int titleLines: (sideBySide ? body.height : body.height - tile.u * 4) - restH >= titleFm.height * 2 ? 2 : 1
@@ -116,7 +120,7 @@ GlassTile {
         Item {
             id: art
             // Whole pixels, so the cover isn't resampled half a pixel off.
-            readonly property real side: Math.floor(tile.sideBySide ? body.height
+            readonly property real side: Math.floor(tile.sideBySide ? Math.min(body.height, body.width - tile.u * 0.9 - tile.infoMinW)
                 : Math.min(body.width, body.height - info.implicitHeight - tile.u * 0.6))
             visible: side >= tile.u * 3
             width: visible ? side : 0
@@ -216,6 +220,7 @@ GlassTile {
             Item { Layout.fillHeight: true; Layout.minimumHeight: tile.u * 0.3 }
 
             RowLayout {
+                id: controls
                 Layout.fillWidth: true
                 spacing: tile.u * 0.2
                 Item { visible: !tile.sideBySide; Layout.fillWidth: true }
