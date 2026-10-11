@@ -20,6 +20,7 @@ Item {
     property real lineWidth: Math.max(1.5, Math.min(2.5, height / 70))
     property bool glow: true
     property bool bars: false       // Pixel: blocky columns snapped to a grid
+    property bool liveDot: true     // dot on the newest sample (Plasma's charts have none)
 
     implicitHeight: Kirigami.Units.gridUnit * 2.5
 
@@ -139,7 +140,7 @@ Item {
 
     // Live dot at the newest sample
     Rectangle {
-        visible: !chart.bars && chart.line1.length > 0
+        visible: chart.liveDot && !chart.bars && chart.line1.length > 0
         readonly property point p: chart.line1.length ? chart.line1[chart.line1.length - 1] : Qt.point(0, 0)
         width: chart.lineWidth * 2.6; height: width; radius: width / 2
         x: p.x - width; y: p.y - height / 2

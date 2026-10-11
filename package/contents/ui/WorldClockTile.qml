@@ -78,6 +78,7 @@ GlassTile {
                 }
                 BigNumber {
                     family: tile.numberFamily
+                    plain: tile.nativeOn
                     text: cityRow.known ? Qt.formatTime(cityRow.t, tile.twelveHour ? "h:mm" : "HH:mm") : "–"
                     unit: cityRow.known && tile.twelveHour ? Qt.formatTime(cityRow.t, "AP") : ""
                     size: Math.min(tile.u * 2, tile.height / Math.max(3, app.worldClocks.length * 1.8))

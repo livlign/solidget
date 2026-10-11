@@ -65,16 +65,27 @@ GlassTile {
     component CtlButton: QQC2.AbstractButton {
         id: cb
         property string iconName
+        property string tip
         property bool main: false
         implicitWidth: tile.btn * (main ? 1.15 : 1)
         implicitHeight: implicitWidth
         hoverEnabled: true
         opacity: enabled ? 1 : 0.3
+        // Plasma style: flat like Plasma's tool buttons, with the
+        // highlight-colored hover frame; no filled play button.
+        readonly property bool filled: cb.main && !tile.nativeOn
+        Accessible.name: cb.tip
+        QQC2.ToolTip.text: cb.tip
+        QQC2.ToolTip.visible: cb.tip !== "" && hovered
+        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
         background: Rectangle {
-            radius: tile.radius > 0 ? width / 2 : 0
-            color: cb.main ? tile.accent
+            radius: tile.nativeOn ? Kirigami.Units.cornerRadius : tile.radius > 0 ? width / 2 : 0
+            color: cb.filled ? tile.accent
+                 : tile.nativeOn ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, cb.hovered ? 0.2 : 0)
                  : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, cb.hovered ? 0.16 : 0)
-            opacity: cb.main && !cb.hovered ? 0.9 : 1
+            border.width: tile.nativeOn && cb.hovered ? 1 : 0
+            border.color: Kirigami.Theme.highlightColor
+            opacity: cb.filled && !cb.hovered ? 0.9 : 1
         }
         contentItem: Item {
             Kirigami.Icon {
@@ -82,7 +93,7 @@ GlassTile {
                 width: Math.round(cb.width * 0.5); height: width
                 source: cb.iconName
                 isMask: true
-                color: cb.main ? (tile.accent.hslLightness > 0.6 ? "#111111" : "#ffffff") : Kirigami.Theme.textColor
+                color: cb.filled ? (tile.accent.hslLightness > 0.6 ? "#111111" : "#ffffff") : Kirigami.Theme.textColor
             }
         }
     }
@@ -210,16 +221,19 @@ GlassTile {
                 Item { visible: !tile.sideBySide; Layout.fillWidth: true }
                 CtlButton {
                     iconName: "media-skip-backward"
+                    tip: i18n("Previous")
                     enabled: tile.hasPlayer && tile.player.canGoPrevious
                     onClicked: tile.player.container.Previous()
                 }
                 CtlButton {
                     main: true
                     iconName: tile.playing ? "media-playback-pause" : "media-playback-start"
+                    tip: tile.playing ? i18n("Pause") : i18n("Play")
                     onClicked: tile.player.container.PlayPause()
                 }
                 CtlButton {
                     iconName: "media-skip-forward"
+                    tip: i18n("Next")
                     enabled: tile.hasPlayer && tile.player.canGoNext
                     onClicked: tile.player.container.Next()
                 }

@@ -71,8 +71,8 @@ GlassTile {
                     text: tile.hhmm
                     font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
                     font.pixelSize: px
-                    font.weight: tile.numberFamily ? Font.Normal : Font.ExtraLight
-                    font.letterSpacing: -px * 0.04
+                    font.weight: tile.numberFamily || tile.nativeOn ? Font.Normal : Font.ExtraLight
+                    font.letterSpacing: tile.nativeOn ? 0 : -px * 0.04
                     font.features: { "tnum": 1 }
                 }
                 PlasmaComponents.Label {
@@ -116,6 +116,7 @@ GlassTile {
                 spacing: 0
                 BigNumber {
                 family: tile.numberFamily
+                plain: tile.nativeOn
                     text: tile.temp(tile.w.temp)
                     unit: tile.w.fahrenheit ? "F" : "C"
                     size: tile.weatherTempSize
@@ -157,7 +158,7 @@ GlassTile {
                 textFormat: Text.PlainText
                 text: tile.temp(tile.w.temp)
                 font.pixelSize: nowLine.height * 0.7
-                font.weight: Font.Light
+                font.weight: tile.nativeOn ? Font.Normal : Font.Light
             }
             PlasmaComponents.Label {
                 textFormat: Text.PlainText

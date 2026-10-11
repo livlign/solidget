@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **New Plasma style, now the default.** Tiles use your Plasma Style's own
+  widget background, your accent color and plain headings, so the board
+  sits in with Plasma's built-in widgets. Busy and hot readings use
+  Plasma's green, yellow and red. Boards that already picked a style or
+  theme keep it; Glass, Flat, Clear, Pixel and every theme are still in
+  Settings → Look.
+- In the Plasma style, Settings uses Plasma's own buttons, switches, text
+  fields and tabs, on a Plasma dialog background. Media and focus timer
+  buttons are flat like Plasma's, and every tile has the same padding.
+- The right-click menu says **Configure Solidget…**, like other widgets.
+- The Temperatures tile no longer pushes its last bar (SSD) past the
+  bottom edge when it's short.
 - Small video thumbnails from browsers (Chrome sends tiny ones) are no
   longer stretched and blurry in Now playing. They show whole, over a
   soft blurred copy of themselves.

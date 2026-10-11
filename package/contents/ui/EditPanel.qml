@@ -23,6 +23,8 @@ GlassTile {
     readonly property int pBorder: app.look.bevel ? 2 : 1
     readonly property string pFont: app.look.fontFamily
     readonly property real gap: Kirigami.Units.largeSpacing
+    // Plasma style: Plasma's own controls instead of the themed ones.
+    readonly property bool stock: app.nativeStyle
     function tint(a) { return Qt.rgba(pText.r, pText.g, pText.b, a); }
 
     property int tab: 0
@@ -59,7 +61,8 @@ GlassTile {
         Layout.fillWidth: true
         implicitHeight: secCol.implicitHeight + panel.gap * 2
         radius: panel.pRadius
-        color: panel.tint(0.045)
+        // Plasma style: plain groups on the dialog, like a settings page.
+        color: panel.stock ? "transparent" : panel.tint(0.045)
         border.width: panel.pSharp ? panel.pBorder : 0
         border.color: panel.tint(0.1)
         ColumnLayout {
@@ -85,150 +88,285 @@ GlassTile {
         }
     }
 
+    // The controls below come in two builds: Plasma's own (the Plasma style,
+    // where theme colors are the system's) and our own drawn ones, which can
+    // wear any theme. Each is a small wrapper that loads one or the other.
+
     // Button; `checked` (set by binding) or `primary` fills it with the accent.
-    component SButton: QQC2.AbstractButton {
-        id: b
-        property bool primary: false
+    component SButton: Item {
+        id: sb
+        property string text
         property string iconName: ""
         property string tip: ""
-        readonly property bool filled: checked || primary
-        hoverEnabled: true
-        padding: Kirigami.Units.smallSpacing * 1.4
-        leftPadding: Kirigami.Units.largeSpacing
-        rightPadding: Kirigami.Units.largeSpacing
-        opacity: enabled ? 1 : 0.4
-        QQC2.ToolTip.text: tip
-        QQC2.ToolTip.visible: tip !== "" && hovered
-        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-        background: Rectangle {
-            radius: panel.pRadius
-            color: b.filled ? (b.hovered ? Qt.lighter(panel.pAccent, 1.12) : panel.pAccent)
-                            : panel.tint(b.hovered ? 0.14 : 0.06)
-            border.width: panel.pBorder
-            border.color: b.filled ? Qt.darker(panel.pAccent, 1.35) : panel.tint(0.14)
+        property bool primary: false
+        property bool checked: false
+        signal clicked()
+        implicitWidth: sbLoader.implicitWidth
+        implicitHeight: sbLoader.implicitHeight
+        Loader {
+            id: sbLoader
+            anchors.fill: parent
+            sourceComponent: panel.stock ? (sb.text === "" ? sbStockIcon : sbStock) : sbOwn
         }
-        contentItem: RowLayout {
-            spacing: Kirigami.Units.smallSpacing
-            Item { Layout.fillWidth: true; visible: b.text !== "" }
-            Kirigami.Icon {
-                visible: b.iconName !== ""
-                source: b.iconName
-                color: b.filled ? panel.pOnAccent : panel.pText
-                isMask: true
-                Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+        Component {
+            id: sbStock
+            PlasmaComponents.Button {
+                text: sb.text
+                icon.name: sb.iconName
+                checked: sb.checked
+                QQC2.ToolTip.text: sb.tip
+                QQC2.ToolTip.visible: sb.tip !== "" && hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                onClicked: sb.clicked()
             }
-            PlasmaComponents.Label {
-                textFormat: Text.PlainText
-                visible: b.text !== ""
-                text: b.text
-                color: b.filled ? panel.pOnAccent : panel.pText
-                font.family: panel.pFont || Kirigami.Theme.defaultFont.family
-                font.weight: b.filled ? Font.DemiBold : Font.Normal
-                elide: Text.ElideRight
+        }
+        Component {
+            id: sbStockIcon
+            PlasmaComponents.ToolButton {
+                icon.name: sb.iconName
+                checked: sb.checked
+                QQC2.ToolTip.text: sb.tip
+                QQC2.ToolTip.visible: sb.tip !== "" && hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                Accessible.name: sb.tip
+                onClicked: sb.clicked()
             }
-            Item { Layout.fillWidth: true; visible: b.text !== "" }
+        }
+        Component {
+            id: sbOwn
+            QQC2.AbstractButton {
+                id: b
+                readonly property bool filled: sb.checked || sb.primary
+                text: sb.text
+                hoverEnabled: true
+                padding: Kirigami.Units.smallSpacing * 1.4
+                leftPadding: Kirigami.Units.largeSpacing
+                rightPadding: Kirigami.Units.largeSpacing
+                opacity: enabled ? 1 : 0.4
+                QQC2.ToolTip.text: sb.tip
+                QQC2.ToolTip.visible: sb.tip !== "" && hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                Accessible.name: sb.text || sb.tip
+                onClicked: sb.clicked()
+                background: Rectangle {
+                    radius: panel.pRadius
+                    color: b.filled ? (b.hovered ? Qt.lighter(panel.pAccent, 1.12) : panel.pAccent)
+                                    : panel.tint(b.hovered ? 0.14 : 0.06)
+                    border.width: panel.pBorder
+                    border.color: b.filled ? Qt.darker(panel.pAccent, 1.35) : panel.tint(0.14)
+                }
+                contentItem: RowLayout {
+                    spacing: Kirigami.Units.smallSpacing
+                    Item { Layout.fillWidth: true; visible: b.text !== "" }
+                    Kirigami.Icon {
+                        visible: sb.iconName !== ""
+                        source: sb.iconName
+                        color: b.filled ? panel.pOnAccent : panel.pText
+                        isMask: true
+                        Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                        Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                    }
+                    PlasmaComponents.Label {
+                        textFormat: Text.PlainText
+                        visible: b.text !== ""
+                        text: b.text
+                        color: b.filled ? panel.pOnAccent : panel.pText
+                        font.family: panel.pFont || Kirigami.Theme.defaultFont.family
+                        font.weight: b.filled ? Font.DemiBold : Font.Normal
+                        elide: Text.ElideRight
+                    }
+                    Item { Layout.fillWidth: true; visible: b.text !== "" }
+                }
+            }
         }
     }
 
-    component SToggle: QQC2.AbstractButton {
-        id: tgl
-        checkable: true
-        hoverEnabled: true
-        implicitWidth: Kirigami.Units.gridUnit * 2.4
-        implicitHeight: Kirigami.Units.gridUnit * 1.3
-        background: Rectangle {
-            radius: panel.pSharp ? 0 : height / 2
-            color: tgl.checked ? panel.pAccent : panel.tint(tgl.hovered ? 0.28 : 0.2)
-            border.width: panel.pSharp ? panel.pBorder : 0
-            border.color: panel.tint(0.25)
-            Rectangle {
-                width: parent.height - 6; height: width
-                radius: panel.pSharp ? 0 : width / 2
-                y: 3
-                x: tgl.checked ? parent.width - width - 3 : 3
-                color: tgl.checked ? panel.pOnAccent : "#ffffff"
-                Behavior on x { NumberAnimation { duration: Kirigami.Units.shortDuration } }
+    // On/off switch. Toggling sets `checked` and emits toggled(); the inner
+    // control is re-bound afterwards so later outside changes still show.
+    component SToggle: Item {
+        id: tg
+        property bool checked: false
+        signal toggled()
+        implicitWidth: tgLoader.implicitWidth
+        implicitHeight: tgLoader.implicitHeight
+        function flip(on, ctl) {
+            tg.checked = on;
+            tg.toggled();
+            ctl.checked = Qt.binding(function () { return tg.checked; });
+        }
+        Loader {
+            id: tgLoader
+            anchors.fill: parent
+            sourceComponent: panel.stock ? tgStock : tgOwn
+        }
+        Component {
+            id: tgStock
+            PlasmaComponents.Switch {
+                id: sw
+                checked: tg.checked
+                onToggled: tg.flip(checked, sw)
+            }
+        }
+        Component {
+            id: tgOwn
+            QQC2.AbstractButton {
+                id: tgl
+                checkable: true
+                checked: tg.checked
+                hoverEnabled: true
+                implicitWidth: Kirigami.Units.gridUnit * 2.4
+                implicitHeight: Kirigami.Units.gridUnit * 1.3
+                onToggled: tg.flip(checked, tgl)
+                background: Rectangle {
+                    radius: panel.pSharp ? 0 : height / 2
+                    color: tgl.checked ? panel.pAccent : panel.tint(tgl.hovered ? 0.28 : 0.2)
+                    border.width: panel.pSharp ? panel.pBorder : 0
+                    border.color: panel.tint(0.25)
+                    Rectangle {
+                        width: parent.height - 6; height: width
+                        radius: panel.pSharp ? 0 : width / 2
+                        y: 3
+                        x: tgl.checked ? parent.width - width - 3 : 3
+                        color: tgl.checked ? panel.pOnAccent : "#ffffff"
+                        Behavior on x { NumberAnimation { duration: Kirigami.Units.shortDuration } }
+                    }
+                }
             }
         }
     }
 
-    component SField: Rectangle {
+    // One-line text field; edited() fires when editing finishes.
+    component SField: Item {
         id: fld
-        property alias text: input.text
+        property string text
         property string placeholder
         signal edited(string value)
-        implicitHeight: Kirigami.Units.gridUnit * 1.9
-        radius: panel.pRadius
-        color: panel.tint(input.activeFocus ? 0.12 : 0.06)
-        border.width: panel.pBorder
-        border.color: input.activeFocus ? panel.pAccent : panel.tint(0.16)
-        TextInput {
-            id: input
-            anchors.fill: parent
-            anchors.leftMargin: Kirigami.Units.largeSpacing
-            anchors.rightMargin: Kirigami.Units.largeSpacing
-            verticalAlignment: TextInput.AlignVCenter
-            color: panel.pText
-            selectionColor: panel.pAccent
-            selectedTextColor: panel.pOnAccent
-            font: Kirigami.Theme.defaultFont
-            clip: true
-            onEditingFinished: fld.edited(text.trim())
+        implicitWidth: fldLoader.implicitWidth
+        implicitHeight: fldLoader.implicitHeight
+        function finish(input) {
+            fld.edited(input.text.trim());
+            input.text = Qt.binding(function () { return fld.text; });
         }
-        PlasmaComponents.Label {
-            textFormat: Text.PlainText
-            anchors.fill: input
-            verticalAlignment: Text.AlignVCenter
-            visible: input.text === "" && !input.activeFocus
-            text: fld.placeholder
-            color: panel.pText
-            opacity: 0.45
-            elide: Text.ElideRight
+        Loader {
+            id: fldLoader
+            anchors.fill: parent
+            sourceComponent: panel.stock ? fldStock : fldOwn
+        }
+        Component {
+            id: fldStock
+            PlasmaComponents.TextField {
+                id: tf
+                text: fld.text
+                placeholderText: fld.placeholder
+                onEditingFinished: fld.finish(tf)
+            }
+        }
+        Component {
+            id: fldOwn
+            Rectangle {
+                implicitHeight: Kirigami.Units.gridUnit * 1.9
+                radius: panel.pRadius
+                color: panel.tint(input.activeFocus ? 0.12 : 0.06)
+                border.width: panel.pBorder
+                border.color: input.activeFocus ? panel.pAccent : panel.tint(0.16)
+                TextInput {
+                    id: input
+                    anchors.fill: parent
+                    anchors.leftMargin: Kirigami.Units.largeSpacing
+                    anchors.rightMargin: Kirigami.Units.largeSpacing
+                    verticalAlignment: TextInput.AlignVCenter
+                    text: fld.text
+                    color: panel.pText
+                    selectionColor: panel.pAccent
+                    selectedTextColor: panel.pOnAccent
+                    font: Kirigami.Theme.defaultFont
+                    clip: true
+                    onEditingFinished: fld.finish(input)
+                }
+                PlasmaComponents.Label {
+                    textFormat: Text.PlainText
+                    anchors.fill: input
+                    verticalAlignment: Text.AlignVCenter
+                    visible: input.text === "" && !input.activeFocus
+                    text: fld.placeholder
+                    color: panel.pText
+                    opacity: 0.45
+                    elide: Text.ElideRight
+                }
+            }
         }
     }
 
-    // Segmented control: options side by side in one bar.
-    component Segmented: Rectangle {
+    // Pick one of a few options side by side (also the panel's tabs).
+    component Segmented: Item {
         id: seg
         property var options: []      // [{ value, text }]
         property var current
         signal picked(var value)
-        implicitHeight: Kirigami.Units.gridUnit * 1.8
-        implicitWidth: segRow.implicitWidth + 6
-        radius: panel.pRadius
-        color: panel.tint(0.07)
-        border.width: panel.pBorder
-        border.color: panel.tint(0.12)
-        RowLayout {
-            id: segRow
+        implicitWidth: segLoader.implicitWidth
+        implicitHeight: segLoader.implicitHeight
+        Loader {
+            id: segLoader
             anchors.fill: parent
-            anchors.margins: 3
-            spacing: 2
-            Repeater {
-                model: seg.options
-                QQC2.AbstractButton {
-                    id: opt
-                    required property var modelData
-                    readonly property bool on: seg.current === modelData.value
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    hoverEnabled: true
-                    leftPadding: Kirigami.Units.largeSpacing
-                    rightPadding: Kirigami.Units.largeSpacing
-                    onClicked: seg.picked(modelData.value)
-                    background: Rectangle {
-                        radius: panel.pSharp ? 0 : panel.pRadius - 2
-                        color: opt.on ? panel.pAccent : opt.hovered ? panel.tint(0.1) : "transparent"
+            sourceComponent: panel.stock ? segStock : segOwn
+        }
+        Component {
+            id: segStock
+            RowLayout {
+                spacing: Kirigami.Units.smallSpacing
+                Repeater {
+                    model: seg.options
+                    PlasmaComponents.ToolButton {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        text: modelData.text
+                        // Shown as checked by binding; clicking never un-checks it.
+                        checked: seg.current === modelData.value
+                        onClicked: seg.picked(modelData.value)
                     }
-                    contentItem: PlasmaComponents.Label {
-                        text: opt.modelData.text
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        color: opt.on ? panel.pOnAccent : panel.pText
-                        font.family: panel.pFont || Kirigami.Theme.defaultFont.family
-                        font.weight: opt.on ? Font.DemiBold : Font.Normal
-                        elide: Text.ElideRight
+                }
+            }
+        }
+        Component {
+            id: segOwn
+            Rectangle {
+                implicitHeight: Kirigami.Units.gridUnit * 1.8
+                implicitWidth: segRow.implicitWidth + 6
+                radius: panel.pRadius
+                color: panel.tint(0.07)
+                border.width: panel.pBorder
+                border.color: panel.tint(0.12)
+                RowLayout {
+                    id: segRow
+                    anchors.fill: parent
+                    anchors.margins: 3
+                    spacing: 2
+                    Repeater {
+                        model: seg.options
+                        QQC2.AbstractButton {
+                            id: opt
+                            required property var modelData
+                            readonly property bool on: seg.current === modelData.value
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            hoverEnabled: true
+                            leftPadding: Kirigami.Units.largeSpacing
+                            rightPadding: Kirigami.Units.largeSpacing
+                            onClicked: seg.picked(modelData.value)
+                            background: Rectangle {
+                                radius: panel.pSharp ? 0 : panel.pRadius - 2
+                                color: opt.on ? panel.pAccent : opt.hovered ? panel.tint(0.1) : "transparent"
+                            }
+                            contentItem: PlasmaComponents.Label {
+                                text: opt.modelData.text
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                color: opt.on ? panel.pOnAccent : panel.pText
+                                font.family: panel.pFont || Kirigami.Theme.defaultFont.family
+                                font.weight: opt.on ? Font.DemiBold : Font.Normal
+                                elide: Text.ElideRight
+                            }
+                        }
                     }
                 }
             }
@@ -264,8 +402,8 @@ GlassTile {
         readonly property var st: Palette.STYLES[styleKey]
         readonly property var th: Palette.THEMES[themeKey]
         readonly property color body: th.body || panel.app.plasmaBody
-        readonly property color acc: panel.app.accentPair(themeKey, "cpu")[0]
-        readonly property color acc2: panel.app.accentPair(themeKey, "cpu")[1]
+        readonly property color acc: panel.app.accentPair(themeKey, "cpu", st.plasmaFrame === true)[0]
+        readonly property color acc2: panel.app.accentPair(themeKey, "cpu", st.plasmaFrame === true)[1]
         readonly property real r: st.radius === 0 ? 0 : Math.min(width, height) * 0.22
         implicitWidth: Kirigami.Units.gridUnit * 2.6
         implicitHeight: implicitWidth
@@ -469,7 +607,8 @@ GlassTile {
                                 text: Palette.STYLES[modelData].name
                                 subtitle: Palette.STYLES[modelData].hint
                                 styleKey: modelData
-                                themeKey: panel.app.themeId
+                                // Each style shown in the colors it would get.
+                                themeKey: Palette.STYLES[modelData].plasmaFrame ? "plasma" : panel.app.themeSetting
                                 checked: panel.app.styleId === modelData
                                 onClicked: Plasmoid.configuration.style = modelData
                             }
@@ -479,9 +618,13 @@ GlassTile {
 
                 Section {
                     title: i18n("Theme")
-                    hint: i18n("Colors only. Follow Plasma uses your system's colors and accent.")
+                    hint: panel.app.nativeStyle
+                        ? i18n("The Plasma style always uses your system's colors and accent. Pick another style to use a theme.")
+                        : i18n("Colors only. Follow Plasma uses your system's colors and accent.")
                     GridLayout {
                         Layout.fillWidth: true
+                        enabled: !panel.app.nativeStyle
+                        opacity: enabled ? 1 : 0.5
                         columns: 2
                         columnSpacing: Kirigami.Units.smallSpacing
                         rowSpacing: Kirigami.Units.smallSpacing
@@ -491,7 +634,7 @@ GlassTile {
                                 id: swatch
                                 required property string modelData
                                 readonly property var th: Palette.THEMES[modelData]
-                                readonly property bool current: panel.app.themeId === modelData
+                                readonly property bool current: panel.app.themeSetting === modelData
                                 Layout.fillWidth: true
                                 Layout.preferredWidth: 1     // equal columns, whatever the names
                                 implicitHeight: Kirigami.Units.gridUnit * 2.2

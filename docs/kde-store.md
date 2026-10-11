@@ -40,7 +40,7 @@ One solid widget for your KDE desktop: live system stats, your PC's specs, and t
 
 WHAT YOU GET
 - 20 tiles: CPU, GPU, memory, temperatures, network, storage, fans, top apps, clock and weather, calendar, music controls, photo of the day, world clocks, focus timer, sticky note, quote of the day, and a pixel pet (a poodle or a cat) that reacts to your CPU.
-- 4 styles (Glass, Flat, Clear, Pixel) x 10 color themes, or one-click looks like Retro Terminal and Paper.
+- 5 styles (Plasma, Glass, Flat, Clear, Pixel) x 10 color themes, or one-click looks like Retro Terminal and Paper.
 - Fits any space: a corner card, a sidebar, or a whole spare monitor, landscape or portrait.
 - Drag and resize tiles. They stay exactly where you put them.
 - Private by default: your computer name, Wi-Fi name, IP and location are hidden, so screenshots are safe to share.

@@ -14,6 +14,7 @@ Row {
     property color color: Kirigami.Theme.textColor
     property bool animated: true
     property string family: ""      // the Pixel style's pixel font
+    property bool plain: false      // Plasma style: regular weight, normal spacing
 
     property real shown: value
     Behavior on shown { enabled: big.animated; NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
@@ -28,8 +29,8 @@ Row {
         font.family: big.family || Kirigami.Theme.defaultFont.family
         // Pixel glyphs are much wider than the system font's.
         font.pixelSize: big.family ? big.size * 0.72 : big.size
-        font.weight: big.family ? Font.Normal : Font.Light
-        font.letterSpacing: big.family ? 0 : -big.size * 0.03
+        font.weight: big.family || big.plain ? Font.Normal : Font.Light
+        font.letterSpacing: big.family || big.plain ? 0 : -big.size * 0.03
         font.features: { "tnum": 1 }
     }
     PlasmaComponents.Label {

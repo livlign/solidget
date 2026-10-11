@@ -6,6 +6,7 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasma5support as P5Support
 import org.kde.kirigami as Kirigami
+import org.kde.ksvg as KSvg
 import org.kde.ksysguard.sensors as Sensors
 import "../code/layout.js" as Bento
 import "../code/format.js" as Fmt
@@ -434,15 +435,18 @@ PlasmoidItem {
 
     // ---- Appearance: style (shape/material) x theme (colors) -------------
 
-    readonly property string styleId: Palette.STYLES[Plasmoid.configuration.style] ? Plasmoid.configuration.style : "glass"
-    readonly property string themeId: Palette.THEMES[Plasmoid.configuration.theme] ? Plasmoid.configuration.theme : "aurora"
+    readonly property string styleId: Palette.STYLES[Plasmoid.configuration.style] ? Plasmoid.configuration.style : "plasma"
+    readonly property bool nativeStyle: Palette.STYLES[styleId].plasmaFrame === true
+    // The theme picked in Settings; the Plasma style always follows the system.
+    readonly property string themeSetting: Palette.THEMES[Plasmoid.configuration.theme] ? Plasmoid.configuration.theme : "plasma"
+    readonly property string themeId: nativeStyle ? "plasma" : themeSetting
     // Everything a tile needs to draw itself, in one object.
     readonly property var look: {
         var st = Palette.STYLES[styleId];
         var th = Palette.THEMES[themeId];
         var dark = th.dark === null ? plasmaDark : th.dark;
         return {
-            style: styleId, theme: themeId, dark: dark,
+            style: styleId, theme: themeId, dark: dark, plasmaFrame: nativeStyle,
             body: th.body || plasmaBody,
             text: th.text || "",
             bodyAlpha: st.bodyAlpha === null ? (dark ? 0.66 : 0.72)
@@ -462,14 +466,25 @@ PlasmoidItem {
     readonly property color plasmaBody: Kirigami.Theme.backgroundColor
     readonly property bool plasmaDark: plasmaBody.hslLightness < 0.5
     readonly property var plasmaPalette: Palette.plasmaPalette(Kirigami.Theme.highlightColor.toString(), plasmaDark)
+    readonly property string plasmaAccent: Kirigami.Theme.highlightColor.toString()
+    readonly property string plasmaPositive: Kirigami.Theme.positiveTextColor.toString()
+    readonly property string plasmaNeutral: Kirigami.Theme.neutralTextColor.toString()
+    readonly property string plasmaNegative: Kirigami.Theme.negativeTextColor.toString()
     readonly property color boardText: look.text !== "" ? look.text : plasmaText
     // Colors for any theme (the Settings previews show themes not in use).
-    function accentPair(themeKey, id) { return Palette.accentPair(themeKey, id, plasmaPalette); }
-    function accent(id) { return accentPair(themeId, id)[0]; }
-    function accent2(id) { return accentPair(themeId, id)[1]; }
-    function heat(t) { return Palette.heatFor(themeId, t, look.dark); }
+    // nativeColors = the Plasma style's accent-only colors.
+    function accentPair(themeKey, id, nativeColors) {
+        if (nativeColors) return Palette.nativePair(id, plasmaAccent, plasmaPositive);
+        return Palette.accentPair(themeKey, id, plasmaPalette);
+    }
+    function accent(id) { return accentPair(themeId, id, nativeStyle)[0]; }
+    function accent2(id) { return accentPair(themeId, id, nativeStyle)[1]; }
+    function heat(t) {
+        if (nativeStyle) return Palette.nativeHeat(t, plasmaPositive, plasmaNeutral, plasmaNegative);
+        return Palette.heatFor(themeId, t, look.dark);
+    }
     function tempColor(c) { return heat(Palette.tempLevel(c)); }
-    function vendorColor(v) { return Palette.vendorColor(themeId, v); }
+    function vendorColor(v) { return nativeStyle ? "" : Palette.vendorColor(themeId, v); }
     function applyLook(styleKey, themeKey) {
         Plasmoid.configuration.style = styleKey;
         Plasmoid.configuration.theme = themeKey;
@@ -600,8 +615,8 @@ PlasmoidItem {
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
     Plasmoid.contextualActions: [
         PlasmaCore.Action {
-            text: i18n("Solidget Settings…")
-            icon.name: "document-edit"
+            text: i18n("Configure Solidget…")
+            icon.name: "configure"
             onTriggered: root.showSettings = true
         },
         PlasmaCore.Action {
@@ -871,11 +886,18 @@ PlasmoidItem {
             width: toolRow.implicitWidth + Kirigami.Units.largeSpacing * 2
             height: toolRow.implicitHeight + Kirigami.Units.smallSpacing * 2
             radius: root.look.radius === 0 ? 0 : height / 2
-            color: Qt.rgba(Qt.color(root.look.body).r, Qt.color(root.look.body).g, Qt.color(root.look.body).b, 0.95)
-            border.width: root.look.bevel ? 2 : 1
+            color: root.nativeStyle ? "transparent" : Qt.rgba(Qt.color(root.look.body).r, Qt.color(root.look.body).g, Qt.color(root.look.body).b, 0.95)
+            border.width: root.nativeStyle ? 0 : root.look.bevel ? 2 : 1
             border.color: Qt.rgba(root.boardText.r, root.boardText.g, root.boardText.b, 0.2)
             Kirigami.Theme.inherit: false
             Kirigami.Theme.textColor: root.boardText
+
+            // Plasma style: a Plasma dialog frame instead of our pill.
+            KSvg.FrameSvgItem {
+                visible: root.nativeStyle
+                anchors.fill: parent
+                imagePath: "dialogs/background"
+            }
 
             RowLayout {
                 id: toolRow
@@ -937,13 +959,27 @@ PlasmoidItem {
         property bool introHint: true
         Timer { interval: 5000; running: true; onTriggered: full.introHint = false }
 
+        // Plasma style: Plasma's own button.
+        PlasmaComponents.Button {
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.topMargin: Kirigami.Units.smallSpacing
+            z: 20
+            visible: root.nativeStyle && !root.editing && !root.showSettings && opacity > 0
+            opacity: hover.hovered || full.introHint ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration } }
+            icon.name: "configure"
+            text: i18n("Configure…")
+            onClicked: root.showSettings = true
+        }
+
         QQC2.AbstractButton {
             id: settingsPill
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.topMargin: Kirigami.Units.smallSpacing
             z: 20
-            visible: !root.editing && !root.showSettings && opacity > 0
+            visible: !root.nativeStyle && !root.editing && !root.showSettings && opacity > 0
             opacity: hover.hovered || full.introHint ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration } }
             hoverEnabled: true

@@ -54,6 +54,7 @@ GlassTile {
 
             BigNumber {
                 family: tile.numberFamily
+                plain: tile.nativeOn
                 anchors.centerIn: parent
                 value: tile.value
                 text: tile.valueText
@@ -89,6 +90,7 @@ GlassTile {
                 Layout.fillHeight: true
                 Layout.topMargin: tile.u * 0.3
                 glow: tile.glowOn
+                liveDot: !tile.nativeOn
                 bars: tile.look ? tile.look.chart === "bars" : false
                 values: tile.history || []
                 values2: tile.history2 || []

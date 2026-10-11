@@ -21,7 +21,12 @@ GlassTile {
     accent2: app.heat(Math.max(0, Palette.tempLevel(hottest) - 0.3))
     level: Palette.tempLevel(hottest)
 
+    // Bar unit: tile.u, shrunk so every row fits the height. A row is about
+    // 1.7 units tall (label, gap, bar) with 0.5 between rows.
+    readonly property real barU: Math.min(u, (grid.height + 1) / Math.max(1, sources.length * 2.2 - 0.5))
+
     GridLayout {
+        id: grid
         anchors.fill: parent
         columns: tile.wide ? 2 : 1
         columnSpacing: tile.u
@@ -29,13 +34,15 @@ GlassTile {
 
         BigNumber {
                 family: tile.numberFamily
+                plain: tile.nativeOn
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
             value: app.tempValue(tile.hottest)
             unit: app.tempUnit
             color: tile.hotColor
             // Stacked: the number gets the height the bars leave (its line is
-            // about 1.2x the font size), and steps aside if that's too little.
-            readonly property real fit: tile.wide ? parent.height : (parent.height - bars.implicitHeight - parent.rowSpacing) / 1.2
+            // up to 1.4x the font size, e.g. Noto Sans), and steps aside if
+            // that's too little.
+            readonly property real fit: tile.wide ? parent.height : (parent.height - bars.implicitHeight - parent.rowSpacing) / 1.4
             size: Math.min(tile.u * (tile.wide ? 4.2 : 3.4), fit)
             visible: size >= tile.u * 1.4
         }
@@ -43,12 +50,12 @@ GlassTile {
             id: bars
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignBottom
-            spacing: tile.u * 0.5
+            spacing: tile.barU * 0.5
             Repeater {
                 model: tile.sources
                 HeatBar {
                     required property var modelData
-                    u: tile.u
+                    u: tile.barU
                     label: modelData.label
                     celsius: modelData.value
                     valueText: app.tempText(modelData.value)

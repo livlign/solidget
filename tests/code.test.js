@@ -89,7 +89,7 @@ test("quotes: one per day, always text + author", () => {
 });
 
 // ---- palette.js ------------------------------------------------------------
-const P = load("palette.js", ["ACCENTS", "STYLES", "STYLE_ORDER", "THEMES", "THEME_ORDER", "TILE_HUE", "LOOKS", "accentPair", "heatFor", "vendorColor", "plasmaPalette"]);
+const P = load("palette.js", ["ACCENTS", "STYLES", "STYLE_ORDER", "THEMES", "THEME_ORDER", "TILE_HUE", "LOOKS", "accentPair", "heatFor", "vendorColor", "plasmaPalette", "nativePair", "nativeHeat"]);
 const hex = /^#[0-9a-f]{6}$/i;
 
 // Tile ids from main.qml, so a new tile can't be forgotten here.
@@ -123,6 +123,15 @@ test("Follow Plasma builds its colors from the system accent", () => {
     // It must not look like Aurora, the theme next to it.
     assert.notDeepStrictEqual(P.accentPair("plasma", "cpu", P.plasmaPalette("#3daee9", true)), P.accentPair("aurora", "cpu"));
     assert.ok(hex.test(P.heatFor("plasma", 0.5, false)));
+});
+test("the Plasma style takes every color from the system", () => {
+    assert.ok(P.STYLES.plasma.plasmaFrame && P.STYLE_ORDER[0] === "plasma");
+    tiles.forEach((id) => assert.strictEqual(P.nativePair(id, "#3daee9", "#27ae60")[0], "#3daee9"));
+    ["network", "disk"].forEach((id) => assert.notStrictEqual(P.nativePair(id, "#3daee9", "#27ae60")[0], P.nativePair(id, "#3daee9", "#27ae60")[1], id));
+    assert.strictEqual(P.nativeHeat(0, "#27ae60", "#f67400", "#da4453"), "#27ae60");
+    assert.strictEqual(P.nativeHeat(0.5, "#27ae60", "#f67400", "#da4453"), "#27ae60");
+    assert.strictEqual(P.nativeHeat(0.8, "#27ae60", "#f67400", "#da4453"), "#f67400");
+    assert.strictEqual(P.nativeHeat(1, "#27ae60", "#f67400", "#da4453"), "#da4453");
 });
 test("network download and upload colors differ", () => {
     P.THEME_ORDER.forEach((th) => {

@@ -58,6 +58,11 @@ function tempLevel(c) {
 // ---- Styles: shape and material (no colors) --------------------------------
 // radius is in grid units; bodyAlpha null = the theme's default opacity.
 var STYLES = {
+    // native: draw the card with the Plasma Style's own SVG and take every
+    // color from the system (accent for meters, semantic colors for heat).
+    plasma: { name: "Plasma", hint: "Matches your Plasma Style and colors", plasmaFrame: true,
+              radius: 0.3, bodyAlpha: 1.0, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
+              border: 0, highlight: false, roundCaps: false, font: "", meter: "ring", chart: "line" },
     // tint: how much of the tile's own color tints its card (0..1).
     // font: "" = system, "pixel" = bundled Silkscreen (numbers and titles).
     // meter: "ring" or "blocks"; chart: "line" or "bars".
@@ -76,7 +81,7 @@ var STYLES = {
              radius: 0, bodyAlpha: 1.0, tint: 0.12, glow: false, shadow: false, hardShadow: true, bevel: true,
              border: 0, highlight: false, roundCaps: false, font: "pixel", meter: "blocks", chart: "bars" }
 };
-var STYLE_ORDER = ["glass", "flat", "clear", "pixel"];
+var STYLE_ORDER = ["plasma", "glass", "flat", "clear", "pixel"];
 
 // ---- Themes: colors only ------------------------------------------------------
 // body/text null = follow Plasma. palette = six hues the tiles draw from;
@@ -161,6 +166,7 @@ function vendorColor(themeId, vendor) {
 
 // ---- Looks: one click sets a style and a theme --------------------------------
 var LOOKS = [
+    { name: "Plasma",         style: "plasma", theme: "plasma" },
     { name: "Aurora Glass",   style: "glass", theme: "aurora" },
     { name: "Retro Terminal", style: "pixel", theme: "moss" },
     { name: "Paper",          style: "flat",  theme: "ink" },
@@ -168,3 +174,19 @@ var LOOKS = [
     { name: "Campfire",       style: "glass", theme: "ember" },
     { name: "Reef",           style: "flat",  theme: "lagoon" }
 ];
+
+// ---- Native (Plasma style) colors ---------------------------------------------
+// Every tile wears the system accent; network (down/up) and disk
+// (read/write) chart two series, so they get a second color.
+function nativePair(id, accentHex, secondHex) {
+    return id === "network" || id === "disk" ? [accentHex, secondHex] : [accentHex, accentHex];
+}
+// Heat follows Plasma's semantic colors: positive -> neutral -> negative.
+// It stays positive while things are fine (below 70 °C, the Temperatures
+// tile's "Warm"), so a "Cool" reading is never painted as a warning.
+function nativeHeat(t, positive, neutral, negative) {
+    t = Math.max(0, Math.min(1, t || 0));
+    if (t < 0.6) return positive;
+    if (t < 0.8) return mix(positive, neutral, (t - 0.6) / 0.2);
+    return mix(neutral, negative, (t - 0.8) / 0.2);
+}

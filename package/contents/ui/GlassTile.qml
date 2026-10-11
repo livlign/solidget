@@ -3,15 +3,18 @@ import QtQuick.Shapes
 import QtQuick.Effects
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.ksvg as KSvg
 import org.kde.plasma.components as PlasmaComponents
 
 // The card every tile is built on. `look` (from main.qml) picks the style:
 // Glass = translucent body, drop shadow and color glows that follow `level`
 // (0..1, e.g. current load); Flat, Clear and Pixel drop or change those.
+// Plasma draws the Plasma Style's own widget background instead.
 Item {
     id: tile
 
     property var look: null
+    readonly property bool nativeOn: look ? look.plasmaFrame === true : false
     // Defaults reproduce Glass on the Plasma colors when no look is given.
     readonly property bool glowOn: !solid && (look ? look.glow : true)
     readonly property bool shadowOn: look ? look.shadow : true
@@ -43,7 +46,10 @@ Item {
     // Size helpers for children: `u` is a font/spacing unit that scales with
     // the tile, so a tile on a 4K wall dashboard reads from across the room.
     readonly property real u: Math.max(Kirigami.Units.gridUnit * 0.75, Math.min(width, height * 1.4) / 14)
-    readonly property real pad: Math.max(Kirigami.Units.largeSpacing, u * 0.9)
+    // Plasma: the same padding on every tile, as in Plasma's own widgets.
+    readonly property real pad: nativeOn
+        ? Math.max(Kirigami.Units.largeSpacing * 1.5, frame.margins.left, frame.margins.top)
+        : Math.max(Kirigami.Units.largeSpacing, u * 0.9)
     readonly property bool wide: width > height * 1.6
     readonly property bool tall: height > width * 1.4
     readonly property bool roomy: height > Kirigami.Units.gridUnit * 11
@@ -65,6 +71,25 @@ Item {
         color: Qt.rgba(0, 0, 0, tile.dark ? 0.55 : 0.28)
     }
 
+    // Plasma: the Plasma Style's own background, so tiles match the
+    // built-in widgets (Breeze or any other Plasma Style).
+    // Settings sheet: Plasma's dialog frame expects the compositor to blur
+    // what's behind it, which never happens inside a widget, so back it
+    // with the solid window color or the board shows through.
+    Rectangle {
+        visible: tile.nativeOn && tile.solid
+        anchors.fill: parent
+        anchors.margins: 1
+        radius: Kirigami.Units.cornerRadius
+        color: Kirigami.Theme.backgroundColor
+    }
+    KSvg.FrameSvgItem {
+        id: frame
+        visible: tile.nativeOn
+        anchors.fill: parent
+        imagePath: tile.solid ? "dialogs/background" : "widgets/background"
+    }
+
     RectangularShadow {
         visible: tile.shadowOn
         anchors.fill: card
@@ -77,6 +102,7 @@ Item {
 
     Shape {
         id: card
+        visible: !tile.nativeOn
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
 
@@ -170,6 +196,7 @@ Item {
             spacing: tile.u * 0.45
 
             Rectangle {
+                visible: !tile.nativeOn
                 Layout.preferredWidth: tile.u * 0.45
                 Layout.preferredHeight: Layout.preferredWidth
                 radius: tile.radius > 0 ? width / 2 : 0
@@ -183,11 +210,14 @@ Item {
                 text: tile.title
                 textFormat: Text.PlainText   // text from outside; never render it as HTML
                 font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
-                font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.78)
+                // Plasma: a plain heading, one size on every tile, the way
+                // Plasma's own widgets title things.
+                font.pixelSize: tile.nativeOn ? Kirigami.Units.gridUnit * 0.85
+                              : Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.78)
                 font.weight: Font.DemiBold
-                font.capitalization: Font.AllUppercase
-                font.letterSpacing: tile.u * 0.12
-                opacity: 0.75
+                font.capitalization: tile.nativeOn ? Font.MixedCase : Font.AllUppercase
+                font.letterSpacing: tile.nativeOn ? 0 : tile.u * 0.12
+                opacity: tile.nativeOn ? 0.9 : 0.75
                 Layout.fillWidth: true
                 Layout.minimumWidth: Math.min(implicitWidth, tile.width * 0.45)
                 elide: Text.ElideRight
@@ -197,7 +227,8 @@ Item {
                 textFormat: Text.PlainText
                 // Drop the subtitle rather than truncate the title.
                 visible: text !== "" && titleLabel.implicitWidth + Math.min(implicitWidth, tile.u * 4) + tile.u * 2 < tile.width - tile.pad * 2
-                font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.72)
+                font.pixelSize: tile.nativeOn ? Kirigami.Units.gridUnit * 0.75
+                              : Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.72)
                 opacity: subtitleMouse.containsMouse ? 0.9 : 0.55
                 font.underline: subtitleMouse.containsMouse
                 elide: Text.ElideRight

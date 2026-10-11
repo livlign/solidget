@@ -29,14 +29,19 @@ GlassTile {
         QQC2.ToolTip.text: tip
         QQC2.ToolTip.visible: hovered
         QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+        Accessible.name: tip
+        // Plasma style: flat like Plasma's tool buttons, highlight frame on hover.
         background: Rectangle {
-            radius: tile.radius > 0 ? width / 2 : 0
-            color: rb.hovered ? tile.accent : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.1)
+            radius: tile.nativeOn ? Kirigami.Units.cornerRadius : tile.radius > 0 ? width / 2 : 0
+            color: tile.nativeOn ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, rb.hovered ? 0.2 : 0)
+                 : rb.hovered ? tile.accent : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.1)
+            border.width: tile.nativeOn && rb.hovered ? 1 : 0
+            border.color: Kirigami.Theme.highlightColor
         }
         contentItem: Kirigami.Icon {
             source: rb.iconName
             isMask: true
-            color: rb.hovered ? "#ffffff" : Kirigami.Theme.textColor
+            color: rb.hovered && !tile.nativeOn ? "#ffffff" : Kirigami.Theme.textColor
             implicitWidth: Kirigami.Units.iconSizes.small
             implicitHeight: implicitWidth
         }
@@ -62,6 +67,7 @@ GlassTile {
             BigNumber {
                 anchors.centerIn: parent
                 family: tile.numberFamily
+                plain: tile.nativeOn
                 text: tile.clock
                 size: ring.width * 0.2
             }

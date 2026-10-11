@@ -31,11 +31,13 @@ GlassTile {
             PlasmaComponents.Label {
                 textFormat: Text.PlainText
                 text: "⚡"
+                visible: !tile.nativeOn   // Plasma's own widgets don't decorate numbers
                 color: tile.accent
                 font.pixelSize: big.size * 0.6
             }
             BigNumber {
                 family: tile.numberFamily
+                plain: tile.nativeOn
                 id: big
                 value: tile.watts
                 unit: "W"

@@ -36,13 +36,13 @@
     <entry name="tileRects" type="String">
       <default></default>
     </entry>
-    <!-- Shape and material: glass, flat, clear, pixel -->
+    <!-- Shape and material: plasma (native), glass, flat, clear, pixel -->
     <entry name="style" type="String">
-      <default>glass</default>
+      <default>plasma</default>
     </entry>
     <!-- Colors: plasma (follow the system) or a theme id from palette.js -->
     <entry name="theme" type="String">
-      <default>aurora</default>
+      <default>plasma</default>
     </entry>
     <!-- auto (from the widget's shape), landscape or portrait -->
     <entry name="orientation" type="String">

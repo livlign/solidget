@@ -26,7 +26,7 @@ GlassTile {
             text: "“"
             color: tile.accent
             font.pixelSize: tile.u * 3
-            font.family: tile.numberFamily || "serif"
+            font.family: tile.numberFamily || (tile.nativeOn ? Kirigami.Theme.defaultFont.family : "serif")
             Layout.preferredHeight: tile.u * 1.4
         }
         PlasmaComponents.Label {
@@ -39,7 +39,7 @@ GlassTile {
             fontSizeMode: Text.Fit
             minimumPixelSize: Kirigami.Theme.smallFont.pixelSize
             font.pixelSize: tile.u * 1.5
-            font.family: tile.numberFamily || "serif"
+            font.family: tile.numberFamily || (tile.nativeOn ? Kirigami.Theme.defaultFont.family : "serif")
             font.italic: !tile.numberFamily
             verticalAlignment: Text.AlignTop
         }

@@ -110,6 +110,7 @@ GlassTile {
                 spacing: tile.su * 0.7
 
                 Rectangle {
+                    visible: !tile.nativeOn   // the name already says AMD/Intel/NVIDIA
                     readonly property color vc: app.vendorColor(hero.modelData.vendor) || tile.accent
                     Layout.preferredWidth: badge.implicitWidth + tile.su * 0.9
                     Layout.preferredHeight: tile.nameSize * 1.25
@@ -137,8 +138,8 @@ GlassTile {
                         text: hero.modelData.kind
                         opacity: 0.55
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.su * 0.72)
-                        font.capitalization: Font.AllUppercase
-                        font.letterSpacing: tile.su * 0.08
+                        font.capitalization: tile.nativeOn ? Font.MixedCase : Font.AllUppercase
+                        font.letterSpacing: tile.nativeOn ? 0 : tile.su * 0.08
                     }
                     PlasmaComponents.Label {
                         text: hero.modelData.name
@@ -190,8 +191,8 @@ GlassTile {
                         text: modelData.label
                         opacity: 0.55
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.su * 0.7)
-                        font.capitalization: Font.AllUppercase
-                        font.letterSpacing: tile.su * 0.06
+                        font.capitalization: tile.nativeOn ? Font.MixedCase : Font.AllUppercase
+                        font.letterSpacing: tile.nativeOn ? 0 : tile.su * 0.06
                     }
                     PlasmaComponents.Label {
                         textFormat: Text.PlainText

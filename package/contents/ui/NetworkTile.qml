@@ -53,6 +53,7 @@ GlassTile {
                     }
                     BigNumber {
                         family: tile.numberFamily
+                        plain: tile.nativeOn
                         text: parts.n
                         unit: parts.unit
                         size: Math.min(tile.u * 2.6, tile.height * 0.16)
@@ -71,6 +72,7 @@ GlassTile {
             minAutoMax: 64 * 1024
             sqrtScale: true
             glow: tile.glowOn
+            liveDot: !tile.nativeOn
             bars: tile.look ? tile.look.chart === "bars" : false
             color: tile.downColor
             colorEnd: tile.downColor
