@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solidget for KDE Plasma</title>
+<meta name="description" content="One solid widget for your KDE desktop. Live system stats, your PC's specs, and the little everyday things, all in one good-looking board.">
+<meta property="og:title" content="Solidget for KDE Plasma">
+<meta property="og:description" content="Live system stats, your PC's specs and your day, in one good-looking board.">
+<meta property="og:image" content="https://livlign.github.io/solidget/hero.png">
+<meta property="og:url" content="https://livlign.github.io/solidget/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#120f1f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='3' fill='%2342d9c8'/%3E%3Crect x='17' y='2' width='13' height='13' rx='3' fill='%23b18cff'/%3E%3Crect x='2' y='17' width='28' height='13' rx='3' fill='%23ff9f6b'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #100d1c;
+    --bg2: #171329;
+    --card: rgba(255, 255, 255, 0.045);
+    --line: rgba(255, 255, 255, 0.09);
+    --text: #ecebf5;
+    --dim: #a6a3bd;
+    --teal: #42d9c8;
+    --violet: #b18cff;
+    --peach: #ff9f6b;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.6 system-ui, -apple-system, "Segoe UI", "Noto Sans", Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; }
+  img { max-width: 100%; height: auto; display: block; }
+  .wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
+
+  /* Soft aurora behind the top of the page, like the widget's Aurora theme */
+  .aurora {
+    position: absolute; inset: 0 0 auto 0; height: 900px; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(600px 380px at 15% 10%, rgba(66, 217, 200, 0.20), transparent 70%),
+      radial-gradient(700px 420px at 85% 0%, rgba(177, 140, 255, 0.24), transparent 70%),
+      radial-gradient(600px 400px at 55% 45%, rgba(255, 159, 107, 0.10), transparent 70%);
+  }
+
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; text-decoration: none; }
+  .brand svg { width: 26px; height: 26px; }
+  nav .links { display: flex; gap: 22px; font-size: 15px; color: var(--dim); }
+  nav .links a { text-decoration: none; }
+  nav .links a:hover { color: var(--text); }
+
+  .hero { text-align: center; padding: 56px 0 40px; }
+  .pill {
+    display: inline-block; padding: 5px 14px; border-radius: 99px; font-size: 14px;
+    border: 1px solid var(--line); background: var(--card); color: var(--dim);
+  }
+  h1 {
+    font-size: clamp(36px, 6.4vw, 68px); line-height: 1.05; letter-spacing: -0.03em;
+    margin: 22px auto 18px; max-width: 14ch;
+  }
+  h1 span {
+    background: linear-gradient(90deg, var(--teal), var(--violet) 55%, var(--peach));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lede { font-size: clamp(17px, 2.2vw, 20px); color: var(--dim); max-width: 36em; margin: 0 auto 32px; }
+  .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 12px;
+    font-weight: 600; text-decoration: none; border: 1px solid var(--line); background: var(--card);
+    transition: transform .15s, background .15s;
+  }
+  .btn:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.08); }
+  .btn.primary { background: linear-gradient(135deg, #5fe3d3, #9b7bff); color: #120f1f; border: 0; }
+  .btn.primary:hover { background: linear-gradient(135deg, #78ecdd, #ad92ff); }
+  .btn svg { width: 18px; height: 18px; }
+  .small { font-size: 14px; color: var(--dim); margin-top: 16px; }
+
+  .shot {
+    margin: 48px auto 0; border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: 0 40px 120px -30px rgba(155, 123, 255, 0.45), 0 20px 60px -20px rgba(0, 0, 0, 0.7);
+  }
+
+  section { padding: 88px 0 0; }
+  h2 { font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 10px; text-align: center; }
+  .sub { text-align: center; color: var(--dim); margin: 0 auto 40px; max-width: 34em; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px;
+  }
+  .card h3 { margin: 12px 0 6px; font-size: 19px; }
+  .card p { margin: 0; color: var(--dim); font-size: 16px; }
+  .icon {
+    width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c);
+  }
+  .icon svg { width: 22px; height: 22px; }
+
+  .looks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .looks figure { margin: 0; }
+  .looks img { border-radius: 14px; border: 1px solid var(--line); aspect-ratio: 9 / 16; object-fit: cover; width: 100%; }
+  .looks figcaption { text-align: center; margin-top: 12px; color: var(--dim); font-size: 15px; }
+  .looks figcaption b { color: var(--text); font-weight: 600; display: block; font-size: 17px; }
+
+  .steps { counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .steps .card { position: relative; padding-top: 58px; }
+  .steps .card::before {
+    counter-increment: step; content: counter(step);
+    position: absolute; top: 20px; left: 24px; width: 28px; height: 28px; border-radius: 50%;
+    display: grid; place-items: center; font-weight: 700; font-size: 15px;
+    background: linear-gradient(135deg, var(--teal), var(--violet)); color: #120f1f;
+  }
+  kbd {
+    font: inherit; font-size: 0.92em; padding: 1px 7px; border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); color: var(--text); white-space: nowrap;
+  }
+  .note { text-align: center; color: var(--dim); font-size: 15px; margin-top: 22px; }
+
+  .online { max-width: 760px; margin: 0 auto; }
+  .row { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row span:last-child { color: var(--dim); text-align: right; }
+
+  footer { margin-top: 110px; border-top: 1px solid var(--line); position: relative; }
+  .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 28px 0 40px; color: var(--dim); font-size: 14px; }
+  .foot a { text-decoration: none; }
+  .foot a:hover { color: var(--text); }
+
+  /* The desk pet strolls along the footer line, using the widget's own sprite sheet */
+  .pet {
+    position: absolute; top: -50px; left: 0; width: 64px; height: 50px;
+    background: url(poodle.png) 0 0 / 256px auto no-repeat;
+    image-rendering: pixelated;
+    animation: legs .6s steps(4) infinite, stroll 26s linear infinite;
+  }
+  @keyframes legs { to { background-position-x: -256px; } }
+  @keyframes stroll { from { transform: translateX(100vw); } to { transform: translateX(-80px); } }
+
+  @media (max-width: 760px) {
+    nav .links a.hide-sm { display: none; }
+    .hero { padding-top: 32px; }
+    .looks { grid-template-columns: 1fr; max-width: 360px; margin: 0 auto; }
+    section { padding-top: 64px; }
+    .row { flex-direction: column; gap: 2px; }
+    .row span:last-child { text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pet { animation: none; left: auto; right: 24px; }
+    .btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="aurora"></div>
+
+<div class="wrap">
+  <nav>
+    <a class="brand" href="#">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="13" height="13" rx="3" fill="#42d9c8"/><rect x="17" y="2" width="13" height="13" rx="3" fill="#b18cff"/><rect x="2" y="17" width="28" height="13" rx="3" fill="#ff9f6b"/></svg>
+      Solidget
+    </a>
+    <div class="links">
+      <a class="hide-sm" href="#features">Features</a>
+      <a class="hide-sm" href="#install">Install</a>
+      <a href="https://github.com/livlign/solidget">GitHub</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <span class="pill">Free and open source · KDE Plasma 6</span>
+    <h1>One <span>solid widget</span> for your desktop</h1>
+    <p class="lede">Live system stats, your PC's specs, and the little everyday things, all in one good-looking board.</p>
+    <div class="buttons">
+      <a class="btn primary" href="#install">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16"/></svg>
+        Get Solidget
+      </a>
+      <a class="btn" href="https://github.com/livlign/solidget">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <p class="small">Fedora, Kubuntu, Debian 13, openSUSE, Arch, Manjaro, KDE neon, Bazzite and more</p>
+    <img class="shot" src="hero.png" width="2400" height="1300" alt="Solidget showing clock and weather, CPU, GPU, temperatures, music, a photo of the day and a pixel pet">
+  </header>
+
+  <section id="features">
+    <h2>Everything at a glance</h2>
+    <p class="sub">Put it in a corner, down the side, or fill a spare monitor. It looks good in all of them.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="icon" style="--c: var(--teal)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/></svg></div>
+        <h3>20 tiles</h3>
+        <p>CPU, GPU, memory, temperatures, network, storage, fans and top apps. Plus clock and weather, calendar, music, photo of the day, world clocks, focus timer, notes and quotes.</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="--c: var(--violet)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A5.6 5.6 0 0 0 22 9.8C22 5.5 17.5 2 12 2Z"/></svg></div>
+        <h3>Your look</h3>
+        <p>4 styles × 10 color themes, or one click for a ready-made look. It can also follow your Plasma colors.</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="--c: var(--peach)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9 2 12l3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg></div>
+        <h3>Arrange it your way</h3>
+        <p>Drag tiles, resize them, hide the ones you don't need. They stay exactly where you put them.</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="--c: var(--teal)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg></div>
+        <h3>Private by default</h3>
+        <p>Your computer name, Wi-Fi name, IP and location are hidden, so screenshots are safe to share.</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="--c: var(--violet)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg></div>
+        <h3>Light on your PC</h3>
+        <p>About 5% of one CPU core with every tile on. No background services, nothing to set up.</p>
+      </div>
+      <div class="card">
+        <div class="icon" style="--c: var(--peach)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.05Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/></svg></div>
+        <h3>A little desk pet</h3>
+        <p>A pixel poodle (or cat) naps when your PC is calm, plays fetch when it's busy, and pants when it gets hot.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="looks">
+    <h2>Make it yours</h2>
+    <p class="sub">Three of the ready-made looks, on a portrait monitor.</p>
+    <div class="looks">
+      <figure>
+        <img src="screenshots/aurora-glass.jpg" width="1080" height="1920" loading="lazy" alt="Solidget in the Aurora Glass look">
+        <figcaption><b>Aurora Glass</b>Soft frosted glass</figcaption>
+      </figure>
+      <figure>
+        <img src="screenshots/retro-terminal.jpg" width="1080" height="1920" loading="lazy" alt="Solidget in the Retro Terminal look">
+        <figcaption><b>Retro Terminal</b>Green pixels on black</figcaption>
+      </figure>
+      <figure>
+        <img src="screenshots/paper.jpg" width="1080" height="1920" loading="lazy" alt="Solidget in the Paper look">
+        <figcaption><b>Paper</b>Calm and light</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>Install in a minute</h2>
+    <p class="sub">Works on any Linux with KDE Plasma 6.</p>
+    <div class="steps">
+      <div class="card">
+        <h3>Open the widget store</h3>
+        <p>Right-click your desktop → <kbd>Add Widgets…</kbd> → <kbd>Get New Widgets</kbd> → <kbd>Download New Plasma Widgets</kbd>.</p>
+      </div>
+      <div class="card">
+        <h3>Install Solidget</h3>
+        <p>Search for <b>Solidget</b> and click <kbd>Install</kbd>. Updates arrive in Discover.</p>
+      </div>
+      <div class="card">
+        <h3>Drop it on your desktop</h3>
+        <p>Drag Solidget from <kbd>Add Widgets</kbd>. Hover over it and click <kbd>Settings</kbd> to pick a look.</p>
+      </div>
+    </div>
+    <p class="note">Prefer a file? Download it from the <a href="https://github.com/livlign/solidget/releases/latest">latest release</a> and choose <kbd>Install Widget From Local File</kbd>.</p>
+  </section>
+
+  <section id="online">
+    <h2>What goes online</h2>
+    <p class="sub">Everything runs on your PC. A few tiles fetch public data, and only when they're shown. No accounts, no tracking.</p>
+    <div class="card online">
+      <div class="row"><span>Clock &amp; weather</span><span>open-meteo.com, ipwho.is</span></div>
+      <div class="row"><span>World clocks</span><span>open-meteo.com, once per city</span></div>
+      <div class="row"><span>Photo of the day</span><span>bing.com, once a day</span></div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="pet" role="img" aria-label="The pixel poodle walking by"></div>
+  <div class="wrap foot">
+    <span>Solidget · free software under GPL-2.0</span>
+    <span>
+      <a href="https://github.com/livlign/solidget">Source</a> ·
+      <a href="https://github.com/livlign/solidget/issues">Ideas &amp; bugs</a> ·
+      <a href="https://github.com/livlign/solidget/blob/main/CHANGELOG.md">What's new</a>
+    </span>
+  </div>
+</footer>
+</body>
+</html>
