@@ -71,6 +71,8 @@ See errors: `journalctl --user -u plasma-plasmashell -f | grep -i solidget`
 
 ## Pull requests
 
+- `main` is protected: changes go in through a pull request, and it can be
+  merged once the checks pass.
 - One change per pull request. Small is great.
 - Add a screenshot for anything visual, **with personal info hidden**.
 - Commit messages: short and in the present tense, like `Add moon phase to calendar`.
