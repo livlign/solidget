@@ -68,6 +68,10 @@
     <entry name="worldClocks" type="String">
       <default>London|Europe/London;New York|America/New_York;Tokyo|Asia/Tokyo</default>
     </entry>
+    <!-- Desk pet: dog (apricot poodle) or cat -->
+    <entry name="petKind" type="String">
+      <default>dog</default>
+    </entry>
     <!-- Focus timer lengths in minutes -->
     <entry name="focusMinutes" type="Int">
       <default>25</default>

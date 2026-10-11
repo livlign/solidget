@@ -3,16 +3,150 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 
-// A pixel cat that reacts to the PC: naps when idle, strolls at light load,
-// sprints when busy and pants when hot. Drawn from a 16x12 grid of squares.
+// A pixel pet that reacts to the PC: naps when idle, strolls at light load,
+// sprints when busy and pants when hot. An apricot teddy-cut poodle (26x18
+// squares) or a cat in the theme's color (16x12).
 // It animates only while awake, at a few frames per second (a continuous
 // animation would make Plasma redraw the whole desktop nonstop).
 GlassTile {
     id: tile
     required property var app
 
-    // ---- Sprites: k outline, b body, w eye, p nose/inner ear, d sweat ----
-    readonly property var frames: ({
+    readonly property bool isCat: app.petKind === "cat"
+
+    // ---- Dog: k outline, b coat, s darker curls, c cream chest, m muzzle,
+    //      e eye, w eye shine, n nose, t tongue ----
+    readonly property var dogFrames: ({
+        walk1: ["..kkk......kkk............",
+                ".kssskkkkkksssk...........",
+                "kssssssbbssssssk.....kk...",
+                "kssssbbsbbsssssk....kbsk..",
+                "ksssbbbbbbbbsssk...kbbbbk.",
+                ".ksbbbbbbbbbbsk....kbbbbk.",
+                ".ksbbewbbewbbskkkkkkkbbk..",
+                ".ksbbeebbeebbsbbbbbbkbk...",
+                "..kbbbmmmmbbbbbbbbbbbbk...",
+                "..ksbmmnnmmbsbbsbbsbbsbk..",
+                "..ksbbmnnmbbsbbbbbbbbbbk..",
+                "...kssbbbbssccbbbbbbbbbk..",
+                "....kksssssbcccbsbbsbbk...",
+                "......kkkkbbkbbkkbbkbbk...",
+                ".........kbbkbbkkbbkbbk...",
+                ".........kbskbskksbksbk...",
+                ".........kbbkkk.kbbkkk....",
+                "..........kk.....kk......."],
+        walk2: ["..kkk......kkk............",
+                ".kssskkkkkksssk...........",
+                "kssssssbbssssssk.....kk...",
+                "kssssbbsbbsssssk....kbsk..",
+                "ksssbbbbbbbbsssk...kbbbbk.",
+                ".ksbbbbbbbbbbsk....kbbbbk.",
+                ".ksbbewbbewbbskkkkkkkbbk..",
+                ".ksbbeebbeebbsbbbbbbkbk...",
+                "..kbbbmmmmbbbbbbbbbbbbk...",
+                "..ksbmmnnmmbsbbsbbsbbsbk..",
+                "..ksbbmnnmbbsbbbbbbbbbbk..",
+                "...kssbbbbssccbbbbbbbbbk..",
+                "....kksssskbcccbsbbsbbk...",
+                "......kkkkkbbbbkkkbbbbk...",
+                "..........kbbbbk.kbbbbk...",
+                "..........ksbbsk.kbbsbk...",
+                "...........kkbbk..kkbbk...",
+                ".............kk.....kk...."],
+        run1:  ["..kkk......kkk............",
+                ".kssskkkkkksssk......kk...",
+                "kssssssbbssssssk....kbbk..",
+                "kssssbbbbbbssssk...kbbbbk.",
+                "ksssbsbbsbbssssk...ksbbsk.",
+                ".ksbbbbbbbbbbsk.....kbbk..",
+                ".ksbbewbbewbbskkkkkkkbk...",
+                ".ksbbeebbeebbsbsbbsbksk...",
+                "..kbbbmmmmbbbbbbbbbbbbk...",
+                "..ksbmmnnmmbsbbbbbbbbbbk..",
+                "..ksbbmnnmbbssbbsbbsbbsk..",
+                "...kssbttbssccbbbbbbbbbbk.",
+                "....kksttskbcccbbbbbbkbbk.",
+                "......kksbksbkkkkkkbskbsk.",
+                ".......kbbkbbk....kbbkbbk.",
+                ".......kbbkbbk....kbbkbbk.",
+                "........kkkbsk....kbbkkk..",
+                "...........kk......kk....."],
+        run2:  ["..kkk......kkk............",
+                ".kssskkkkkksssk...........",
+                "kssssssbbssssssk.....kk...",
+                "kssssbbbbbbssssk....kbbk..",
+                "ksssbsbbsbbssssk...ksbbsk.",
+                ".ksbbbbbbbbbbsk....kbbbbk.",
+                ".ksbbewbbewbbskkkkkkkbbk..",
+                ".ksbbeebbeebbsbsbbsbksk...",
+                "..kbbbmmmmbbbbbbbbbbbbk...",
+                "..ksbmmnnmmbsbbbbbbbbbbk..",
+                "..ksbbmnnmbbssbbsbbsbbsk..",
+                "...kssbttbssccbbbbbbbbbk..",
+                "....kksttskbcccbbbbbbkk...",
+                "......kkkkksbbskksbbsk....",
+                "..........kbbbbkkbbbbk....",
+                "..........kbbbbkkbbbbk....",
+                "..........kbsbbkkbsbbk....",
+                "...........kkkk..kkkk....."],
+        hot1:  ["..kkk......kkk............",
+                ".kssskkkkkksssk...........",
+                "kssssssbbssssssk.....kk...",
+                "kssssbbsbbsssssk....kbsk..",
+                "ksssbbbbbbbbsssk...kbbbbk.",
+                ".ksbbbbbbbbbbsk....kbbbbk.",
+                ".ksbbewbbewbbskkkkkkkbbk..",
+                ".ksbbeebbeebbsbbbbbbkbk...",
+                "..kbbbmmmmbbbbbbbbbbbbk...",
+                "..ksbmmnnmmbsbbsbbsbbsbk..",
+                "..ksbbmnnmbbsbbbbbbbbbbk..",
+                "...kssbttbssccbbbbbbbbbk..",
+                "....kksttssbcccbsbbsbbk...",
+                "......kkkkbbkbbkkbbkbbk...",
+                ".........kbbkbbkkbbkbbk...",
+                ".........kbskbskksbksbk...",
+                ".........kbbkkk.kbbkkk....",
+                "..........kk.....kk......."],
+        hot2:  ["..kkk......kkk............",
+                ".kssskkkkkksssk...........",
+                "kssssssbbssssssk.....kk...",
+                "kssssbbsbbsssssk....kbsk..",
+                "ksssbbbbbbbbsssk...kbbbbk.",
+                ".ksbbbbbbbbbbsk....kbbbbk.",
+                ".ksbbewbbewbbskkkkkkkbbk..",
+                ".ksbbeebbeebbsbbbbbbkbk...",
+                "..kbbbmmmmbbbbbbbbbbbbk...",
+                "..ksbmmnnmmbsbbsbbsbbsbk..",
+                "..ksbbmnnmbbsbbbbbbbbbbk..",
+                "...kssbttbssccbbbbbbbbbk..",
+                "....kksttskbcccbsbbsbbk...",
+                "......kkkkkbbbbkkkbbbbk...",
+                "..........kbbbbk.kbbbbk...",
+                "..........ksbbsk.kbbsbk...",
+                "...........kkbbk..kkbbk...",
+                ".............kk.....kk...."],
+        sleep: ["..........................",
+                "..........................",
+                "..........................",
+                "..........................",
+                "..........................",
+                "..........................",
+                "...kkk....kkk.............",
+                "..kssskkkkssskkk....kkk...",
+                ".kssssssssssssbbkkkkbbsk..",
+                ".ksssbbbbbbsssbbbbbbbbbk..",
+                ".kssbbbbbbbbssbbbbbbbbbk..",
+                "..kbbbbbbbbbbbsbbsbbsbbk..",
+                "..kbbeebbbeebbbbbbbbbbk...",
+                "..ksbbmnnmbbsbbbbbbbbbk...",
+                "..ksbbmmmmbbsbbsbbsbbk....",
+                "...ksbbmmbbsbbbbbbkkk.....",
+                "....kksssskkkkkkkk........",
+                "......kkkk................"]
+    })
+
+    // ---- Cat: k outline, b body, w eye, p nose/inner ear ----
+    readonly property var catFrames: ({
         walk1: ["................",
                 "..k..k..........",
                 ".kbkkbk........k",
@@ -105,13 +239,21 @@ GlassTile {
     // Sleeping: just the Zzz, on the shared tick.
     Connections { target: app; function onTickChanged() { if (tile.mood === "sleep") tile.step++; } }
 
+    readonly property var frames: isCat ? catFrames : dogFrames
     readonly property var frame: mood === "sleep" ? frames.sleep
         : mood === "run" ? (step % 2 ? frames.run1 : frames.run2)
+        : mood === "hot" && frames.hot1 ? (step % 2 ? frames.hot1 : frames.hot2)
         : (step % 2 ? frames.walk1 : frames.walk2)
+    readonly property int cols: frame[0].length
+    readonly property int rows: frame.length
 
+    // The dog keeps its own coat in every theme; the cat wears the theme.
+    readonly property var dogColors: ({ k: "#4a2c17", b: "#e0a46a", s: "#c27f45", c: "#f8e6cc", m: "#f0c590",
+                                        e: "#1a1110", w: "#ffffff", n: "#1a1110", t: "#f28ba8" })
     readonly property color bodyColor: app.accent("pet")
     readonly property color outline: dark ? "#0b0b0f" : "#1f1f24"
     function colorFor(ch) {
+        if (!isCat) return dogColors[ch] || "transparent";
         switch (ch) {
         case "k": return outline;
         case "b": return bodyColor;
@@ -132,9 +274,9 @@ GlassTile {
         id: stage
         anchors.fill: parent
 
-        readonly property real px: Math.max(2, Math.floor(Math.min(width / 22, (height - tile.u) / 13)))
-        readonly property real spriteW: px * 16
-        readonly property real spriteH: px * 12
+        readonly property real px: Math.max(2, Math.floor(Math.min(width / (tile.cols + 6), (height - tile.u) / (tile.rows + 1))))
+        readonly property real spriteW: px * tile.cols
+        readonly property real spriteH: px * tile.rows
 
         // Ground line
         Rectangle {
@@ -155,11 +297,11 @@ GlassTile {
             transform: Scale { origin.x: cat.width / 2; xScale: tile.facingLeft || tile.mood === "sleep" ? 1 : -1 }
 
             Repeater {
-                model: 16 * 12
+                model: tile.cols * tile.rows
                 Rectangle {
                     required property int index
-                    readonly property int cx: index % 16
-                    readonly property int cy: Math.floor(index / 16)
+                    readonly property int cx: index % tile.cols
+                    readonly property int cy: Math.floor(index / tile.cols)
                     x: cx * stage.px
                     y: cy * stage.px
                     width: stage.px
@@ -168,9 +310,9 @@ GlassTile {
                     visible: color.a > 0          // empty pixels draw nothing
                 }
             }
-            // Sweat drop when hot (bobs with the step).
+            // Sweat drop when hot (bobs with the step). The dog pants instead.
             Rectangle {
-                visible: tile.mood === "hot"
+                visible: tile.mood === "hot" && tile.isCat
                 x: stage.px * 7; y: stage.px * (tile.step % 2 ? 0 : 1)
                 width: stage.px; height: stage.px * 2
                 color: "#7dd3fc"

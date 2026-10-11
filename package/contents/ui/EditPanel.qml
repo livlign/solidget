@@ -328,6 +328,7 @@ GlassTile {
         property string subtitle
         hoverEnabled: true
         Layout.fillWidth: true
+        Layout.preferredWidth: 1
         implicitHeight: Kirigami.Units.gridUnit * 3.6
         padding: Kirigami.Units.smallSpacing * 1.5
         background: Rectangle {
@@ -492,6 +493,7 @@ GlassTile {
                                 readonly property var th: Palette.THEMES[modelData]
                                 readonly property bool current: panel.app.themeId === modelData
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: 1     // equal columns, whatever the names
                                 implicitHeight: Kirigami.Units.gridUnit * 2.2
                                 hoverEnabled: true
                                 onClicked: Plasmoid.configuration.theme = modelData
@@ -525,7 +527,7 @@ GlassTile {
                                         elide: Text.ElideRight
                                     }
                                     Kirigami.Icon {
-                                        visible: swatch.current
+                                        opacity: swatch.current ? 1 : 0   // keeps its space, so cards never resize
                                         source: "checkmark"
                                         color: swatch.th.text || panel.app.plasmaText
                                         isMask: true
@@ -787,6 +789,18 @@ GlassTile {
                         text: panel.app.worldClocks.map(function (c) { return c.name; }).join(", ")
                         placeholder: i18n("London, New York, Tokyo")
                         onEdited: (v) => panel.app.setWorldCities(v)
+                    }
+                }
+
+                Section {
+                    title: i18n("Desk pet")
+                    SettingRow {
+                        label: i18n("Pet")
+                        Segmented {
+                            options: [{ value: "dog", text: i18n("Poodle") }, { value: "cat", text: i18n("Cat") }]
+                            current: panel.app.petKind
+                            onPicked: (v) => Plasmoid.configuration.petKind = v
+                        }
                     }
                 }
 

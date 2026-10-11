@@ -472,6 +472,7 @@ PlasmoidItem {
     // ---- Units & privacy --------------------------------------------------
     // Every tile formats through these, so one setting changes the whole board.
 
+    readonly property string petKind: Plasmoid.configuration.petKind === "cat" ? "cat" : "dog"
     readonly property bool useFahrenheit: Plasmoid.configuration.weatherUnit === "f"
         || (Plasmoid.configuration.weatherUnit === "auto" && Qt.locale().measurementSystem === Locale.ImperialUSSystem)
     readonly property bool decimalUnits: Plasmoid.configuration.dataUnits === "decimal"

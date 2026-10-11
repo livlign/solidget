@@ -84,7 +84,11 @@ GlassTile {
         // Cover art
         Item {
             id: art
-            readonly property real side: parent.columns === 2 ? Math.min(parent.height, parent.width * 0.42) : Math.min(parent.width, parent.height * 0.5)
+            // Stacked: the cover gets whatever height the text and buttons
+            // leave, so the controls never spill out of the tile.
+            readonly property real side: parent.columns === 2 ? Math.min(parent.height, parent.width * 0.42)
+                : Math.max(0, Math.min(parent.width, parent.height - info.implicitHeight - parent.rowSpacing))
+            visible: side >= tile.u * 3
             Layout.preferredWidth: side
             Layout.preferredHeight: side
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -120,6 +124,7 @@ GlassTile {
         }
 
         ColumnLayout {
+            id: info
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: tile.u * 0.2
