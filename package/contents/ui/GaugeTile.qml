@@ -13,7 +13,11 @@ GlassTile {
     property string unit: "%"
     property var details: []             // [{ label, value, dot? }]
     property var history: null           // array of samples, 0..100
-    property real historyMax: 100
+    property real historyMax: 100        // 0 = scale to the data (rates)
+    property var history2: []            // optional second line (e.g. writes)
+    property bool historySqrt: false     // squash big spikes (rates)
+    property real historyMinMax: 1       // auto scale never goes below this
+    property bool preferChart: false     // small tiles: shrink the ring to fit the chart
 
     level: value / 100
 
@@ -21,6 +25,7 @@ GlassTile {
     readonly property real rowH: u * 1.45
     readonly property real ringSize: sideBySide
         ? Math.min(body.height, body.width * 0.42)
+        : preferChart ? Math.max(u * 3, Math.min(body.width * 0.9, body.height - rowH * Math.min(2, details.length) - u * 3.4))
         : Math.min(body.width * 0.9, body.height - (details.length ? rowH * Math.min(2, details.length) : 0))
 
     // Space left for details + chart, in the column beside or below the ring.
@@ -86,9 +91,13 @@ GlassTile {
                 glow: tile.glowOn
                 bars: tile.look ? tile.look.chart === "bars" : false
                 values: tile.history || []
+                values2: tile.history2 || []
                 maxValue: tile.historyMax
+                minAutoMax: tile.historyMinMax
+                sqrtScale: tile.historySqrt
                 color: tile.accent
-                colorEnd: tile.accent2
+                colorEnd: (tile.history2 || []).length ? tile.accent : tile.accent2
+                color2: tile.accent2
             }
 
             Item { visible: !tile.showChart; Layout.fillHeight: true }

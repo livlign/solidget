@@ -307,10 +307,14 @@ PlasmoidItem {
     History { id: gpuHistory }
     History { id: downHistory }
     History { id: upHistory }
+    History { id: readHistory }
+    History { id: writeHistory }
     readonly property alias cpuHistory: cpuHistory
     readonly property alias gpuHistory: gpuHistory
     readonly property alias downHistory: downHistory
     readonly property alias upHistory: upHistory
+    readonly property alias readHistory: readHistory
+    readonly property alias writeHistory: writeHistory
 
     // One shared tick: sensors report whenever they like, but tiles only see
     // new values here, all at once. Plasma redraws the whole window for any
@@ -374,6 +378,8 @@ PlasmoidItem {
             gpuHistory.push(gpuUsage.value);
             downHistory.push(netDown.value);
             upHistory.push(netUp.value);
+            readHistory.push(diskRead.value);
+            writeHistory.push(diskWrite.value);
             root.focusTick();
             root.tick++;
         }

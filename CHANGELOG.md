@@ -21,6 +21,8 @@
   corner to sort by memory instead.
 - The Temperatures tile no longer cuts off its last bar when it's small.
 - Theme and look cards keep the same size when you pick one.
+- **Storage shows a read/write chart** like Network, with colored dots
+  that match the lines.
 - Fans spin smoothly again (a little more CPU than the one-step-a-second
   turn).
 
