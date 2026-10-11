@@ -2,7 +2,7 @@
     "KPlugin": {
         "Id": "io.github.solidget",
         "Name": "Solidget",
-        "Description": "Live stats, your PC's specs and your day, in one good-looking board.",
+        "Description": "Live stats, your PC's specs and your day, in one board that matches your Plasma desktop.",
         "Icon": "computer",
         "Category": "System Information",
         "License": "GPL-2.0-or-later",
