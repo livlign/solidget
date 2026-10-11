@@ -1,5 +1,7 @@
 # Publishing on the KDE Store
 
+Our page: https://store.kde.org/p/2378131/
+
 For maintainers. Takes about 10 minutes the first time.
 
 ## First time

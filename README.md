@@ -3,6 +3,8 @@
 **One solid widget for your KDE desktop.** Live system stats, your PC's specs,
 and the little everyday things, all in one good-looking board.
 
+[Website](https://livlign.github.io/solidget/) · [KDE Store](https://store.kde.org/p/2378131/)
+
 ![Solidget on a desktop](docs/hero.png)
 
 ## What you get
@@ -31,6 +33,7 @@ you what's missing and the exact command to install it.
 **From Plasma (easiest).** Right-click your desktop → **Add Widgets…** →
 **Get New Widgets** → **Download New Plasma Widgets**. Search for
 "Solidget" and click **Install**. Updates show up in Discover.
+It's also on the [KDE Store](https://store.kde.org/p/2378131/).
 
 **From a file.** Download `solidget-….plasmoid` from the
 [latest release](https://github.com/livlign/solidget/releases/latest). Then
