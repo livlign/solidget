@@ -3,262 +3,19 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 
-// A pixel pet that reacts to the PC: naps when idle, trots at light load,
-// gallops when busy and pants when hot. An apricot teddy-cut poodle seen from
-// the side (30x21 squares, 4-frame walk and gallop) or a cat in the theme's
-// color (16x12).
-// It animates only while awake, at a few frames per second (a continuous
-// animation would make Plasma redraw the whole desktop nonstop).
+// A pixel pet that lives in the tile.
+// - Poodle: keeps busy with a little routine (sits, wags, sniffs, yawns,
+//   play-bows, trots, naps) and gets livelier with the CPU: hops at medium
+//   load; zooms, chases its tail and its ball when busy; lies down panting
+//   when hot. Frames come from images/poodle.png (made by tools/poodle.py).
+// - Cat: naps, strolls or sprints with the CPU, in the theme's color.
+// It animates at a few frames per second and stands still while asleep
+// (every frame makes Plasma redraw the desktop).
 GlassTile {
     id: tile
     required property var app
 
     readonly property bool isCat: app.petKind === "cat"
-
-    // ---- Dog: k outline, b coat, q curls, s ears/paws, c cream chest,
-    //      m muzzle, e eye, w eye shine, n nose, g nose shine, t tongue,
-    //      v collar, y bell ----
-    readonly property var dogFrames: ({
-        walk: [
-            ["..............................",
-             ".......kkkk...................",
-             ".....kkbqbbk..................",
-             "....kbbbbbbbk.............kkk.",
-             "...kbbbbbbkkbk...........kbbbk",
-             "..kkbbwbkssskk...........kbbbk",
-             ".kmmmbebkssssk...kkk.....kqbbk",
-             "knnmmmbbksssskkkkbbbkkkk.kbkk.",
-             "knmmmmbbkssskkqbbbbbqbbbkbk...",
-             ".kmmmbbbbkkkvbbbbbbbbbbbbbk...",
-             "..kkkkkbbbkkqvbbbbbbbbbbqbk...",
-             ".......kkbbbbvbbbbbbbbbbbbk...",
-             ".........kbbybbbbbqbbbbbbk....",
-             ".........kbbbbbbbbbbbbbbsk....",
-             "..........kkbbkkkkkkqbssk.....",
-             "..........ksbbk....kbbkssk....",
-             "..........ksbbk....kbbkssk....",
-             "..........ksbbk....kbbkssk....",
-             ".........kkkssk....ksskkkkk...",
-             "..........kkkk......kk..kk....",
-             ".............................."],
-            [".......kkkk...................",
-             ".....kkbqbbk..................",
-             "....kbbbbbbbk.............kkk.",
-             "...kbbbbbbkkbk...........kbbbk",
-             "..kkbbwbkssskk...........kbbbk",
-             ".kmmmbebkssssk...kkk.....kqbbk",
-             "knnmmmbbksssskkkkbbbkkkk.kbkk.",
-             "knmmmmbbkssskkqbbbbbqbbbkbk...",
-             ".kmmmbbbbkkkvbbbbbbbbbbbbbk...",
-             "..kkkkkbbbkkqvbbbbbbbbbbqbk...",
-             ".......kkbbbbvbbbbbbbbbbbbk...",
-             ".........kbbybbbbbqbbbbbbk....",
-             ".........kbbbbbbbbbbbbbbsk....",
-             "..........kbbskkkkkkkbbsk.....",
-             "..........kbbsk.....kbbsk.....",
-             "..........kbbsk.....kbbsk.....",
-             "..........kbbkk.....ksssk.....",
-             "..........kssk.......kkkk.....",
-             "...........kk.........kk......",
-             "..............................",
-             ".............................."],
-            ["..............................",
-             ".......kkkk...................",
-             ".....kkbqbbk..................",
-             "....kbbbbbbbk...........kkk...",
-             "...kbbbbbbkkbk.........kbbbk..",
-             "..kkbbwbkssskk.........kbbbk..",
-             ".kmmmbebkssssk...kkk...kqbqk..",
-             "knnmmmbbksssskkkkbbbkkkkkkbk..",
-             "knmmmmbbkssskkqbbbbbqbbbkbk...",
-             ".kmmmbbbbkkkvbbbbbbbbbbbbbk...",
-             "..kkkkkbbbkkqvbbbbbbbbbbqbk...",
-             ".......kkbbbbvbbbbbbbbbbbbk...",
-             ".........kbbybbbbbqbbbbbbk....",
-             ".........kbbbbbbbbbbbbbbsk....",
-             ".........kbbsskkkkkkkkbbk.....",
-             ".........kbbkssk....ksbbk.....",
-             ".........kqbkssk....ksbbk.....",
-             ".........kbbkssk....ksbbk.....",
-             ".........ksskkkkk..kkkssk.....",
-             "..........kk..kk....kkkk......",
-             ".............................."],
-            [".......kkkk...................",
-             ".....kkbqbbk..................",
-             "....kbbbbbbbk...........kkk...",
-             "...kbbbbbbkkbk.........kbbbk..",
-             "..kkbbwbkssskk.........kbbbk..",
-             ".kmmmbebkssssk...kkk...kqbqk..",
-             "knnmmmbbksssskkkkbbbkkkkkkbk..",
-             "knmmmmbbkssskkqbbbbbqbbbkbk...",
-             ".kmmmbbbbkkkvbbbbbbbbbbbbbk...",
-             "..kkkkkbbbkkqvbbbbbbbbbbqbk...",
-             ".......kkbbbbvbbbbbbbbbbbbk...",
-             ".........kbbybbbbbqbbbbbbk....",
-             ".........kbbbbbbbbbbbbbbsk....",
-             "..........kbbskkkkkkkbbsk.....",
-             "..........kbbsk.....kbbsk.....",
-             "..........kbbsk.....kbbsk.....",
-             "..........ksssk.....kbbkk.....",
-             "...........kkkk.....kssk......",
-             "............kk.......kk.......",
-             "..............................",
-             ".............................."]
-        ],
-        run: [
-            [".....kkbqbbkk.................",
-             "....kbbbbbkkkk..........kkk...",
-             "...kbbbbbkssskk........kbbbk..",
-             "..kkbbwbbkssssk........kbbbk..",
-             ".kmmmbebbkssssk..kkk...kqbqk..",
-             "knnmmmbbbkssskkkkbbbkkkkkkbk..",
-             "knmmmmbbbbbkkkqbbbbbqbbbbbk...",
-             ".kmttbbbbbbbvbbbbbbbbbbbbbk...",
-             "..kttkkbbbkkqvbbbbbbbbbbqbqk..",
-             "...kk..kkbbbbvbbbbbbbbbbbbbk..",
-             ".........kbbybbbbbqbbbbbbbk...",
-             "........kbbbbbbbbbbbbbbbbk....",
-             ".........kbbskkkkkkkkkbbsk....",
-             "........kbbsk.........kbbsk...",
-             ".......kbbssk..........kbbk...",
-             ".......kbbssk..........kbbk...",
-             "......ksskkk............kssk..",
-             ".......kkkk..............kk...",
-             "..............................",
-             "..............................",
-             ".............................."],
-            ["..............................",
-             ".......kkkk...................",
-             ".....kkbqbbkk.................",
-             "....kbbbbbkkkk............kkk.",
-             "...kbbbbbkssskk..........kbbbk",
-             "..kkbbwbbkssssk..........kbbbk",
-             ".kmmmbebbkssssk..kkk.....kqbbk",
-             "knnmmmbbbkssskkkkbbbkkkk.kbkk.",
-             "knmmmmbbbbbkkkqbbbbbqbbbkbk...",
-             ".kmttbbbbbbbvbbbbbbbbbbbbbk...",
-             "..kttkkbbbkkqvbbbbbbbbbbqbk...",
-             "...kk..kkbbbbvbbbbbbbbbbbbk...",
-             ".........kbbybbbbbqbbbbbbk....",
-             ".........kbbbbbbbbbbbbbbsk....",
-             ".........kbbsskkkkkkkkbbsk....",
-             ".........kbbssk......kbbsk....",
-             ".........kqbsk........kbbsk...",
-             "........kbbssk........ksskk...",
-             "........ksskkk.........kkk....",
-             ".........kkkk.................",
-             ".............................."],
-            [".......kkkk...................",
-             ".....kkbqbbk..................",
-             "....kbbbbbbbk...........kkk...",
-             "...kbbbbbbkkbk.........kbbbk..",
-             "..kkbbwbkssskk.........kbbbk..",
-             ".kmmmbebkssssk...kkk...kqbqk..",
-             "knnmmmbbksssskkkkbbbkkkkkkbk..",
-             "knmmmmbbkssskkqbbbbbqbbbkbk...",
-             ".kmttbbbbkkkvbbbbbbbbbbbbbk...",
-             "..kttkkbbbkkqvbbbbbbbbbbqbk...",
-             "...kk..kkbbbbvbbbbbbbbbbbbk...",
-             ".........kbbybbbbbqbbbbbbk....",
-             ".........kbbbbbbbbbbbbbbsk....",
-             "..........kkbbkkkkkkqbssk.....",
-             "...........kbbsk...kbbssk.....",
-             "............kbbk...kbbsk......",
-             "............kssk..kbbssk......",
-             ".............kk...ksskkk......",
-             "...................kkkk.......",
-             "..............................",
-             ".............................."],
-            ["..............................",
-             ".......kkkk...................",
-             ".....kkbqbbk..................",
-             "....kbbbbbbbk.............kkk.",
-             "...kbbbbbbkkbk...........kbbbk",
-             "..kkbbwbkssskk...........kbbbk",
-             ".kmmmbebkssssk...kkk.....kqbbk",
-             "knnmmmbbksssskkkkbbbkkkk.kbkk.",
-             "knmmmmbbkssskkqbbbbbqbbbkbk...",
-             ".kmttbbbbkkkvbbbbbbbbbbbbbk...",
-             "..kttkkbbbkkqvbbbbbbbbbbqbk...",
-             "...kk..kkbbbbvbbbbbbbbbbbbk...",
-             ".........kbbybbbbbqbbbbbbk....",
-             ".........kbbbbbbbbbbbbbbsk....",
-             "..........kbbskkkkkkkbbsk.....",
-             "..........kbbk......kbbsk.....",
-             "..........kbbk......kbbssk....",
-             "..........kbbk......kbbssk....",
-             "..........kssk......ksskkk....",
-             "...........kk........kkkk.....",
-             ".............................."]
-        ],
-        hot: [
-            ["..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "...k...kkkkkk...k.............",
-             "..kskkkkkkkkkkkksk............",
-             ".kssskbbbbbbbbksssk...........",
-             "kssskbqbqbbbqbbksssk..........",
-             "ksssbbbbbbbbbbbbsssk..........",
-             "ksskbbewbbbbewbbkssk..........",
-             ".kskbbeebbbbeebbksk.kk........",
-             "..kkqbbbmnnmbbbbbkkkqbk.......",
-             "...kkbbmmnnmmbbkbbbbbbbk......",
-             "....kkbbmttmbbkbbbbbbbbk......",
-             "....kkkkkttkkbbbbbbbbbbk......",
-             "...kkbbbkbbbkbbbkbbbqbbk......",
-             "...kkbbbkbbbkbbbkbbbbbk.......",
-             "....kkkkkbbbbbqbbbqbqk........"],
-            ["..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "...k...kkkkkk...k.............",
-             "..kskkkkkkkkkkkksk............",
-             ".kssskbbbbbbbbksssk...........",
-             "kssskbqbqbbbqbbksssk..........",
-             "ksssbbbbbbbbbbbbsssk..........",
-             "ksskbbewbbbbewbbkssk..........",
-             ".kskbbeebbbbeebbksk.kk........",
-             "..kkqbbbmnnmbbbbbkkkqbk.......",
-             "...kkbbmmnnmmbbkbbbbbbbk......",
-             "....kkbbmttmbbkbbbbbbbbk......",
-             "....kkkkkkkkkbbbbbbbbbbk......",
-             "...kkbbbkbbbkbbbkbbbqbbk......",
-             "...kkbbbkbbbkbbbkbbbbbk.......",
-             "....kkkkkbbbbbqbbbqbqk........"]
-        ],
-        sleep: [
-            ["..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "..............................",
-             "...k...kkkkkk...k.............",
-             "..kskkkkkkkkkkkksk............",
-             ".kssskbbbbbbbbksssk...........",
-             "kssskbqbqbbbqbbksssk..........",
-             "ksssbbbbbbbbbbbbsssk..........",
-             "ksskbbbbbbbbbbbbkssk..........",
-             ".kskbbeebbbbeebbksk.kk........",
-             "..kkqbbbmnnmbbbbbkkkqbk.......",
-             "...kkbbmmnnmmbbkbbbbbbbk......",
-             "....kkbbmmmmbbkbbbbbbbbk......",
-             "....kkkkkkkkkbbbbbbbbbbk......",
-             "...kkbbbkbbbkbbbkbbbqbbk......",
-             "...kkbbbkbbbkbbbkbbbbbk.......",
-             "....kkkkkbbbbbqbbbqbqk........"]
-        ]
-    })
 
     // ---- Cat: k outline, b body, w eye, p nose/inner ear ----
     readonly property var catFrames: ({
@@ -324,52 +81,114 @@ GlassTile {
              "............kkk."]]
     })
 
-    // ---- Mood from the system ----
+    // ---- What the PC is doing ----
     readonly property real load: app.cpuUsage.value || 0
     readonly property real temp: app.cpuTempValue
-    readonly property string mood: temp >= 85 ? "hot" : load < 8 ? "sleep" : load < 45 ? "walk" : "run"
-    readonly property string caption: mood === "sleep" ? i18n("Napping · all quiet")
-        : mood === "walk" ? i18n("Strolling · CPU %1%", Math.round(load))
-        : mood === "run" ? i18n("Zoomies! · CPU %1%", Math.round(load))
-        : i18n("Too hot! · %1", app.tempText(temp))
+    readonly property string mood: temp >= 85 ? "hot" : load < 15 ? "calm" : load < 45 ? "busy" : "zoom"
+
+    // ---- What the pet is doing ----
+    // Poodle activities: [sprite row, frame ms, speed across the tile, weight per mood]
+    readonly property var acts: ({
+        sit:   { row: "sit",   ms: 320, speed: 0,     calm: 3, busy: 1, zoom: 0 },
+        wag:   { row: "wag",   ms: 200, speed: 0,     calm: 3, busy: 2, zoom: 0 },
+        sniff: { row: "sniff", ms: 280, speed: 0.004, calm: 3, busy: 1, zoom: 0 },
+        yawn:  { row: "yawn",  ms: 380, speed: 0,     calm: 1, busy: 0, zoom: 0 },
+        bow:   { row: "bow",   ms: 240, speed: 0,     calm: 2, busy: 2, zoom: 1 },
+        walk:  { row: "walk",  ms: 220, speed: 0.014, calm: 3, busy: 3, zoom: 0 },
+        hop:   { row: "walk",  ms: 160, speed: 0.022, calm: 0, busy: 3, zoom: 1 },
+        run:   { row: "run",   ms: 140, speed: 0.045, calm: 0, busy: 1, zoom: 3 },
+        spin:  { row: "run",   ms: 140, speed: 0,     calm: 0, busy: 0, zoom: 2 },
+        ball:  { row: "run",   ms: 140, speed: 0.04,  calm: 1, busy: 2, zoom: 2 },
+        sleep: { row: "sleep", ms: 0,   speed: 0,     calm: 2, busy: 0, zoom: 0 },
+        hot:   { row: "hot",   ms: 450, speed: 0 }
+    })
+    readonly property var sheetRows: ["walk", "run", "sit", "wag", "sniff", "bow", "yawn", "sleep", "hot"]
+    readonly property var sheetFrames: ({ walk: 4, run: 4, sit: 4, wag: 4, sniff: 4, bow: 4, yawn: 4, sleep: 2, hot: 2 })
+
+    property string activity: "sit"
+    property int remaining: 12           // frames (or seconds, asleep) until the next activity
+    function pickActivity() {
+        if (isCat) {   // the cat just follows the CPU
+            activity = mood === "hot" ? "hot" : load < 8 ? "sleep" : mood === "zoom" ? "run" : "walk";
+            remaining = 10;
+            return;
+        }
+        if (mood === "hot") { activity = "hot"; remaining = 20; return; }
+        var names = Object.keys(acts), total = 0;
+        names.forEach(function (n) { total += acts[n][mood] || 0; });
+        var r = Math.random() * total;
+        for (var i = 0; i < names.length; i++) {
+            r -= acts[names[i]][mood] || 0;
+            if (r < 0) { activity = names[i]; break; }
+        }
+        // A nap lasts 20-45 s; everything else 2-5 s worth of frames.
+        remaining = activity === "sleep" ? 20 + Math.floor(Math.random() * 25)
+             : Math.round((2000 + Math.random() * 3000) / Math.max(120, acts[activity].ms));
+        if (activity === "spin" || Math.random() < 0.3) facingLeft = !facingLeft;
+    }
+    // A big change in the PC wakes the pet and changes plans right away.
+    onMoodChanged: pickActivity()
+    onIsCatChanged: pickActivity()
+    Component.onCompleted: pickActivity()
+
+    readonly property bool asleep: activity === "sleep"
+    readonly property string caption: {
+        if (activity === "hot") return i18n("Too hot! · %1", app.tempText(temp));
+        if (isCat) return asleep ? i18n("Napping · all quiet") : activity === "run" ? i18n("Zoomies! · CPU %1%", Math.round(load)) : i18n("Strolling · CPU %1%", Math.round(load));
+        switch (activity) {
+        case "sleep": return i18n("Napping");
+        case "sit":   return i18n("Sitting pretty");
+        case "wag":   return i18n("Happy wiggles");
+        case "sniff": return i18n("Sniffing around");
+        case "yawn":  return i18n("Yawn…");
+        case "bow":   return i18n("Wants to play!");
+        case "walk":  return i18n("Trotting about");
+        case "hop":   return i18n("Bouncy · CPU %1%", Math.round(load));
+        case "spin":  return i18n("Chasing its tail!");
+        case "ball":  return i18n("Fetch!");
+        }
+        return i18n("Zoomies! · CPU %1%", Math.round(load));
+    }
 
     property int step: 0
     property real pos: 0.3          // 0..1 across the tile
     property bool facingLeft: true
+    property real ballPos: 0        // 0..1, the ball rolls ahead of the dog
 
-    // Frame timer only while awake.
     Timer {
-        // Every frame redraws the whole desktop window, so keep these low.
-        interval: tile.mood === "run" ? 200 : tile.mood === "hot" ? 500 : 333
-        running: tile.visible && tile.mood !== "sleep" && !app.editing
+        interval: tile.isCat ? (tile.activity === "run" ? 200 : tile.activity === "hot" ? 500 : 333)
+                             : Math.max(120, (tile.acts[tile.activity] || tile.acts.sit).ms)
+        running: tile.visible && !tile.asleep && !app.editing
         repeat: true
         onTriggered: {
             tile.step++;
-            // The dog lies down to pant; the cat keeps shuffling.
-            var speed = tile.mood === "run" ? 0.05 : tile.mood === "hot" ? (tile.isCat ? 0.008 : 0) : 0.016;
+            if (tile.activity === "spin" && tile.step % 2 === 0) tile.facingLeft = !tile.facingLeft;
+            var speed = tile.isCat ? (tile.activity === "run" ? 0.05 : tile.activity === "hot" ? 0.008 : 0.016)
+                                   : (tile.acts[tile.activity] || tile.acts.sit).speed;
             tile.pos += tile.facingLeft ? -speed : speed;
             if (tile.pos < 0) { tile.pos = 0; tile.facingLeft = false; }
             if (tile.pos > 1) { tile.pos = 1; tile.facingLeft = true; }
+            if (--tile.remaining <= 0) tile.pickActivity();
         }
     }
-    // Sleeping: just the Zzz, on the shared tick.
-    Connections { target: app; function onTickChanged() { if (tile.mood === "sleep") tile.step++; } }
+    // Asleep: breathe and drift the Zzz on the shared tick; wake when rested.
+    Connections {
+        target: app
+        function onTickChanged() {
+            if (!tile.asleep || !tile.visible) return;
+            tile.step++;
+            if (--tile.remaining <= 0) tile.pickActivity();
+        }
+    }
 
-    readonly property var frames: isCat ? catFrames : dogFrames
-    // Each mood is a list of frames played in a loop; the cat has no hot pose.
-    readonly property var cycle: frames[mood] || frames.walk
-    readonly property var frame: cycle[step % cycle.length]
-    readonly property int cols: frame[0].length
-    readonly property int rows: frame.length
-
-    // The dog keeps its own coat in every theme; the cat wears the theme.
-    readonly property var dogColors: ({ k: "#4a2c17", b: "#e0a46a", q: "#d5965c", s: "#c27f45", c: "#f8e6cc",
-                                        m: "#f0c590", e: "#1a1110", w: "#ffffff", n: "#1a1110", g: "#6b5a50",
-                                        t: "#f28ba8", v: "#9b7fe0", y: "#f5c518" })
+    // ---- Cat frames (text) ----
+    readonly property var catCycle: catFrames[activity === "hot" ? "walk" : activity] || catFrames.walk
+    readonly property var frame: catCycle[step % catCycle.length]
+    readonly property int cols: isCat ? frame[0].length : 32
+    readonly property int rows: isCat ? frame.length : 25
     readonly property color bodyColor: app.accent("pet")
     readonly property color outline: dark ? "#0b0b0f" : "#1f1f24"
     function colorFor(ch) {
-        if (!isCat) return dogColors[ch] || "transparent";
         switch (ch) {
         case "k": return outline;
         case "b": return bodyColor;
@@ -380,17 +199,23 @@ GlassTile {
         return "transparent";
     }
 
+    // ---- Poodle frame (a cell of the sprite sheet) ----
+    readonly property string dogRow: (acts[activity] || acts.sit).row
+    readonly property int dogCol: step % sheetFrames[dogRow]
+    // Hop: a little arc every 4 frames.
+    readonly property real lift: activity === "hop" ? [0, 2, 3, 2][step % 4] : 0
+
     title: i18n("Pet")
     subtitle: caption
     accent: app.accent("pet")
     accent2: app.accent2("pet")
-    level: mood === "sleep" ? 0.15 : mood === "walk" ? 0.4 : 0.8
+    level: asleep ? 0.15 : mood === "calm" ? 0.35 : mood === "busy" ? 0.6 : 0.85
 
     Item {
         id: stage
         anchors.fill: parent
 
-        readonly property real px: Math.max(2, Math.floor(Math.min(width / (tile.cols + 6), (height - tile.u) / (tile.rows + 1))))
+        readonly property real px: Math.max(2, Math.floor(Math.min(width / (tile.cols + 8), (height - tile.u * 0.5) / (tile.rows + 1))))
         readonly property real spriteW: px * tile.cols
         readonly property real spriteH: px * tile.rows
 
@@ -398,22 +223,51 @@ GlassTile {
         Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
-            y: cat.y + stage.spriteH
+            y: stage.height - stage.px
             height: Math.max(1, stage.px / 2)
             color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.15)
         }
 
+        // The ball, for fetch: rolls and bounces ahead of the dog.
+        Rectangle {
+            visible: tile.activity === "ball" && !tile.isCat
+            width: stage.px * 4; height: width
+            radius: tile.radius > 0 ? width / 2 : 0
+            color: "#ef4444"
+            border.width: Math.max(1, stage.px / 2)
+            border.color: "#7f1d1d"
+            x: Math.max(0, Math.min(stage.width - width, pet.x + (tile.facingLeft ? -width * 1.5 : stage.spriteW + width * 0.5)))
+            y: stage.height - stage.px - height - stage.px * [0, 3, 5, 3][tile.step % 4]
+        }
+
         Item {
-            id: cat
+            id: pet
             width: stage.spriteW
             height: stage.spriteH
             x: (stage.width - width) * tile.pos
-            y: stage.height - height - stage.px
-            // Sprites face left; mirror when walking right.
-            transform: Scale { origin.x: cat.width / 2; xScale: tile.facingLeft || tile.mood === "sleep" || (tile.mood === "hot" && !tile.isCat) ? 1 : -1 }
+            y: stage.height - height - stage.px - tile.lift * stage.px
+            // Sprites face left; mirror when heading right. Lying poses face you.
+            transform: Scale { origin.x: pet.width / 2; xScale: tile.facingLeft || tile.asleep || tile.activity === "hot" ? 1 : -1 }
 
+            // Poodle: show one cell of the sheet by sliding the sheet inside a
+            // clipped box (no image reloads, no per-pixel items).
+            Item {
+                anchors.fill: parent
+                visible: !tile.isCat
+                clip: true
+                Image {
+                    source: "../images/poodle.png"
+                    smooth: false
+                    width: sourceSize.width * stage.px
+                    height: sourceSize.height * stage.px
+                    x: -tile.dogCol * 32 * stage.px
+                    y: -tile.sheetRows.indexOf(tile.dogRow) * 25 * stage.px
+                }
+            }
+
+            // Cat: drawn square by square from the text frames.
             Repeater {
-                model: tile.cols * tile.rows
+                model: tile.isCat ? tile.cols * tile.rows : 0
                 Rectangle {
                     required property int index
                     readonly property int cx: index % tile.cols
@@ -426,9 +280,9 @@ GlassTile {
                     visible: color.a > 0          // empty pixels draw nothing
                 }
             }
-            // Sweat drop when hot (bobs with the step). The dog pants instead.
+            // Cat's sweat drop when hot.
             Rectangle {
-                visible: tile.mood === "hot" && tile.isCat
+                visible: tile.activity === "hot" && tile.isCat
                 x: stage.px * 7; y: stage.px * (tile.step % 2 ? 0 : 1)
                 width: stage.px; height: stage.px * 2
                 color: "#7dd3fc"
@@ -438,10 +292,10 @@ GlassTile {
         // Zzz while napping, drifting up one step per second.
         PlasmaComponents.Label {
             textFormat: Text.PlainText
-            visible: tile.mood === "sleep"
+            visible: tile.asleep
             text: ["z", "zZ", "zZz"][tile.step % 3]
-            x: cat.x + stage.spriteW * 0.6
-            y: cat.y - stage.px * (2 + tile.step % 3)
+            x: pet.x + stage.spriteW * 0.6
+            y: pet.y + stage.spriteH * (tile.isCat ? 0 : 0.3) - stage.px * (2 + tile.step % 3)
             color: tile.accent
             font.pixelSize: stage.px * 4
             font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family

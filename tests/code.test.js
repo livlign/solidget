@@ -138,12 +138,26 @@ test("pet sprites are well formed", () => {
     const frames = [...pet.matchAll(/\[((?:\s*"[^"]*",?)+)\]/g)]
         .map((m) => [...m[1].matchAll(/"([^"]*)"/g)].map((r) => r[1]))
         .filter((rows) => rows[0].length > 5);
-    assert.ok(frames.length >= 16, "found " + frames.length + " frames");
+    assert.ok(frames.length >= 5, "found " + frames.length + " cat frames");
     frames.forEach((rows, i) => {
         assert.ok(rows.every((r) => r.length === rows[0].length), "frame " + i + " has uneven rows");
         assert.ok(rows.every((r) => /^[.kbqscmewngtvypd]+$/.test(r)), "frame " + i + " uses an unknown color");
     });
     for (const mood of ["walk", "run", "sleep"]) assert.ok(new RegExp("\\b" + mood + ": \\[").test(pet), "no " + mood + " frames");
+});
+test("poodle sprite sheet matches the tile", () => {
+    const pet = read("ui/PetTile.qml");
+    const rows = JSON.parse(pet.match(/sheetRows: (\[[^\]]+\])/)[1]);
+    const counts = JSON.parse(pet.match(/sheetFrames: \(\{([^}]+)\}\)/)[1].replace(/(\w+):/g, '"$1":').replace(/^/, "{").concat("}"));
+    const tool = fs.readFileSync(path.join(root, "..", "..", "tools", "poodle.py"), "utf8");
+    assert.deepStrictEqual(rows, JSON.parse(tool.match(/MOODS = (\[[^\]]+\])/)[1]), "row order differs from tools/poodle.py");
+    // PNG size from its header: width and height at bytes 16-23.
+    const png = fs.readFileSync(path.join(root, "images", "poodle.png"));
+    assert.strictEqual(png.readUInt32BE(16), 32 * Math.max(...Object.values(counts)));
+    assert.strictEqual(png.readUInt32BE(20), 25 * rows.length);
+    rows.forEach((r) => assert.ok(counts[r] >= 1, "no frame count for " + r));
+    // Every activity points at a real row.
+    for (const m of pet.matchAll(/row: "(\w+)"/g)) assert.ok(rows.includes(m[1]), "unknown row " + m[1]);
 });
 test("every tile has a QML file and a name", () => {
     const files = fs.readdirSync(path.join(root, "ui"));

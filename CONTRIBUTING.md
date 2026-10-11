@@ -98,3 +98,4 @@ Then upload the file to the KDE Store: see [docs/kde-store.md](docs/kde-store.md
 | `package/contents/config/main.xml` | Every saved setting |
 | `tests/` | All checks; `run.sh` runs them |
 | `tools/package.sh` | Builds the `.plasmoid` file |
+| `tools/poodle.py` | Draws the poodle sprite sheet (`images/poodle.png`) |
