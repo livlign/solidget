@@ -5,6 +5,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
 import "../code/layout.js" as Bento
+import "../code/palette.js" as Palette
 
 // Side sheet over the live dashboard. Every change applies and saves
 // immediately, so the board behind it is the preview.
@@ -77,6 +78,78 @@ GlassTile {
                 QQC2.ToolTip.text: i18n("Drag tiles to move them, drag a corner to resize")
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+            }
+
+            // ---- Appearance ----
+            SectionLabel { text: i18n("Appearance") }
+            Flow {
+                Layout.fillWidth: true
+                spacing: Kirigami.Units.smallSpacing
+                Repeater {
+                    model: Palette.LOOKS
+                    PlasmaComponents.Button {
+                        required property var modelData
+                        text: modelData.name
+                        checkable: true
+                        checked: panel.app.styleId === modelData.style && panel.app.themeId === modelData.theme
+                        onClicked: panel.app.applyLook(modelData.style, modelData.theme)
+                    }
+                }
+            }
+            Choice {
+                label: i18n("Style")
+                options: Palette.STYLE_ORDER.map(function (k) { return { value: k, text: Palette.STYLES[k].name }; })
+                current: panel.app.styleId
+                onPicked: (v) => Plasmoid.configuration.style = v
+            }
+            PlasmaComponents.Label { text: i18n("Theme"); Layout.topMargin: Kirigami.Units.smallSpacing }
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: Kirigami.Units.smallSpacing
+                rowSpacing: Kirigami.Units.smallSpacing
+                Repeater {
+                    model: Palette.THEME_ORDER
+                    QQC2.AbstractButton {
+                        id: swatch
+                        required property string modelData
+                        readonly property var th: Palette.THEMES[modelData]
+                        readonly property bool current: panel.app.themeId === modelData
+                        Layout.fillWidth: true
+                        implicitHeight: Kirigami.Units.gridUnit * 2.2
+                        hoverEnabled: true
+                        onClicked: Plasmoid.configuration.theme = modelData
+                        background: Rectangle {
+                            radius: Kirigami.Units.cornerRadius
+                            color: swatch.th.body || panel.app.look.body
+                            border.width: swatch.current ? 2 : 1
+                            border.color: swatch.current ? Kirigami.Theme.highlightColor
+                                : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, swatch.hovered ? 0.4 : 0.15)
+                        }
+                        contentItem: RowLayout {
+                            spacing: Kirigami.Units.smallSpacing
+                            Row {
+                                Layout.leftMargin: Kirigami.Units.smallSpacing
+                                spacing: 2
+                                Repeater {
+                                    model: ["cpu", "gpu", "memory", "processes"]
+                                    Rectangle {
+                                        required property string modelData
+                                        width: Kirigami.Units.gridUnit * 0.55; height: width; radius: width / 2
+                                        color: Palette.accentPair(swatch.modelData, modelData)[0]
+                                    }
+                                }
+                            }
+                            PlasmaComponents.Label {
+                                text: swatch.th.name
+                                color: swatch.th.text || panel.app.plasmaText
+                                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+                }
             }
 
             // ---- Placement ----

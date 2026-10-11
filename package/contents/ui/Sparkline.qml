@@ -18,6 +18,7 @@ Item {
     property color colorEnd: color
     property color color2: "#f472b6"
     property real lineWidth: Math.max(1.5, height / 40)
+    property bool glow: true
 
     implicitHeight: Kirigami.Units.gridUnit * 2.5
 
@@ -66,7 +67,7 @@ Item {
         // Glow + line, main series
         ShapePath {
             fillColor: "transparent"
-            strokeColor: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, 0.16)
+            strokeColor: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, chart.glow ? 0.16 : 0)
             strokeWidth: chart.lineWidth * 4
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
@@ -83,7 +84,7 @@ Item {
         // Second series
         ShapePath {
             fillColor: "transparent"
-            strokeColor: Qt.rgba(chart.color2.r, chart.color2.g, chart.color2.b, 0.16)
+            strokeColor: Qt.rgba(chart.color2.r, chart.color2.g, chart.color2.b, chart.glow ? 0.16 : 0)
             strokeWidth: chart.lineWidth * 4
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap

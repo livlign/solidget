@@ -10,6 +10,10 @@ customized right inside the widget — no hunting through widget galleries.
 
 - **Aurora glass design** – frosted tiles with soft color glows that brighten
   with load, gradient ring gauges, thin oversized numbers that count smoothly.
+- **Styles × themes** – 4 styles (Glass, Flat, Clear, Pixel) for shape and
+  material, 9 color themes (Aurora, Glacier Mint, Sandstone, Ember Dusk, Deep
+  Lagoon, Plum Velvet, Moss Lantern, Ink & Paper, Lotus Pond) or *Follow
+  Plasma*, and one-click looks like *Retro Terminal* (Pixel + Moss Lantern).
 - **Fills any space** – a bento layout engine sizes tiles to the space they
   get: a small corner card, a sidebar, or a whole spare monitor, landscape or
   portrait. Tile size: Auto, Compact, Comfortable, Large or Huge.
@@ -17,6 +21,9 @@ customized right inside the widget — no hunting through widget galleries.
 - **12 tiles** – Clock & date, PC specs (copy to clipboard), CPU, GPU, Core
   heatmap, Top apps, Memory, Temperatures, Network, Power & fans (spinning
   fans!), Storage, Battery.
+- **Private by default** – computer name, network name, IP and weather
+  location are hidden unless you turn that off, so screenshots are safe to share.
+- **Your units** – °C/°F everywhere, GiB or GB, MB/s or Mbps.
 - **Detects your hardware** – no GPU tile without a GPU, no battery tile on a desktop.
 - **Arrange by hand** – hover, click the pencil: drag tiles anywhere on the
   grid (empty cells included), drag a tile's corner to resize it, hide tiles

@@ -11,17 +11,17 @@
       each preset a tile order and preferred sizes per orientation.
 
 ## Appearance
-- [ ] More **styles** (how tiles are built): Glass (current), Flat, Transparent
+- [x] More **styles** (how tiles are built): Glass (current), Flat, Transparent
       (macOS-like: light blur, no card, minimal chrome), Pixel (square corners,
       pixel font, stepped bars), and more.
-- [ ] **Themes** (colors), fewer than 10 to start. Names must be our own, not
+- [x] **Themes** (colors), fewer than 10 to start. Names must be our own, not
       borrowed from popular themes (no Dracula, Tokyo Night, Nord, …).
       Draft names to refine:
       Aurora (current), Glacier Mint (light, cool), Sandstone (light, warm),
       Ember Dusk (dark, warm), Deep Lagoon (dark, teal), Plum Velvet (dark,
       purple), Moss Lantern (dark, green/amber), Ink & Paper (black & white),
       Lotus Pond (light, pink/green).
-- [ ] Decide: one setting or two? Proposal below.
+- [x] Decide: one setting or two? → two (Style + Theme) plus one-click Looks, as proposed below.
 
 ### Style vs theme: proposal
 Keep them as **two independent settings**, shown together in one

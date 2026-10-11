@@ -43,8 +43,11 @@ GlassTile {
             value: tile.value
             accent: tile.accent
             accent2: tile.accent2
+            glow: tile.glowOn
+            roundCaps: tile.look ? tile.look.roundCaps : true
 
             BigNumber {
+                family: tile.numberFamily
                 anchors.centerIn: parent
                 value: tile.value
                 text: tile.valueText
@@ -79,6 +82,7 @@ GlassTile {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.topMargin: tile.u * 0.3
+                glow: tile.glowOn
                 values: tile.history || []
                 maxValue: tile.historyMax
                 color: tile.accent

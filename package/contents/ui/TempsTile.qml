@@ -13,12 +13,12 @@ GlassTile {
         { label: i18n("SSD"), value: app.nvmeTemp.value || 0 }
     ].filter(function (s) { return s.value > 0; })
     readonly property real hottest: sources.reduce(function (m, s) { return Math.max(m, s.value); }, 0)
-    readonly property color hotColor: Palette.heat(Palette.tempLevel(hottest))
+    readonly property color hotColor: app.tempColor(hottest)
 
     title: i18n("Temperatures")
     subtitle: hottest >= 85 ? i18n("Running hot") : hottest >= 70 ? i18n("Warm") : i18n("Cool")
     accent: hotColor
-    accent2: Palette.heat(Math.max(0, Palette.tempLevel(hottest) - 0.3))
+    accent2: app.heat(Math.max(0, Palette.tempLevel(hottest) - 0.3))
     level: Palette.tempLevel(hottest)
 
     GridLayout {
@@ -28,6 +28,7 @@ GlassTile {
         rowSpacing: tile.u * 0.5
 
         BigNumber {
+                family: tile.numberFamily
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
             value: app.tempValue(tile.hottest)
             unit: app.tempUnit
@@ -46,6 +47,8 @@ GlassTile {
                     label: modelData.label
                     celsius: modelData.value
                     valueText: app.tempText(modelData.value)
+                    hotColor: app.tempColor(modelData.value)
+                    coolColor: app.heat(0)
                 }
             }
         }

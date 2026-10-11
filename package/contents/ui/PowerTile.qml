@@ -15,8 +15,8 @@ GlassTile {
 
     title: i18n("Power & fans")
     subtitle: wide && app.specs.gpus && app.specs.gpus.length ? i18n("GPU board power") : ""
-    accent: Palette.accent("power")
-    accent2: Palette.accent2("power")
+    accent: app.accent("power")
+    accent2: app.accent2("power")
     level: Math.min(1, watts / 200)
 
     GridLayout {
@@ -34,6 +34,7 @@ GlassTile {
                 font.pixelSize: big.size * 0.6
             }
             BigNumber {
+                family: tile.numberFamily
                 id: big
                 value: tile.watts
                 unit: "W"

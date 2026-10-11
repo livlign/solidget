@@ -9,13 +9,13 @@ GaugeTile {
 
     title: i18n("GPU")
     subtitle: gpu ? gpu.name : ""
-    accent: Palette.accent("gpu")
-    accent2: Palette.accent2("gpu")
+    accent: app.accent("gpu")
+    accent2: app.accent2("gpu")
     value: app.gpuUsage.value || 0
     history: app.gpuHistory.values
     details: [
         { label: i18n("VRAM"), value: app.bytesText(app.gpuVramUsed.value) + " / " + app.bytesText(app.gpuVramTotal.value, 0) },
-        { label: i18n("Temperature"), value: app.tempText(app.gpuTemp.value), dot: Palette.heat(Palette.tempLevel(app.gpuTemp.value)) },
+        { label: i18n("Temperature"), value: app.tempText(app.gpuTemp.value), dot: app.tempColor(app.gpuTemp.value) },
         { label: i18n("Power"), value: app.gpuWatts > 0 ? Math.round(app.gpuWatts) + " W" : "–" }
     ]
 }

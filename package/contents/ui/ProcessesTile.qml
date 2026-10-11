@@ -21,8 +21,8 @@ GlassTile {
 
     title: i18n("Top apps")
     subtitle: i18n("by CPU")
-    accent: Palette.accent("processes")
-    accent2: Palette.accent2("processes")
+    accent: app.accent("processes")
+    accent2: app.accent2("processes")
     level: topApps.length ? Math.min(1, topApps[0].cpu / 25) : 0.2
 
     Process.ApplicationDataModel {

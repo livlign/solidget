@@ -27,8 +27,8 @@ GlassTile {
 
     title: i18n("Cores")
     subtitle: count ? i18n("%1 threads", count) : ""
-    accent: Palette.accent("cores")
-    accent2: Palette.heat(Math.min(1, app.cpuUsage.value / 60))
+    accent: app.accent("cores")
+    accent2: app.heat(Math.min(1, app.cpuUsage.value / 60))
     level: app.cpuUsage.value / 100
 
     Item {
@@ -59,7 +59,7 @@ GlassTile {
                 Rectangle {
                     anchors.fill: parent
                     radius: parent.radius
-                    color: Palette.heat(cell.load / 100)
+                    color: app.heat(cell.load / 100)
                     opacity: 0.12 + Math.min(1, cell.load / 100) * 0.85
                     Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
                     Behavior on color { ColorAnimation { duration: 250 } }

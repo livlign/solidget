@@ -9,8 +9,8 @@ GlassTile {
     id: tile
     required property var app
 
-    readonly property color downColor: Palette.accent("network")
-    readonly property color upColor: Palette.accent2("network")
+    readonly property color downColor: app.accent("network")
+    readonly property color upColor: app.accent2("network")
 
     title: i18n("Network")
     subtitle: app.shownNetwork
@@ -51,6 +51,7 @@ GlassTile {
                         font.weight: Font.DemiBold
                     }
                     BigNumber {
+                        family: tile.numberFamily
                         text: parts.n
                         unit: parts.unit
                         size: Math.min(tile.u * 2.6, tile.height * 0.16)
@@ -68,6 +69,7 @@ GlassTile {
             maxValue: 0
             minAutoMax: 64 * 1024
             sqrtScale: true
+            glow: tile.glowOn
             color: tile.downColor
             colorEnd: tile.downColor
             color2: tile.upColor

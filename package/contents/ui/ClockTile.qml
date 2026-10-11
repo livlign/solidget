@@ -13,7 +13,9 @@ GlassTile {
 
     readonly property var w: app.weather
     readonly property bool hasWeather: w.enabled && w.ready
-    readonly property var mood: hasWeather ? w.mood(w.code, w.isDay) : [Palette.accent("clock"), Palette.accent2("clock")]
+    // Sky-tinted glow on the default themes; other themes keep their own colors.
+    readonly property bool skyMood: app.themeId === "plasma" || app.themeId === "aurora"
+    readonly property var mood: hasWeather && skyMood ? w.mood(w.code, w.isDay) : [app.accent("clock"), app.accent2("clock")]
 
     property date now: new Date()
     readonly property bool twelveHour: Qt.locale().timeFormat(Locale.ShortFormat).toLowerCase().indexOf("ap") >= 0
@@ -71,8 +73,9 @@ GlassTile {
                     readonly property real px: Math.max(Kirigami.Units.gridUnit,
                         Math.min(timeBlock.height * 0.66, timeBlock.width / (tile.hhmm.length * 0.62 + (tile.ampm ? 1 : 0))))
                     text: tile.hhmm
+                    font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
                     font.pixelSize: px
-                    font.weight: Font.ExtraLight
+                    font.weight: tile.numberFamily ? Font.Normal : Font.ExtraLight
                     font.letterSpacing: -px * 0.04
                     font.features: { "tnum": 1 }
                 }
@@ -114,6 +117,7 @@ GlassTile {
                 Layout.alignment: Qt.AlignVCenter
                 spacing: 0
                 BigNumber {
+                family: tile.numberFamily
                     text: tile.temp(tile.w.temp)
                     unit: tile.w.fahrenheit ? "F" : "C"
                     size: tile.weatherTempSize

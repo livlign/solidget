@@ -9,6 +9,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.ksysguard.sensors as Sensors
 import "../code/layout.js" as Bento
 import "../code/format.js" as Fmt
+import "../code/palette.js" as Palette
 
 PlasmoidItem {
     id: root
@@ -363,6 +364,39 @@ PlasmoidItem {
     }
     readonly property real gpuWatts: gpuPowerSysfs > 0 ? gpuPowerSysfs : (gpuPower.value || 0)
 
+    // ---- Appearance: style (shape/material) x theme (colors) -------------
+
+    readonly property string styleId: Palette.STYLES[Plasmoid.configuration.style] ? Plasmoid.configuration.style : "glass"
+    readonly property string themeId: Palette.THEMES[Plasmoid.configuration.theme] ? Plasmoid.configuration.theme : "plasma"
+    // Everything a tile needs to draw itself, in one object.
+    readonly property var look: {
+        var st = Palette.STYLES[styleId];
+        var th = Palette.THEMES[themeId];
+        var dark = th.dark === null ? Kirigami.Theme.backgroundColor.hslLightness < 0.5 : th.dark;
+        return {
+            style: styleId, theme: themeId, dark: dark,
+            body: th.body || (dark ? "#12141f" : "#ffffff"),
+            text: th.text || "",
+            bodyAlpha: st.bodyAlpha === null ? (dark ? 0.66 : 0.72)
+                     : typeof st.bodyAlpha === "object" ? (dark ? st.bodyAlpha.dark : st.bodyAlpha.light)
+                     : st.bodyAlpha,
+            radius: st.radius, glow: st.glow, shadow: st.shadow, border: st.border,
+            highlight: st.highlight, roundCaps: st.roundCaps, mono: st.mono
+        };
+    }
+    // Plasma's own colors, read here where nothing overrides them.
+    readonly property color plasmaText: Kirigami.Theme.textColor
+    readonly property color boardText: look.text !== "" ? look.text : plasmaText
+    function accent(id) { return Palette.accentPair(themeId, id)[0]; }
+    function accent2(id) { return Palette.accentPair(themeId, id)[1]; }
+    function heat(t) { return Palette.heatFor(themeId, t); }
+    function tempColor(c) { return heat(Palette.tempLevel(c)); }
+    function vendorColor(v) { return Palette.vendorColor(themeId, v); }
+    function applyLook(styleKey, themeKey) {
+        Plasmoid.configuration.style = styleKey;
+        Plasmoid.configuration.theme = themeKey;
+    }
+
     // ---- Units & privacy --------------------------------------------------
     // Every tile formats through these, so one setting changes the whole board.
 
@@ -467,6 +501,10 @@ PlasmoidItem {
 
             Item {
                 id: board
+                Kirigami.Theme.inherit: false
+                Kirigami.Theme.textColor: root.boardText
+                Kirigami.Theme.disabledTextColor: Qt.rgba(root.boardText.r, root.boardText.g, root.boardText.b, 0.55)
+                Kirigami.Theme.backgroundColor: root.look.body
                 width: scroll.width
                 height: Math.max(scroll.height, plan.rows * (plan.cellH + gap) - gap)
 
@@ -755,16 +793,16 @@ PlasmoidItem {
         }
     }
 
-    Component { id: clockTile;     ClockTile     { app: root } }
-    Component { id: specsTile;     SpecsTile     { app: root } }
-    Component { id: cpuTile;       CpuTile       { app: root } }
-    Component { id: gpuTile;       GpuTile       { app: root } }
-    Component { id: memoryTile;    MemoryTile    { app: root } }
-    Component { id: tempsTile;     TempsTile     { app: root } }
-    Component { id: networkTile;   NetworkTile   { app: root } }
-    Component { id: coresTile;     CoresTile     { app: root } }
-    Component { id: processesTile; ProcessesTile { app: root } }
-    Component { id: powerTile;     PowerTile     { app: root } }
-    Component { id: diskTile;      DiskTile      { app: root } }
-    Component { id: batteryTile;   BatteryTile   { app: root } }
+    Component { id: clockTile;     ClockTile     { app: root; look: root.look } }
+    Component { id: specsTile;     SpecsTile     { app: root; look: root.look } }
+    Component { id: cpuTile;       CpuTile       { app: root; look: root.look } }
+    Component { id: gpuTile;       GpuTile       { app: root; look: root.look } }
+    Component { id: memoryTile;    MemoryTile    { app: root; look: root.look } }
+    Component { id: tempsTile;     TempsTile     { app: root; look: root.look } }
+    Component { id: networkTile;   NetworkTile   { app: root; look: root.look } }
+    Component { id: coresTile;     CoresTile     { app: root; look: root.look } }
+    Component { id: processesTile; ProcessesTile { app: root; look: root.look } }
+    Component { id: powerTile;     PowerTile     { app: root; look: root.look } }
+    Component { id: diskTile;      DiskTile      { app: root; look: root.look } }
+    Component { id: batteryTile;   BatteryTile   { app: root; look: root.look } }
 }

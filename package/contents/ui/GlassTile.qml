@@ -5,17 +5,27 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 
-// Aurora glass card: translucent body, soft drop shadow, and two blurred
-// color glows whose strength follows `level` (0..1), e.g. current load.
+// The card every tile is built on. `look` (from main.qml) picks the style:
+// Glass = translucent body, drop shadow and color glows that follow `level`
+// (0..1, e.g. current load); Flat, Clear and Pixel drop or change those.
 Item {
     id: tile
+
+    property var look: null
+    // Defaults reproduce Glass on the Plasma colors when no look is given.
+    readonly property bool glowOn: look ? look.glow : true
+    readonly property bool shadowOn: look ? look.shadow : true
+    readonly property bool highlightOn: look ? look.highlight : true
+    readonly property int borderWidth: look ? look.border : 1
+    readonly property string numberFamily: look && look.mono ? "monospace" : ""
+    readonly property color bodyColor: look ? look.body : (dark ? "#12141f" : "#ffffff")
 
     property string title
     property string subtitle
     property color accent: "#38bdf8"
     property color accent2: "#6366f1"
     property real level: 0.3
-    property real bodyOpacity: dark ? 0.66 : 0.72
+    property real bodyOpacity: look ? look.bodyAlpha : (dark ? 0.66 : 0.72)
     property bool showHeader: true
     default property alias content: body.data
 
@@ -26,8 +36,8 @@ Item {
     readonly property bool wide: width > height * 1.6
     readonly property bool tall: height > width * 1.4
     readonly property bool roomy: height > Kirigami.Units.gridUnit * 11
-    readonly property bool dark: Kirigami.Theme.backgroundColor.hslLightness < 0.5
-    readonly property real radius: Math.min(Kirigami.Units.gridUnit * 1.2, Math.min(width, height) * 0.12)
+    readonly property bool dark: look ? look.dark : Kirigami.Theme.backgroundColor.hslLightness < 0.5
+    readonly property real radius: Math.min(Kirigami.Units.gridUnit * (look ? look.radius : 1.2), Math.min(width, height) * 0.12)
 
     property real shownLevel: level
     Behavior on shownLevel { NumberAnimation { duration: 900; easing.type: Easing.OutCubic } }
@@ -35,7 +45,7 @@ Item {
     // Slow breathing when the tile is working hard.
     property real breath: 0
     SequentialAnimation on breath {
-        running: tile.level > 0.85 && tile.visible
+        running: tile.glowOn && tile.level > 0.85 && tile.visible
         loops: Animation.Infinite
         NumberAnimation { to: 1; duration: 1600; easing.type: Easing.InOutSine }
         NumberAnimation { to: 0; duration: 1600; easing.type: Easing.InOutSine }
@@ -43,6 +53,7 @@ Item {
     }
 
     RectangularShadow {
+        visible: tile.shadowOn
         anchors.fill: card
         offset.y: Kirigami.Units.smallSpacing * 1.5
         radius: tile.radius
@@ -56,13 +67,14 @@ Item {
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
 
-        readonly property real glowA: (tile.dark ? 0.10 : 0.07) + tile.shownLevel * (tile.dark ? 0.38 : 0.22) + tile.breath * 0.08
+        readonly property real glowA: !tile.glowOn ? 0
+            : (tile.dark ? 0.10 : 0.07) + tile.shownLevel * (tile.dark ? 0.38 : 0.22) + tile.breath * 0.08
 
         // Body
         ShapePath {
             strokeWidth: 0
             strokeColor: "transparent"
-            fillColor: tile.dark ? Qt.rgba(0.07, 0.08, 0.12, tile.bodyOpacity) : Qt.rgba(1, 1, 1, tile.bodyOpacity)
+            fillColor: Qt.rgba(tile.bodyColor.r, tile.bodyColor.g, tile.bodyColor.b, tile.bodyOpacity)
             PathRectangle { width: card.width; height: card.height; radius: tile.radius }
         }
         // Primary glow, top-left
@@ -91,19 +103,26 @@ Item {
             }
             PathRectangle { width: card.width; height: card.height; radius: tile.radius }
         }
-        // Hairline border, tinted by the accent as load rises.
+        // Border: a hairline for Glass/Clear, a solid frame for Pixel.
         ShapePath {
             fillColor: "transparent"
-            strokeWidth: 1
-            strokeColor: tile.dark
-                ? Qt.rgba(1, 1, 1, 0.07 + tile.shownLevel * 0.05)
+            strokeWidth: tile.borderWidth
+            strokeColor: tile.borderWidth === 0 ? "transparent"
+                : tile.borderWidth > 1 ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.45)
+                : tile.dark ? Qt.rgba(1, 1, 1, 0.07 + tile.shownLevel * 0.05)
                 : Qt.rgba(0, 0, 0, 0.08)
-            PathRectangle { x: 0.5; y: 0.5; width: card.width - 1; height: card.height - 1; radius: tile.radius }
+            joinStyle: ShapePath.MiterJoin
+            PathRectangle {
+                x: tile.borderWidth / 2; y: tile.borderWidth / 2
+                width: card.width - tile.borderWidth; height: card.height - tile.borderWidth
+                radius: tile.radius
+            }
         }
     }
 
     // Light catching the top edge of the glass.
     Rectangle {
+        visible: tile.highlightOn
         anchors.top: parent.top
         anchors.topMargin: 1
         anchors.horizontalCenter: parent.horizontalCenter
@@ -130,7 +149,7 @@ Item {
             Rectangle {
                 Layout.preferredWidth: tile.u * 0.45
                 Layout.preferredHeight: Layout.preferredWidth
-                radius: width / 2
+                radius: tile.radius > 0 ? width / 2 : 0
                 gradient: Gradient {
                     GradientStop { position: 0; color: tile.accent }
                     GradientStop { position: 1; color: tile.accent2 }
@@ -139,6 +158,7 @@ Item {
             PlasmaComponents.Label {
                 id: titleLabel
                 text: tile.title
+                font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.78)
                 font.weight: Font.DemiBold
                 font.capitalization: Font.AllUppercase

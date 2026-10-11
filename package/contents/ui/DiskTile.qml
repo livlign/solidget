@@ -7,8 +7,8 @@ GaugeTile {
 
     title: i18n("Storage")
     subtitle: app.diskTotal.value > 0 ? app.bytesText(app.diskTotal.value, 0) : ""
-    accent: Palette.accent("disk")
-    accent2: Palette.accent2("disk")
+    accent: app.accent("disk")
+    accent2: app.accent2("disk")
     value: app.diskTotal.value > 0 ? app.diskUsed.value / app.diskTotal.value * 100 : 0
     details: [
         { label: i18n("Free"), value: app.bytesText(app.diskTotal.value - app.diskUsed.value) },

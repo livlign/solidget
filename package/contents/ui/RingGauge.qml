@@ -13,6 +13,8 @@ Item {
     property color accent: "#38bdf8"
     property color accent2: "#6366f1"
     property real thickness: Math.max(3, Math.min(width, height) * 0.075)
+    property bool glow: true        // soft halo under the arc (Glass)
+    property bool roundCaps: true   // false = square ends (Pixel)
     default property alias content: center.data
 
     property real shown: value
@@ -40,7 +42,7 @@ Item {
             fillColor: "transparent"
             strokeColor: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.09)
             strokeWidth: gauge.thickness
-            capStyle: ShapePath.RoundCap
+            capStyle: gauge.roundCaps ? ShapePath.RoundCap : ShapePath.FlatCap
             PathAngleArc {
                 centerX: gauge.cx; centerY: gauge.cy
                 radiusX: gauge.r; radiusY: gauge.r
@@ -50,7 +52,7 @@ Item {
         // Glow under the value arc
         ShapePath {
             fillColor: "transparent"
-            strokeColor: Qt.rgba(gauge.accent2.r, gauge.accent2.g, gauge.accent2.b, gauge.frac > 0.002 ? 0.18 : 0)
+            strokeColor: Qt.rgba(gauge.accent2.r, gauge.accent2.g, gauge.accent2.b, gauge.glow && gauge.frac > 0.002 ? 0.18 : 0)
             strokeWidth: gauge.thickness * 2.6
             capStyle: ShapePath.RoundCap
             PathAngleArc {
@@ -91,14 +93,14 @@ Item {
 
     // Rounded caps for the value band
     Rectangle {
-        visible: gauge.frac > 0.002
+        visible: gauge.roundCaps && gauge.frac > 0.002
         width: gauge.thickness; height: width; radius: width / 2
         x: gauge.cx + gauge.r * Math.cos(gauge.startDeg * Math.PI / 180) - width / 2
         y: gauge.cy + gauge.r * Math.sin(gauge.startDeg * Math.PI / 180) - height / 2
         color: gauge.accent
     }
     Rectangle {
-        visible: gauge.frac > 0.002
+        visible: gauge.roundCaps && gauge.frac > 0.002
         width: gauge.thickness; height: width; radius: width / 2
         x: gauge.cx + gauge.r * Math.cos(gauge.endRad) - width / 2
         y: gauge.cy + gauge.r * Math.sin(gauge.endRad) - height / 2

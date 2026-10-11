@@ -13,6 +13,7 @@ Row {
     property real size: Kirigami.Units.gridUnit * 2.5
     property color color: Kirigami.Theme.textColor
     property bool animated: true
+    property string family: ""      // "monospace" for the Pixel style
 
     property real shown: value
     Behavior on shown { enabled: big.animated; NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
@@ -23,8 +24,9 @@ Row {
         id: number
         text: big.text !== "" ? big.text : (isNaN(big.shown) ? "–" : big.shown.toFixed(big.decimals))
         color: big.color
+        font.family: big.family || Kirigami.Theme.defaultFont.family
         font.pixelSize: big.size
-        font.weight: Font.Light
+        font.weight: big.family ? Font.Normal : Font.Light
         font.letterSpacing: -big.size * 0.03
         font.features: { "tnum": 1 }
     }

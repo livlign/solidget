@@ -17,8 +17,8 @@ GlassTile {
 
     title: app.shownHostname
     subtitle: s.system ? s.system.os : ""
-    accent: s.cpu && Palette.VENDOR[s.cpu.vendor] ? Palette.VENDOR[s.cpu.vendor] : Palette.accent("specs")
-    accent2: gpu && Palette.VENDOR[gpu.vendor] ? Palette.VENDOR[gpu.vendor] : Palette.accent2("specs")
+    accent: s.cpu && app.vendorColor(s.cpu.vendor) ? app.vendorColor(s.cpu.vendor) : app.accent("specs")
+    accent2: gpu && app.vendorColor(gpu.vendor) ? app.vendorColor(gpu.vendor) : app.accent2("specs")
     level: 0.45
 
     function memoryLine() {
@@ -109,7 +109,7 @@ GlassTile {
                 spacing: tile.su * 0.7
 
                 Rectangle {
-                    readonly property color vc: Palette.VENDOR[hero.modelData.vendor] || tile.accent
+                    readonly property color vc: app.vendorColor(hero.modelData.vendor) || tile.accent
                     Layout.preferredWidth: badge.implicitWidth + tile.su * 0.9
                     Layout.preferredHeight: tile.nameSize * 1.25
                     Layout.alignment: Qt.AlignTop

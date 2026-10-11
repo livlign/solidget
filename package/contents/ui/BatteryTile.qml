@@ -8,8 +8,8 @@ GaugeTile {
 
     title: i18n("Battery")
     subtitle: bat.status || ""
-    accent: (bat.percent || 0) <= 15 ? "#f43f5e" : Palette.accent("battery")
-    accent2: (bat.percent || 0) <= 15 ? "#f97316" : Palette.accent2("battery")
+    accent: (bat.percent || 0) <= 15 ? "#f43f5e" : app.accent("battery")
+    accent2: (bat.percent || 0) <= 15 ? "#f97316" : app.accent2("battery")
     value: bat.percent || 0
     details: [
         { label: i18n("Status"), value: bat.status || "–" }

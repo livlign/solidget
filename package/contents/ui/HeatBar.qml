@@ -12,6 +12,8 @@ ColumnLayout {
     property string label
     property real celsius: 0              // drives the color ramp
     property string valueText: Fmt.temp(celsius)   // shown text, in the user's unit
+    property color hotColor: Palette.heat(Palette.tempLevel(celsius))
+    property color coolColor: Palette.heat(0)
     property real u: Kirigami.Units.gridUnit
 
     readonly property real frac: Math.max(0, Math.min(1, celsius / 100))
@@ -29,7 +31,7 @@ ColumnLayout {
         }
         PlasmaComponents.Label {
             text: bar.valueText
-            color: Palette.heat(Palette.tempLevel(bar.celsius))
+            color: bar.hotColor
             font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, bar.u * 0.9)
             font.weight: Font.DemiBold
             font.features: { "tnum": 1 }
@@ -47,8 +49,8 @@ ColumnLayout {
             Behavior on width { NumberAnimation { duration: 700; easing.type: Easing.OutCubic } }
             gradient: Gradient {
                 orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: Palette.heat(0) }
-                GradientStop { position: 1; color: Palette.heat(Palette.tempLevel(bar.celsius)) }
+                GradientStop { position: 0; color: bar.coolColor }
+                GradientStop { position: 1; color: bar.hotColor }
             }
         }
     }

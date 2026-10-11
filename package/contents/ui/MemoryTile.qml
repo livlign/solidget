@@ -7,8 +7,8 @@ GaugeTile {
 
     title: i18n("Memory")
     subtitle: app.memTotal.value > 0 ? app.bytesText(app.memTotal.value, 0) : ""
-    accent: Palette.accent("memory")
-    accent2: Palette.accent2("memory")
+    accent: app.accent("memory")
+    accent2: app.accent2("memory")
     value: app.memTotal.value > 0 ? app.memUsed.value / app.memTotal.value * 100 : 0
     details: [
         { label: i18n("In use"), value: app.bytesText(app.memUsed.value) },
