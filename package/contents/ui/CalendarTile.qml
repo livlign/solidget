@@ -9,7 +9,8 @@ GlassTile {
     required property var app
 
     property date today: new Date()
-    Connections { target: app; function onTickChanged() { if (app.tick % 60 === 0) tile.today = new Date(); } }
+    // Swap the date only when the day changes, so the grid isn't rebuilt every minute.
+    Connections { target: app; function onTickChanged() { var d = new Date(); if (d.getDate() !== tile.today.getDate()) tile.today = d; } }
 
     readonly property int firstDow: Qt.locale().firstDayOfWeek          // 0 = Sunday
     readonly property var cells: {

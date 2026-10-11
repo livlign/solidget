@@ -139,6 +139,7 @@ GlassTile {
                     }
                     PlasmaComponents.Label {
                         text: hero.modelData.name
+                        textFormat: Text.PlainText
                         font.pixelSize: tile.nameSize
                         font.weight: Font.DemiBold
                         Layout.fillWidth: true

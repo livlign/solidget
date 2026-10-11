@@ -9,7 +9,8 @@ GlassTile {
     required property var app
 
     property date now: new Date()
-    Connections { target: app; function onTickChanged() { if (app.tick % 10 === 0) tile.now = new Date(); } }
+    // Redraw only when the minute turns.
+    Connections { target: app; function onTickChanged() { var d = new Date(); if (d.getMinutes() !== tile.now.getMinutes()) tile.now = d; } }
     readonly property bool twelveHour: Qt.locale().timeFormat(Locale.ShortFormat).toLowerCase().indexOf("ap") >= 0
     readonly property int localOffset: -now.getTimezoneOffset()
 
@@ -18,6 +19,11 @@ GlassTile {
     accent2: app.accent2("worldclock")
     level: 0.3
 
+    // +7 h, -3:30 h (India, Newfoundland and a few others are off by half hours)
+    function diffText(min) {
+        var a = Math.abs(min), h = Math.floor(a / 60), m = a % 60;
+        return (min > 0 ? "+" : "-") + i18n("%1 h", m ? h + ":" + ("0" + m).slice(-2) : h);
+    }
     function timeIn(zone) {
         var off = app.tzOffsets[zone];
         if (off === undefined) return null;
@@ -42,7 +48,7 @@ GlassTile {
                 readonly property date t: tile.timeIn(modelData.zone) || tile.now
                 readonly property bool known: app.tzOffsets[modelData.zone] !== undefined
                 readonly property bool day: t.getHours() >= 6 && t.getHours() < 18
-                readonly property int diffH: known ? Math.round((app.tzOffsets[modelData.zone] - tile.localOffset) / 60) : 0
+                readonly property int diffMin: known ? app.tzOffsets[modelData.zone] - tile.localOffset : 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: tile.u * 0.5
@@ -57,12 +63,13 @@ GlassTile {
                     spacing: 0
                     PlasmaComponents.Label {
                         text: cityRow.modelData.name
+                        textFormat: Text.PlainText   // text from outside; never render it as HTML
                         font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize * 0.9, tile.u * 0.9)
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
                     PlasmaComponents.Label {
-                        text: !cityRow.known ? "" : cityRow.diffH === 0 ? i18n("Same time") : (cityRow.diffH > 0 ? "+" : "") + i18n("%1 h", cityRow.diffH)
+                        text: !cityRow.known ? "" : cityRow.diffMin === 0 ? i18n("Same time") : tile.diffText(cityRow.diffMin)
                         opacity: 0.55
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.7)
                     }

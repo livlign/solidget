@@ -512,7 +512,7 @@ PlasmoidItem {
         names.forEach(function (n, i) {
             weatherModel.get("https://geocoding-api.open-meteo.com/v1/search?count=1&name=" + encodeURIComponent(n), function (d) {
                 var r = d && d.results && d.results[0];
-                results[i] = r && r.timezone ? r.name + "|" + r.timezone : null;
+                results[i] = r && r.timezone ? String(r.name).replace(/[;|]/g, " ") + "|" + r.timezone : null;
                 if (--pending === 0) Plasmoid.configuration.worldClocks = results.filter(Boolean).join(";");
             });
         });

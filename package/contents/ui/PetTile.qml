@@ -90,12 +90,13 @@ GlassTile {
 
     // Frame timer only while awake.
     Timer {
-        interval: tile.mood === "run" ? 125 : tile.mood === "hot" ? 400 : 280
+        // Every frame redraws the whole desktop window, so keep these low.
+        interval: tile.mood === "run" ? 200 : tile.mood === "hot" ? 500 : 333
         running: tile.visible && tile.mood !== "sleep" && !app.editing
         repeat: true
         onTriggered: {
             tile.step++;
-            var speed = tile.mood === "run" ? 0.035 : tile.mood === "hot" ? 0.006 : 0.014;
+            var speed = tile.mood === "run" ? 0.05 : tile.mood === "hot" ? 0.008 : 0.016;
             tile.pos += tile.facingLeft ? -speed : speed;
             if (tile.pos < 0) { tile.pos = 0; tile.facingLeft = false; }
             if (tile.pos > 1) { tile.pos = 1; tile.facingLeft = true; }
@@ -164,6 +165,7 @@ GlassTile {
                     width: stage.px
                     height: stage.px
                     color: tile.colorFor(tile.frame[cy].charAt(cx))
+                    visible: color.a > 0          // empty pixels draw nothing
                 }
             }
             // Sweat drop when hot (bobs with the step).

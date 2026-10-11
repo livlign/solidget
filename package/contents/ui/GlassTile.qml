@@ -178,6 +178,7 @@ Item {
             PlasmaComponents.Label {
                 id: titleLabel
                 text: tile.title
+                textFormat: Text.PlainText   // text from outside; never render it as HTML
                 font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.78)
                 font.weight: Font.DemiBold
@@ -190,6 +191,7 @@ Item {
             }
             PlasmaComponents.Label {
                 text: tile.subtitle
+                textFormat: Text.PlainText
                 // Drop the subtitle rather than truncate the title.
                 visible: text !== "" && titleLabel.implicitWidth + Math.min(implicitWidth, tile.u * 4) + tile.u * 2 < tile.width - tile.pad * 2
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.72)

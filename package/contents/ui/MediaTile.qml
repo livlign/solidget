@@ -30,7 +30,8 @@ GlassTile {
     Connections {
         target: app
         function onTickChanged() {
-            if (!tile.player || !tile.player.container) return;
+            // Paused or hidden: nothing moves, so skip the D-Bus round trip.
+            if (!tile.playing || !tile.visible || !tile.player.container) return;
             tile.player.container.updatePosition();
             tile.positionUs = tile.player.container.position || 0;
         }
@@ -125,6 +126,7 @@ GlassTile {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: tile.hasPlayer ? tile.player.track : ""
+                textFormat: Text.PlainText   // text from outside; never render it as HTML
                 font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.15)
                 font.weight: Font.DemiBold
                 font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
@@ -135,6 +137,7 @@ GlassTile {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: tile.hasPlayer ? (tile.player.artist || tile.player.identity || "") : ""
+                textFormat: Text.PlainText
                 opacity: 0.7
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.85)
                 elide: Text.ElideRight

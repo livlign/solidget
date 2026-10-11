@@ -177,8 +177,10 @@ def displays():
                 continue
             mode = next((m for m in o.get("modes", []) if m.get("id") == o.get("currentModeId")), None)
             if mode:
-                result.append({"name": o.get("name", ""), "width": mode["size"]["width"],
-                               "height": mode["size"]["height"],
+                w, h = mode["size"]["width"], mode["size"]["height"]
+                if o.get("rotation") in (2, 8):     # turned 90°: a portrait screen
+                    w, h = h, w
+                result.append({"name": o.get("name", ""), "width": w, "height": h,
                                "hz": round(mode.get("refreshRate", 0))})
     except ValueError:
         pass

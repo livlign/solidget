@@ -10,7 +10,7 @@ GlassTile {
 
     property date today: new Date()
     // Re-check after midnight, on the shared tick.
-    Connections { target: app; function onTickChanged() { if (app.tick % 60 === 0) tile.today = new Date(); } }
+    Connections { target: app; function onTickChanged() { var d = new Date(); if (d.getDate() !== tile.today.getDate()) tile.today = d; } }
     readonly property var q: Quotes.forDate(today)
 
     title: i18n("Quote of the day")

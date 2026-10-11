@@ -28,14 +28,17 @@ GlassTile {
             if (xhr.readyState !== XMLHttpRequest.DONE || xhr.status !== 200) return;
             try {
                 var img = JSON.parse(xhr.responseText).images[0];
-                // UHD version, falling back to the default size Bing returns.
+                // Only a plain path on bing.com ("@host/..." would turn the URL into another host).
+                if (!/^\/[A-Za-z0-9_.?=&%\/-]+$/.test(img.urlbase || "")) return;
+                // Full HD is plenty for a tile.
                 tile.imageUrl = "https://www.bing.com" + img.urlbase + "_1920x1080.jpg";
                 tile.caption = img.title || "";
                 var c = img.copyright || "";
                 var open = c.lastIndexOf("(");
                 tile.credit = open > 0 ? c.slice(open + 1, -1) : "";
                 if (!tile.caption) tile.caption = open > 0 ? c.slice(0, open).trim() : c;
-                tile.link = img.copyrightlink || "";
+                var link = img.copyrightlink || "";
+                tile.link = /^https:\/\/[^\s"']+$/.test(link) ? link : "";
                 tile.loadedDay = day;
             } catch (e) {}
         };
@@ -102,6 +105,7 @@ GlassTile {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: tile.caption
+                textFormat: Text.PlainText   // text from outside; never render it as HTML
                 color: "white"
                 font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.05)
                 font.weight: Font.DemiBold
@@ -111,6 +115,7 @@ GlassTile {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: tile.credit
+                textFormat: Text.PlainText
                 visible: text !== ""
                 color: "white"
                 opacity: 0.7

@@ -90,12 +90,14 @@ GlassTile {
         spacing: 0
 
         Repeater {
-            model: tile.topApps.slice(0, tile.maxRows)
+            // A count, not the array: rows stay alive between refreshes (no
+            // rebuilding icons and labels every 2 s) and their bars can glide.
+            model: Math.min(tile.maxRows, tile.topApps.length)
 
             RowLayout {
                 id: row
-                required property var modelData
                 required property int index
+                readonly property var modelData: tile.topApps[index] || ({ name: "", icon: "", cpu: 0, memText: "", cpuText: "" })
                 readonly property real share: tile.topApps.length && tile.topApps[0].cpu > 0 ? modelData.cpu / tile.topApps[0].cpu : 0
                 Layout.fillWidth: true
                 Layout.preferredHeight: tile.rowH
@@ -114,6 +116,7 @@ GlassTile {
                         Layout.fillWidth: true
                         PlasmaComponents.Label {
                             text: row.modelData.name
+                            textFormat: Text.PlainText   // text from outside; never render it as HTML
                             font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.lu * 0.85)
                             Layout.fillWidth: true
                             elide: Text.ElideRight

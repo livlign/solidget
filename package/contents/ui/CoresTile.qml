@@ -61,6 +61,7 @@ GlassTile {
                 Rectangle {
                     anchors.fill: parent
                     radius: parent.radius
+                    id: fill
                     color: app.heat(cell.load / 100)
                     opacity: 0.12 + Math.min(1, cell.load / 100) * 0.85
                     Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
@@ -73,7 +74,9 @@ GlassTile {
                     font.pixelSize: Math.min(cell.height * 0.32, cell.width * 0.26)
                     font.weight: Font.Medium
                     font.features: { "tnum": 1 }
-                    color: cell.load > 55 ? "#0b1020" : Kirigami.Theme.textColor
+                    // On a strong fill, pick dark or light text by how bright the fill is
+                    // (Ink & Paper fills busy cores near-black).
+                    color: cell.load <= 55 ? Kirigami.Theme.textColor : fill.color.hslLightness > 0.5 ? "#0b1020" : "#ffffff"
                     opacity: 0.85
                 }
             }

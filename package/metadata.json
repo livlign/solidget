@@ -6,7 +6,7 @@
         "Icon": "computer",
         "Category": "System Information",
         "License": "GPL-2.0-or-later",
-        "Version": "0.2.0",
+        "Version": "0.3.0",
         "Website": "https://github.com/livlign/solidget",
         "Authors": [
             { "Name": "Solidget contributors" }
