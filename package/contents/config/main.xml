@@ -60,6 +60,21 @@
     <entry name="maskSensitive" type="Bool">
       <default>true</default>
     </entry>
+    <!-- Sticky note text -->
+    <entry name="noteText" type="String">
+      <default></default>
+    </entry>
+    <!-- World clocks: "Name|IANA zone" separated by ";" -->
+    <entry name="worldClocks" type="String">
+      <default>London|Europe/London;New York|America/New_York;Tokyo|Asia/Tokyo</default>
+    </entry>
+    <!-- Focus timer lengths in minutes -->
+    <entry name="focusMinutes" type="Int">
+      <default>25</default>
+    </entry>
+    <entry name="breakMinutes" type="Int">
+      <default>5</default>
+    </entry>
     <entry name="placeRequest" type="String">
       <default></default>
     </entry>

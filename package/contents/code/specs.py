@@ -245,9 +245,28 @@ def battery():
     return {"present": False}
 
 
+def tz_offsets(zones):
+    """Current UTC offset in minutes for each IANA zone (DST-aware)."""
+    from datetime import datetime
+    try:
+        from zoneinfo import ZoneInfo
+    except ImportError:
+        return {}
+    out = {}
+    for z in zones:
+        try:
+            off = datetime.now(ZoneInfo(z)).utcoffset()
+            out[z] = int(off.total_seconds() // 60)
+        except Exception:
+            pass
+    return out
+
+
 if __name__ == "__main__":
     if sys.argv[1:] == ["battery"]:
         print(json.dumps(battery()))
+    elif sys.argv[1:2] == ["tz"]:
+        print(json.dumps(tz_offsets(sys.argv[2:])))
     else:
         print(json.dumps({
             "cpu": cpu(), "gpus": gpus(), "memory": memory(), "board": board(),

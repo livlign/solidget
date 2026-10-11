@@ -21,11 +21,20 @@ var SPANS = {
     battery:   [[1, 1], [2, 1]],
     cores:     [[2, 1], [2, 2], [3, 2]],
     processes: [[2, 2], [2, 3], [3, 3]],
-    power:     [[1, 1], [2, 1]]
+    power:     [[1, 1], [2, 1]],
+    pet:       [[2, 1], [2, 2], [3, 2]],
+    photo:     [[2, 2], [3, 2], [4, 2], [4, 3]],
+    media:     [[2, 1], [2, 2], [3, 2]],
+    calendar:  [[2, 2], [2, 3], [3, 3]],
+    quote:     [[2, 1], [3, 1], [2, 2]],
+    note:      [[1, 1], [2, 1], [2, 2]],
+    worldclock:[[2, 1], [2, 2]],
+    focus:     [[1, 1], [2, 1], [2, 2]]
 };
 
 // Who gets extra space first.
-var GROW_PRIORITY = ["clock", "cpu", "specs", "gpu", "network", "cores", "processes",
+var GROW_PRIORITY = ["clock", "photo", "cpu", "specs", "gpu", "network", "media", "calendar", "pet", "cores", "processes",
+                     "worldclock", "focus", "quote", "note",
                      "memory", "temps", "power", "disk", "battery"];
 
 // Target cell edge in grid units for each density setting.

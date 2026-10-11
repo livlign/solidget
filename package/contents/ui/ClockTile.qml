@@ -66,7 +66,7 @@ GlassTile {
                 PlasmaComponents.Label {
                     id: time
                     readonly property real px: Math.max(Kirigami.Units.gridUnit,
-                        Math.min(timeBlock.height * 0.66, timeBlock.width / (tile.hhmm.length * 0.62 + (tile.ampm ? 1 : 0))))
+                        Math.min(timeBlock.height * 0.56, timeBlock.width / (tile.hhmm.length * 0.62 + (tile.ampm ? 1 : 0))))
                     text: tile.hhmm
                     font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
                     font.pixelSize: px

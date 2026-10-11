@@ -17,7 +17,8 @@ PlasmoidItem {
     // ---- Tile catalogue -------------------------------------------------
 
     readonly property var allTiles: ["clock", "specs", "cpu", "gpu", "memory", "temps", "network",
-                                     "cores", "processes", "power", "disk", "battery"]
+                                     "cores", "processes", "power", "disk", "battery",
+                                     "pet", "photo", "media", "calendar", "quote", "note", "worldclock", "focus"]
     readonly property var tileInfo: ({
         clock:     { name: i18n("Clock & date"),  icon: "clock" },
         specs:     { name: i18n("PC specs"),      icon: "computer" },
@@ -30,17 +31,28 @@ PlasmoidItem {
         processes: { name: i18n("Top apps"),      icon: "view-process-system" },
         power:     { name: i18n("Power & fans"),  icon: "flash" },
         disk:      { name: i18n("Storage"),       icon: "drive-harddisk" },
-        battery:   { name: i18n("Battery"),       icon: "battery-080" }
+        battery:   { name: i18n("Battery"),       icon: "battery-080" },
+        pet:       { name: i18n("Desk pet"),      icon: "face-smile" },
+        photo:     { name: i18n("Photo of the day"), icon: "image-x-generic" },
+        media:     { name: i18n("Now playing"),   icon: "media-playback-start" },
+        calendar:  { name: i18n("Calendar & day"), icon: "view-calendar" },
+        quote:     { name: i18n("Quote of the day"), icon: "format-text-blockquote" },
+        note:      { name: i18n("Sticky note"),   icon: "knotes" },
+        worldclock:{ name: i18n("World clocks"),  icon: "preferences-system-time" },
+        focus:     { name: i18n("Focus timer"),   icon: "chronometer" }
     })
 
-    readonly property var presetIds: ["essentials", "everything", "showcase", "performance", "everyday", "minimal"]
+    readonly property var presetIds: ["essentials", "daily", "everything", "showcase", "performance", "everyday", "minimal"]
     readonly property var presets: ({
         essentials:  { name: i18n("Essentials"),  hint: i18n("Clock, your build and the vitals"),
                        tiles: ["clock", "specs", "cpu", "gpu", "memory", "temps", "network"],
                        portrait: ["clock", "specs", "cpu", "gpu", "temps", "memory", "network"] },
+        daily:       { name: i18n("Daily"),       hint: i18n("Photo, calendar, music, pet and your day"),
+                       tiles: ["clock", "photo", "calendar", "media", "pet", "worldclock", "quote", "focus", "note"],
+                       portrait: ["clock", "photo", "media", "calendar", "pet", "worldclock", "quote", "focus", "note"] },
         everything:  { name: i18n("Everything"),  hint: i18n("Every tile your PC supports — great full screen"),
-                       tiles: ["clock", "specs", "cpu", "gpu", "cores", "processes", "memory", "temps", "network", "power", "disk", "battery"],
-                       portrait: ["clock", "specs", "cpu", "gpu", "temps", "memory", "cores", "network", "processes", "power", "disk", "battery"] },
+                       tiles: ["clock", "photo", "specs", "cpu", "gpu", "pet", "cores", "processes", "memory", "temps", "network", "media", "calendar", "power", "disk", "battery", "worldclock", "focus", "quote", "note"],
+                       portrait: ["clock", "photo", "specs", "cpu", "gpu", "temps", "memory", "pet", "cores", "network", "media", "calendar", "processes", "power", "disk", "battery", "worldclock", "focus", "quote", "note"] },
         showcase:    { name: i18n("Showcase"),    hint: i18n("Your build front and center"),
                        tiles: ["specs", "cpu", "gpu", "temps", "power"] },
         performance: { name: i18n("Performance"), hint: i18n("For gaming and heavy work"),
@@ -356,6 +368,7 @@ PlasmoidItem {
             gpuHistory.push(gpuUsage.value);
             downHistory.push(netDown.value);
             upHistory.push(netUp.value);
+            root.focusTick();
             root.tick++;
         }
     }
@@ -475,6 +488,68 @@ PlasmoidItem {
         fahrenheit: root.useFahrenheit
     }
     readonly property alias weather: weatherModel
+
+    // ---- World clocks ---------------------------------------------------------
+    readonly property var worldClocks: (Plasmoid.configuration.worldClocks || "").split(";").map(function (x) {
+        var p = x.split("|");
+        return p.length === 2 && p[1].trim() ? { name: p[0].trim(), zone: p[1].trim() } : null;
+    }).filter(Boolean)
+    property var tzOffsets: ({})      // zone -> minutes from UTC (DST-aware, refreshed hourly)
+    P5Support.DataSource {
+        engine: "executable"
+        interval: 3600000
+        connectedSources: root.worldClocks.length
+            ? [root.helper + " tz " + root.worldClocks.map(function (c) { return "'" + c.zone.replace(/[^A-Za-z0-9_\/+-]/g, "") + "'"; }).join(" ")]
+            : []
+        onNewData: (source, data) => { try { root.tzOffsets = JSON.parse(data["stdout"]); } catch (e) {} }
+    }
+    // "London, New York" -> looks each name up once (Open-Meteo geocoding)
+    // and stores "Name|Zone" pairs.
+    function setWorldCities(text) {
+        var names = text.split(",").map(function (t) { return t.trim(); }).filter(Boolean).slice(0, 6);
+        if (!names.length) { Plasmoid.configuration.worldClocks = ""; return; }
+        var results = new Array(names.length), pending = names.length;
+        names.forEach(function (n, i) {
+            weatherModel.get("https://geocoding-api.open-meteo.com/v1/search?count=1&name=" + encodeURIComponent(n), function (d) {
+                var r = d && d.results && d.results[0];
+                results[i] = r && r.timezone ? r.name + "|" + r.timezone : null;
+                if (--pending === 0) Plasmoid.configuration.worldClocks = results.filter(Boolean).join(";");
+            });
+        });
+    }
+
+    // ---- Focus timer -----------------------------------------------------------
+    // Lives here (not in the tile) so it keeps running if the tile is hidden
+    // or the layout changes. Counts on the shared tick.
+    property string focusPhase: "focus"     // "focus" | "break"
+    property bool focusRunning: false
+    property int focusDone: 0
+    readonly property int focusLength: (focusPhase === "focus" ? Plasmoid.configuration.focusMinutes : Plasmoid.configuration.breakMinutes) * 60
+    property int focusRemaining: Plasmoid.configuration.focusMinutes * 60
+    function focusToggle() { focusRunning = !focusRunning; }
+    function focusReset() { focusRunning = false; focusPhase = "focus"; focusRemaining = Plasmoid.configuration.focusMinutes * 60; }
+    function focusSkip() {
+        if (focusPhase === "focus") { focusDone++; focusPhase = "break"; }
+        else focusPhase = "focus";
+        focusRemaining = focusLength;
+    }
+    function focusTick() {
+        if (!focusRunning) return;
+        if (--focusRemaining > 0) return;
+        notify(focusPhase === "focus" ? i18n("Focus session done") : i18n("Break over"),
+               focusPhase === "focus" ? i18n("Time for a %1-minute break.", Plasmoid.configuration.breakMinutes)
+                                      : i18n("Ready for another %1 minutes?", Plasmoid.configuration.focusMinutes));
+        focusSkip();
+    }
+    P5Support.DataSource {
+        id: notifier
+        engine: "executable"
+        onNewData: (source) => disconnectSource(source)
+    }
+    function notify(title, body) {
+        function q(t) { return "'" + String(t).replace(/'/g, "") + "'"; }
+        notifier.connectSource("notify-send -a Solidget -i chronometer " + q(title) + " " + q(body));
+    }
 
     // ---- Clipboard -------------------------------------------------------
 
@@ -724,6 +799,14 @@ PlasmoidItem {
                             case "power":     return powerTile;
                             case "disk":      return diskTile;
                             case "battery":   return batteryTile;
+                            case "pet":       return petTile;
+                            case "photo":     return photoTile;
+                            case "media":     return mediaTile;
+                            case "calendar":  return calendarTile;
+                            case "quote":     return quoteTile;
+                            case "note":      return noteTile;
+                            case "worldclock":return worldclockTile;
+                            case "focus":     return focusTile;
                             }
                             return null;
                         }
@@ -884,5 +967,13 @@ PlasmoidItem {
     Component { id: processesTile; ProcessesTile { app: root; look: root.look } }
     Component { id: powerTile;     PowerTile     { app: root; look: root.look } }
     Component { id: diskTile;      DiskTile      { app: root; look: root.look } }
+    Component { id: petTile;        PetTile        { app: root; look: root.look } }
+    Component { id: photoTile;      PhotoTile      { app: root; look: root.look } }
+    Component { id: mediaTile;      MediaTile      { app: root; look: root.look } }
+    Component { id: calendarTile;   CalendarTile   { app: root; look: root.look } }
+    Component { id: quoteTile;      QuoteTile      { app: root; look: root.look } }
+    Component { id: noteTile;       NoteTile       { app: root; look: root.look } }
+    Component { id: worldclockTile; WorldClockTile { app: root; look: root.look } }
+    Component { id: focusTile;      FocusTile      { app: root; look: root.look } }
     Component { id: batteryTile;   BatteryTile   { app: root; look: root.look } }
 }

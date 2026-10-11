@@ -19,9 +19,12 @@ customized right inside the widget — no hunting through widget galleries.
   get: a small corner card, a sidebar, or a whole spare monitor, landscape or
   portrait. Tile size: Auto, Compact, Comfortable, Large or Huge.
 - **One-click placement** – full screen, halves, quarters, sidebars, corner card.
-- **12 tiles** – Clock & date, PC specs (copy to clipboard), CPU, GPU, Core
-  heatmap, Top apps, Memory, Temperatures, Network, Power & fans (spinning
-  fans!), Storage, Battery.
+- **20 tiles** – system: Clock & weather, PC specs (copy to clipboard), CPU,
+  GPU, Core heatmap, Top apps, Memory, Temperatures, Network, Power & fans,
+  Storage, Battery. Everyday: Photo of the day (Bing), Now playing (any MPRIS
+  player, with controls), Calendar with sunrise/sunset and moon phase, a pixel
+  Desk pet that naps, strolls or sprints with your CPU load, World clocks,
+  Focus timer (with notifications), Quote of the day, Sticky note.
 - **Private by default** – computer name, network name, IP and weather
   location are hidden unless you turn that off, so screenshots are safe to share.
 - **Your units** – °C/°F everywhere, GiB or GB, MB/s or Mbps.

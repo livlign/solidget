@@ -772,6 +772,34 @@ GlassTile {
                 }
 
                 Section {
+                    title: i18n("World clocks")
+                    hint: i18n("Up to 6 cities, separated by commas. Each name is looked up once to find its time zone.")
+                    SField {
+                        Layout.fillWidth: true
+                        text: panel.app.worldClocks.map(function (c) { return c.name; }).join(", ")
+                        placeholder: i18n("London, New York, Tokyo")
+                        onEdited: (v) => panel.app.setWorldCities(v)
+                    }
+                }
+
+                Section {
+                    title: i18n("Focus timer")
+                    SettingRow {
+                        label: i18n("Focus / break")
+                        Segmented {
+                            options: [{ value: "25/5", text: "25 / 5" }, { value: "50/10", text: "50 / 10" }, { value: "15/3", text: "15 / 3" }]
+                            current: Plasmoid.configuration.focusMinutes + "/" + Plasmoid.configuration.breakMinutes
+                            onPicked: (v) => {
+                                var p = v.split("/");
+                                Plasmoid.configuration.focusMinutes = parseInt(p[0]);
+                                Plasmoid.configuration.breakMinutes = parseInt(p[1]);
+                                panel.app.focusReset();
+                            }
+                        }
+                    }
+                }
+
+                Section {
                     title: i18n("Units")
                     SettingRow {
                         label: i18n("Temperature")

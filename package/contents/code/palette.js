@@ -14,7 +14,15 @@ var ACCENTS = {
     battery:   ["#4ade80", "#22c55e"],
     cores:     ["#38bdf8", "#f43f5e"],
     processes: ["#f472b6", "#a78bfa"],
-    power:     ["#fbbf24", "#f97316"]
+    power:     ["#fbbf24", "#f97316"],
+    pet:       ["#fb923c", "#f472b6"],
+    photo:     ["#e0e7ff", "#a5b4fc"],
+    media:     ["#f472b6", "#a78bfa"],
+    calendar:  ["#34d399", "#38bdf8"],
+    quote:     ["#c4b5fd", "#f0abfc"],
+    note:      ["#fde047", "#fb923c"],
+    worldclock:["#38bdf8", "#818cf8"],
+    focus:     ["#f43f5e", "#fb923c"]
 };
 
 var VENDOR = { amd: "#ef4444", intel: "#3b82f6", nvidia: "#84cc16", apple: "#a3a3a3" };
@@ -97,7 +105,8 @@ var THEME_ORDER = ["plasma", "aurora", "glacier", "sandstone", "ember", "lagoon"
 
 // Which palette hue each tile uses (its second color is two steps along).
 var TILE_HUE = { cpu: 0, gpu: 1, memory: 2, network: 0, disk: 3, battery: 1, clock: 5,
-                 specs: 2, processes: 3, power: 4, cores: 0, temps: 4 };
+                 specs: 2, processes: 3, power: 4, cores: 0, temps: 4,
+                 pet: 4, photo: 5, media: 3, calendar: 1, quote: 2, note: 5, worldclock: 0, focus: 4 };
 
 function accentPair(themeId, id) {
     var t = THEMES[themeId];

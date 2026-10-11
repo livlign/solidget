@@ -120,7 +120,7 @@ QtObject {
         if (!enabled || isNaN(lat)) return;
         var url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat.toFixed(3) + "&longitude=" + lon.toFixed(3)
             + "&current=temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,wind_speed_10m"
-            + "&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=5&timezone=auto"
+            + "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&forecast_days=5&timezone=auto"
             + (fahrenheit ? "&temperature_unit=fahrenheit&wind_speed_unit=mph" : "");
         get(url, function (d) {
             if (!d || !d.current) { error = i18n("Weather unavailable"); return; }
@@ -133,7 +133,8 @@ QtObject {
             var days = [];
             for (var i = 0; d.daily && i < d.daily.time.length; i++)
                 days.push({ date: d.daily.time[i], code: d.daily.weather_code[i],
-                            max: d.daily.temperature_2m_max[i], min: d.daily.temperature_2m_min[i] });
+                            max: d.daily.temperature_2m_max[i], min: d.daily.temperature_2m_min[i],
+                            sunrise: d.daily.sunrise ? d.daily.sunrise[i] : "", sunset: d.daily.sunset ? d.daily.sunset[i] : "" });
             daily = days;
             error = "";
             ready = true;

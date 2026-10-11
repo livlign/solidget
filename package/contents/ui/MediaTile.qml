@@ -1,0 +1,195 @@
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls as QQC2
+import QtQuick.Effects
+import org.kde.kirigami as Kirigami
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.plasma.private.mpris as Mpris
+
+// Whatever is playing (Spotify, a browser tab, VLC, …) via Plasma's MPRIS
+// model, with cover art, progress and controls.
+GlassTile {
+    id: tile
+    required property var app
+
+    // The multiplexer exposes the "current" player as a single row.
+    property var player: null
+    Repeater {
+        model: Mpris.MultiplexerModel { }
+        delegate: Item {
+            required property var model
+            Component.onCompleted: tile.player = model
+            Component.onDestruction: if (tile.player === model) tile.player = null
+        }
+    }
+
+    readonly property bool hasPlayer: player !== null && (player.track || "") !== ""
+    readonly property bool playing: hasPlayer && player.playbackStatus === Mpris.PlaybackStatus.Playing
+    // Position: sampled on the shared tick (no continuous redraws).
+    property real positionUs: 0
+    Connections {
+        target: app
+        function onTickChanged() {
+            if (!tile.player || !tile.player.container) return;
+            tile.player.container.updatePosition();
+            tile.positionUs = tile.player.container.position || 0;
+        }
+    }
+    readonly property real lengthUs: hasPlayer ? (player.length || 0) : 0
+    function mmss(us) { var s = Math.max(0, Math.floor(us / 1e6)); return Math.floor(s / 60) + ":" + ("0" + s % 60).slice(-2); }
+
+    title: hasPlayer ? (player.identity || i18n("Now playing")) : i18n("Now playing")
+    accent: app.accent("media")
+    accent2: app.accent2("media")
+    level: playing ? 0.6 : 0.2
+
+    component CtlButton: QQC2.AbstractButton {
+        id: cb
+        property string iconName
+        property bool big: false
+        implicitWidth: (big ? 2.6 : 2) * Math.max(Kirigami.Units.gridUnit * 0.8, tile.u)
+        implicitHeight: implicitWidth
+        hoverEnabled: true
+        opacity: enabled ? 1 : 0.35
+        background: Rectangle {
+            radius: tile.radius > 0 ? width / 2 : 0
+            color: cb.big ? tile.accent : (cb.hovered ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.14) : "transparent")
+        }
+        contentItem: Kirigami.Icon {
+            source: cb.iconName
+            isMask: true
+            color: cb.big ? (tile.accent.hslLightness > 0.6 ? "#111111" : "#ffffff") : Kirigami.Theme.textColor
+            implicitWidth: cb.big ? Kirigami.Units.iconSizes.medium : Kirigami.Units.iconSizes.small
+            implicitHeight: implicitWidth
+        }
+    }
+
+    PlasmaComponents.Label {
+        anchors.centerIn: parent
+        visible: !tile.hasPlayer
+        text: i18n("Nothing playing")
+        opacity: 0.55
+        font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u)
+    }
+
+    GridLayout {
+        anchors.fill: parent
+        visible: tile.hasPlayer
+        columns: tile.width > tile.height * 1.2 ? 2 : 1
+        columnSpacing: tile.u
+        rowSpacing: tile.u * 0.5
+
+        // Cover art
+        Item {
+            id: art
+            readonly property real side: parent.columns === 2 ? Math.min(parent.height, parent.width * 0.42) : Math.min(parent.width, parent.height * 0.5)
+            Layout.preferredWidth: side
+            Layout.preferredHeight: side
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+            Rectangle {
+                id: artMask
+                anchors.fill: parent
+                radius: tile.radius > 0 ? Kirigami.Units.cornerRadius * 1.5 : 0
+                visible: false
+                layer.enabled: true
+            }
+            Rectangle {
+                anchors.fill: parent
+                radius: artMask.radius
+                color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.08)
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    width: parent.width * 0.4; height: width
+                    source: tile.hasPlayer ? (tile.player.iconName || "media-default-album") : "media-default-album"
+                    visible: cover.status !== Image.Ready
+                }
+            }
+            Image {
+                id: cover
+                anchors.fill: parent
+                source: tile.hasPlayer ? (tile.player.artUrl || "") : ""
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                visible: status === Image.Ready
+                layer.enabled: artMask.radius > 0
+                layer.effect: MultiEffect { maskEnabled: true; maskSource: artMask }
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: tile.u * 0.2
+
+            Item { Layout.fillHeight: true }
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                text: tile.hasPlayer ? tile.player.track : ""
+                font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.15)
+                font.weight: Font.DemiBold
+                font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
+                elide: Text.ElideRight
+                maximumLineCount: 2
+                wrapMode: Text.Wrap
+            }
+            PlasmaComponents.Label {
+                Layout.fillWidth: true
+                text: tile.hasPlayer ? (tile.player.artist || tile.player.identity || "") : ""
+                opacity: 0.7
+                font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.85)
+                elide: Text.ElideRight
+            }
+
+            // Progress
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: tile.lengthUs > 0
+                spacing: 2
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(3, tile.u * 0.22)
+                    radius: tile.radius > 0 ? height / 2 : 0
+                    color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.12)
+                    Rectangle {
+                        height: parent.height
+                        radius: parent.radius
+                        width: parent.width * Math.min(1, tile.positionUs / Math.max(1, tile.lengthUs))
+                        Behavior on width { NumberAnimation { duration: Kirigami.Units.longDuration } }
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0; color: tile.accent }
+                            GradientStop { position: 1; color: tile.accent2 }
+                        }
+                    }
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    PlasmaComponents.Label { text: tile.mmss(tile.positionUs); opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 } }
+                    Item { Layout.fillWidth: true }
+                    PlasmaComponents.Label { text: tile.mmss(tile.lengthUs); opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 } }
+                }
+            }
+
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: tile.u * 0.4
+                CtlButton {
+                    iconName: "media-skip-backward"
+                    enabled: tile.hasPlayer && tile.player.canGoPrevious
+                    onClicked: tile.player.container.Previous()
+                }
+                CtlButton {
+                    big: true
+                    iconName: tile.playing ? "media-playback-pause" : "media-playback-start"
+                    onClicked: tile.player.container.PlayPause()
+                }
+                CtlButton {
+                    iconName: "media-skip-forward"
+                    enabled: tile.hasPlayer && tile.player.canGoNext
+                    onClicked: tile.player.container.Next()
+                }
+            }
+            Item { Layout.fillHeight: true }
+        }
+    }
+}
