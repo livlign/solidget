@@ -68,6 +68,7 @@ GlassTile {
                     Behavior on color { ColorAnimation { duration: Kirigami.Units.longDuration } }
                 }
                 PlasmaComponents.Label {
+                    textFormat: Text.PlainText
                     anchors.centerIn: parent
                     visible: cell.width > tile.u * 2.2 && cell.height > tile.u * 1.4
                     text: Math.round(cell.load) + "%"

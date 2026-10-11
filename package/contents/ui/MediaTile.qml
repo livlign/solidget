@@ -66,6 +66,7 @@ GlassTile {
     }
 
     PlasmaComponents.Label {
+        textFormat: Text.PlainText
         anchors.centerIn: parent
         visible: !tile.hasPlayer
         text: i18n("Nothing playing")
@@ -108,7 +109,8 @@ GlassTile {
             Image {
                 id: cover
                 anchors.fill: parent
-                source: tile.hasPlayer ? (tile.player.artUrl || "") : ""
+                // Players hand us any URL; only load local files and web images.
+                source: tile.hasPlayer && /^(file|https?):\/\//.test(String(tile.player.artUrl || "")) ? tile.player.artUrl : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 visible: status === Image.Ready
@@ -167,9 +169,9 @@ GlassTile {
                 }
                 RowLayout {
                     Layout.fillWidth: true
-                    PlasmaComponents.Label { text: tile.mmss(tile.positionUs); opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 } }
+                    PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.positionUs); opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 } }
                     Item { Layout.fillWidth: true }
-                    PlasmaComponents.Label { text: tile.mmss(tile.lengthUs); opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 } }
+                    PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.lengthUs); opacity: 0.55; font.pixelSize: Kirigami.Theme.smallFont.pixelSize; font.features: { "tnum": 1 } }
                 }
             }
 

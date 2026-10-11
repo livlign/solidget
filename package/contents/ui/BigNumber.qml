@@ -22,6 +22,7 @@ Row {
 
     PlasmaComponents.Label {
         id: number
+        textFormat: Text.PlainText
         text: big.text !== "" ? big.text : (isNaN(big.shown) ? "–" : big.shown.toFixed(big.decimals))
         color: big.color
         font.family: big.family || Kirigami.Theme.defaultFont.family
@@ -32,6 +33,7 @@ Row {
         font.features: { "tnum": 1 }
     }
     PlasmaComponents.Label {
+        textFormat: Text.PlainText
         text: big.unit
         visible: text !== ""
         color: big.color

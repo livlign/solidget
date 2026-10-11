@@ -88,6 +88,7 @@ GlassTile {
     readonly property real nameSize: su * 1.55
 
     PlasmaComponents.Label {
+        textFormat: Text.PlainText
         visible: !tile.s.cpu
         text: i18n("Reading your hardware…")
         opacity: 0.6
@@ -119,6 +120,7 @@ GlassTile {
                     border.color: Qt.rgba(vc.r, vc.g, vc.b, 0.55)
                     PlasmaComponents.Label {
                         id: badge
+                        textFormat: Text.PlainText
                         anchors.centerIn: parent
                         text: (hero.modelData.vendor || "?").toUpperCase()
                         color: parent.vc
@@ -131,6 +133,7 @@ GlassTile {
                     Layout.fillWidth: true
                     spacing: 0
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         text: hero.modelData.kind
                         opacity: 0.55
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.su * 0.72)
@@ -146,6 +149,7 @@ GlassTile {
                         elide: Text.ElideRight
                     }
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         text: hero.modelData.detail
                         visible: text !== ""
                         opacity: 0.7
@@ -182,6 +186,7 @@ GlassTile {
                     Layout.preferredWidth: 1
                     spacing: 0
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         text: modelData.label
                         opacity: 0.55
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.su * 0.7)
@@ -189,6 +194,7 @@ GlassTile {
                         font.letterSpacing: tile.su * 0.06
                     }
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         text: modelData.value
                         font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize * 0.9, tile.su * 0.95)
                         font.weight: Font.Medium
@@ -196,6 +202,7 @@ GlassTile {
                         elide: Text.ElideRight
                     }
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         text: modelData.detail
                         visible: text !== ""
                         opacity: 0.6
@@ -212,6 +219,7 @@ GlassTile {
         RowLayout {
             Layout.fillWidth: true
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 text: app.uptime.value ? i18n("Up %1", Fmt.uptime(app.uptime.value)) : ""
                 opacity: 0.5
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.su * 0.7)

@@ -67,6 +67,7 @@ GlassTile {
             anchors.margins: panel.gap
             spacing: Kirigami.Units.smallSpacing
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 text: sec.title
                 visible: text !== ""
                 color: panel.pText
@@ -117,6 +118,7 @@ GlassTile {
                 Layout.preferredHeight: Kirigami.Units.iconSizes.small
             }
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 visible: b.text !== ""
                 text: b.text
                 color: b.filled ? panel.pOnAccent : panel.pText
@@ -174,6 +176,7 @@ GlassTile {
             onEditingFinished: fld.edited(text.trim())
         }
         PlasmaComponents.Label {
+            textFormat: Text.PlainText
             anchors.fill: input
             verticalAlignment: Text.AlignVCenter
             visible: input.text === "" && !input.activeFocus
@@ -242,7 +245,7 @@ GlassTile {
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 0
-            PlasmaComponents.Label { text: srow.label; color: panel.pText; Layout.fillWidth: true; elide: Text.ElideRight }
+            PlasmaComponents.Label { textFormat: Text.PlainText; text: srow.label; color: panel.pText; Layout.fillWidth: true; elide: Text.ElideRight }
             Hint { visible: srow.hint !== ""; text: srow.hint }
         }
         Item {
@@ -344,6 +347,7 @@ GlassTile {
                 Layout.fillWidth: true
                 spacing: 0
                 PlasmaComponents.Label {
+                    textFormat: Text.PlainText
                     text: card.text
                     color: panel.pText
                     font.family: panel.pFont || Kirigami.Theme.defaultFont.family
@@ -389,6 +393,7 @@ GlassTile {
                 Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
             }
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 text: i18n("Settings")
                 color: panel.pText
                 font.family: panel.pFont || Kirigami.Theme.defaultFont.family
@@ -511,6 +516,7 @@ GlassTile {
                                         }
                                     }
                                     PlasmaComponents.Label {
+                                        textFormat: Text.PlainText
                                         text: swatch.th.name
                                         color: swatch.th.text || panel.app.plasmaText
                                         font.pointSize: Kirigami.Theme.smallFont.pointSize
@@ -611,7 +617,7 @@ GlassTile {
                             onPicked: (v) => Plasmoid.configuration.orientation = v
                         }
                     }
-                    PlasmaComponents.Label { text: i18n("Tile size"); color: panel.pText; Layout.topMargin: Kirigami.Units.smallSpacing }
+                    PlasmaComponents.Label { textFormat: Text.PlainText; text: i18n("Tile size"); color: panel.pText; Layout.topMargin: Kirigami.Units.smallSpacing }
                     Segmented {
                         Layout.fillWidth: true
                         options: [
@@ -698,6 +704,7 @@ GlassTile {
                                     Layout.fillWidth: true
                                     spacing: 0
                                     PlasmaComponents.Label {
+                                        textFormat: Text.PlainText
                                         Layout.fillWidth: true
                                         text: panel.app.tileInfo[row.modelData].name
                                         color: panel.pText

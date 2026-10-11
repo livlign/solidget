@@ -45,6 +45,7 @@ GlassTile {
                     readonly property var parts: tile.split(modelData.rate)
                     spacing: 0
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         text: modelData.arrow + " " + modelData.label
                         color: modelData.color
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.75)

@@ -96,6 +96,11 @@ print(ws.length);")" || exit 1
     say "Placed: $where"
 }
 
+# Plasma widgets live in your own home folder. Running this with sudo would
+# install for root instead, and run Plasma scripts as root. Only the RAM
+# step uses sudo, and only for one read-only command (dmidecode).
+[[ $EUID -ne 0 ]] || die "Run this as yourself, not with sudo. It asks for your password only if needed."
+
 case "${1:-}" in
     --place)
         place_widget "${2:-}"

@@ -37,6 +37,10 @@ class Specs(unittest.TestCase):
         self.assertEqual(tz.get("Asia/Kolkata"), 330)   # half-hour offsets work
         self.assertNotIn("Not/AZone", tz)               # junk is skipped, not a crash
 
+    def test_time_zones_reject_paths_and_tricks(self):
+        bad = ["../../../../etc/passwd", "/etc/localtime", "Europe/../../x", "$(id)", "a b", "x" * 300]
+        self.assertEqual(run("tz", *bad), {})
+
     def test_gpu_power_file_is_a_sysfs_path(self):
         # main.qml runs `cat '<this path>'`, so it must never be anything else.
         path = run()["sensors"].get("gpuPowerFile", "")

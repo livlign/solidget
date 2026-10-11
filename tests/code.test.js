@@ -55,6 +55,29 @@ test("small helpers", () => {
     assert.strictEqual(F.uptime(3 * 86400 + 7200), "3d 2h");
 });
 
+// ---- shell.js --------------------------------------------------------------
+// Every command the widget runs is built with Shell.command(). Feed it
+// hostile strings and run the result through a real shell: each one must
+// come back as exactly one, unchanged argument, and nothing may execute.
+const Sh = load("shell.js", ["quote", "command"]);
+test("shell quoting survives hostile input", () => {
+    const { execFileSync } = require("child_process");
+    const evil = [
+        "plain", "", " ", "it's", "'", "''", "a'b'c", "$(touch /tmp/solidget-pwned)", "`id`",
+        "; rm -rf ~", "&& echo hi", "| cat", "> /tmp/x", "\\", "\\'", "\n", "line1\nline2",
+        "--help", "-rf", "*", "~", "$HOME", "${IFS}", "\t", "émoji 🎉", "\"double\""
+    ];
+    const cmd = Sh.command(["printf", "%s\\0"].concat(evil));
+    const out = execFileSync("/bin/sh", ["-c", cmd], { encoding: "utf8" }).split("\0").slice(0, -1);
+    assert.deepStrictEqual(out, evil);
+    assert.ok(!fs.existsSync("/tmp/solidget-pwned"), "a command ran!");
+});
+test("main.qml builds commands only with Shell.command", () => {
+    const main = read("ui/main.qml");
+    assert.ok(!/connectSource\(\s*"/.test(main), "connectSource with a raw string");
+    assert.ok(!/connectedSources:\s*(?:[^\n]*\?\s*)?\[\s*"/.test(main), "connectedSources with a raw string");
+});
+
 // ---- quotes.js -------------------------------------------------------------
 const Q = load("quotes.js", ["QUOTES", "forDate"]);
 test("quotes: one per day, always text + author", () => {

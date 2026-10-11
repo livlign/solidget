@@ -29,6 +29,7 @@ GlassTile {
             spacing: tile.u * 0.3
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 text: "⚡"
                 color: tile.accent
                 font.pixelSize: big.size * 0.6
@@ -48,6 +49,7 @@ GlassTile {
             spacing: tile.u * 0.4
 
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 visible: tile.fans.length === 0
                 text: i18n("No fan sensors found")
                 opacity: 0.5
@@ -74,6 +76,7 @@ GlassTile {
                         Layout.preferredHeight: Layout.preferredWidth
                     }
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         text: fanRow.modelData.label
                         opacity: 0.6
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.8)
@@ -81,6 +84,7 @@ GlassTile {
                         elide: Text.ElideRight
                     }
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         text: rpm.value > 0 ? Math.round(rpm.value) + " RPM" : i18n("Idle")
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.85)
                         font.weight: Font.Medium

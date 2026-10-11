@@ -21,11 +21,17 @@ ALLOWED_HOSTS = {
     "www.bing.com",                  # photo of the day
 }
 
-# Shell commands the widget may start (the start of each command string).
-ALLOWED_COMMANDS = {
-    "root.helper",     # python3 specs.py [battery | tz <zones>]
-    "\"cat '",        # read the GPU power file from sysfs
-    "\"notify-send ",  # focus timer notifications
+# Programs the widget may start. Commands must be built with
+# Shell.command(["program", args...]) (quotes every argument) or
+# root.helper([...]) (our own specs.py).
+ALLOWED_PROGRAMS = {
+    "cat",          # read the GPU power file from sysfs
+    "notify-send",  # focus timer notifications
+}
+
+# Links the widget may open in the browser (each is checked to be https first).
+SAFE_LINKS = {
+    "tile.link",    # PhotoTile: Bing's "learn more" link, https only
 }
 
 # Patterns that are never OK in the package.
@@ -67,17 +73,39 @@ for folder, _, files in os.walk(ROOT):
             expr = (m.group(1) or m.group(2) or "").strip()
             if expr in ("", "[]", "source") or expr.startswith("disconnect"):
                 continue
-            # The command is the first item of each list, or the connectSource() argument.
-            starts = re.findall(r"\[\s*(root\.helper|\"[^\"]*)", expr) if m.group(2) else re.findall(r"^(root\.helper|\"[^\"]*)", expr)
-            if not starts or not all(any(s.startswith(a) for a in ALLOWED_COMMANDS) for s in starts):
-                problems.append("%s  unknown shell command: %s" % (where(path, text, m.start()), expr[:70]))
+            # Each command must be root.helper(...) or Shell.command(["known program", ...]).
+            builders = re.findall(r"root\.helper\(|Shell\.command\(\[\s*\"([^\"]*)\"", expr)
+            # A string literal used directly as the command (not inside a builder).
+            bare = re.sub(r"Shell\.command\(\[|root\.helper\(\[?", "SAFE(", expr)
+            raw = re.search(r"(?:^|[?:]\s*\[|^\[)\s*\"", bare)
+            if raw or not builders or any(b and b not in ALLOWED_PROGRAMS for b in builders):
+                problems.append("%s  shell command not built safely or not allowed: %s" % (where(path, text, m.start()), expr[:70]))
 
-        # Text from outside (song titles, photo captions, app names, cities)
-        # must never be shown as HTML: it could load images from anywhere.
-        if name.endswith("Tile.qml"):
-            for m in re.finditer(r"text:\s*[^\n]*\b(track|artist|caption|credit|modelData\.name|place)\b[^\n]*\n((?:[^\n]*\n){0,2})", text):
-                if "PlainText" not in m.group(2):
-                    problems.append("%s  outside text needs textFormat: Text.PlainText" % where(path, text, m.start()))
+        # Every label says how to read its text. Qt's default guesses, and
+        # treats text that looks like HTML as HTML: a song called
+        # <img src="https://..."> would load an image from anywhere. Use
+        # Text.PlainText; StyledText only for text we build ourselves.
+        if name.endswith(".qml"):
+            for m in re.finditer(r"^[ \t]*(?:PlasmaComponents\.|QQC2\.)?(?:Label|Text|TextEdit|TextArea)\s*\{", text, re.M):
+                i, depth = m.end(), 1
+                while depth and i < len(text):
+                    depth += {"{": 1, "}": -1}.get(text[i], 0)
+                    i += 1
+                block = text[m.end():i]
+                if "textFormat" not in block:
+                    problems.append("%s  label needs textFormat: Text.PlainText" % where(path, text, m.start()))
+                elif re.search(r"textFormat:\s*Text\.(RichText|AutoText|MarkdownText)", block):
+                    problems.append("%s  rich text can load remote content; use PlainText or StyledText" % where(path, text, m.start()))
+
+        # Opening links: only https, and only from a variable checked first.
+        for m in re.finditer(r"Qt\.openUrlExternally\(([^)]*)\)", text):
+            if m.group(1).strip() not in SAFE_LINKS:
+                problems.append("%s  opening %s: check it's https first, then add it to SAFE_LINKS" % (where(path, text, m.start()), m.group(1)))
+
+        # Code from strings: never.
+        for pattern in (r"Qt\.createQmlObject", r"Qt\.include\(", r"\bpickle\b", r"yaml\.load\("):
+            for m in re.finditer(pattern, text if code else ""):
+                problems.append("%s  %s runs code built from data" % (where(path, text, m.start()), m.group(0)))
 
 if problems:
     print("Security guard found %d problem(s):" % len(problems))

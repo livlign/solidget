@@ -130,8 +130,9 @@ def memory():
     cache = os.path.expanduser("~/.local/share/solidget/memory.json")
     try:
         with open(cache) as f:
-            info.update({k: v for k, v in json.load(f).items() if k in ("type", "speed", "layout")})
-    except (OSError, ValueError):
+            # Short strings only, whatever ends up in the file.
+            info.update({k: str(v)[:40] for k, v in json.load(f).items() if k in ("type", "speed", "layout")})
+    except (OSError, ValueError, AttributeError):
         pass
     return info
 
@@ -255,7 +256,10 @@ def tz_offsets(zones):
     except ImportError:
         return {}
     out = {}
-    for z in zones:
+    for z in zones[:12]:
+        # Only "Area/City"-style names: never a path like "../../etc/passwd".
+        if not re.fullmatch(r"[A-Za-z0-9_+-]+(/[A-Za-z0-9_+-]+){0,2}", z):
+            continue
         try:
             off = datetime.now(ZoneInfo(z)).utcoffset()
             out[z] = int(off.total_seconds() // 60)

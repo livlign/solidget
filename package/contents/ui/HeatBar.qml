@@ -24,6 +24,7 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         PlasmaComponents.Label {
+            textFormat: Text.PlainText
             text: bar.label
             opacity: 0.6
             font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, bar.u * 0.8)
@@ -31,6 +32,7 @@ ColumnLayout {
             elide: Text.ElideRight
         }
         PlasmaComponents.Label {
+            textFormat: Text.PlainText
             text: bar.valueText
             color: bar.hotColor
             font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, bar.u * 0.9)

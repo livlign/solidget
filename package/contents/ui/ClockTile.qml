@@ -65,6 +65,7 @@ GlassTile {
                 spacing: tile.u * 0.3
                 PlasmaComponents.Label {
                     id: time
+                    textFormat: Text.PlainText
                     readonly property real px: Math.max(Kirigami.Units.gridUnit,
                         Math.min(timeBlock.height * 0.56, timeBlock.width / (tile.hhmm.length * 0.62 + (tile.ampm ? 1 : 0))))
                     text: tile.hhmm
@@ -75,6 +76,7 @@ GlassTile {
                     font.features: { "tnum": 1 }
                 }
                 PlasmaComponents.Label {
+                    textFormat: Text.PlainText
                     anchors.baseline: time.baseline
                     text: tile.ampm
                     visible: text !== ""
@@ -83,6 +85,7 @@ GlassTile {
                 }
             }
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 text: Qt.formatDate(tile.now, "dddd, d MMMM yyyy")
                 opacity: 0.75
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, time.px * 0.16)
@@ -118,12 +121,14 @@ GlassTile {
                     size: tile.weatherTempSize
                 }
                 PlasmaComponents.Label {
+                    textFormat: Text.PlainText
                     text: tile.w.summary
                     font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, Math.min(tile.u * 0.9, tile.weatherTempSize * 0.32))
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
                 PlasmaComponents.Label {
+                    textFormat: Text.PlainText
                     visible: tile.topH > tile.u * 5.5
                     text: i18n("Feels %1 · %2%", tile.temp(tile.w.feelsLike), tile.w.humidity)
                     opacity: 0.6
@@ -149,11 +154,13 @@ GlassTile {
                 Layout.preferredHeight: nowLine.height
             }
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 text: tile.temp(tile.w.temp)
                 font.pixelSize: nowLine.height * 0.7
                 font.weight: Font.Light
             }
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 text: tile.w.summary
                 opacity: 0.75
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, nowLine.height * 0.45)
@@ -185,6 +192,7 @@ GlassTile {
                         anchors.centerIn: parent
                         spacing: tile.u * 0.1
                         PlasmaComponents.Label {
+                            textFormat: Text.PlainText
                             Layout.alignment: Qt.AlignHCenter
                             text: Qt.locale().dayName(new Date(modelData.date + "T12:00").getDay(), Locale.ShortFormat)
                             opacity: 0.65

@@ -31,6 +31,7 @@ GlassTile {
     }
 
     PlasmaComponents.Label {
+        textFormat: Text.PlainText
         anchors.centerIn: parent
         visible: app.worldClocks.length === 0
         text: i18n("Add cities in Settings → General")
@@ -69,6 +70,7 @@ GlassTile {
                         elide: Text.ElideRight
                     }
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         text: !cityRow.known ? "" : cityRow.diffMin === 0 ? i18n("Same time") : tile.diffText(cityRow.diffMin)
                         opacity: 0.55
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.7)

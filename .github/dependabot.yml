@@ -1,0 +1,7 @@
+# Keeps the pinned GitHub Actions up to date with small pull requests.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

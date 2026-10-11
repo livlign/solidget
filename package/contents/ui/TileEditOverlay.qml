@@ -83,6 +83,7 @@ Item {
         color: overlay.manual || overlay.resizing ? overlay.accent : Qt.rgba(0, 0, 0, 0.55)
         PlasmaComponents.Label {
             id: badge
+            textFormat: Text.PlainText
             anchors.centerIn: parent
             text: overlay.tileSlot.r.w + " × " + overlay.tileSlot.r.h + (overlay.manual ? "" : "  " + i18n("auto"))
             color: "white"

@@ -84,3 +84,24 @@ console.log("\nall layout tests passed");
     assert.strictEqual(p1.cellW, p2.cellW);
     console.log("fixed-position tests passed");
 }
+
+// ---- Broken or hostile config values ----------------------------------------
+// tileRects/tileSpans live in a plain config file. Junk there must never
+// throw, overlap tiles, or make the board absurdly big (that froze Plasma).
+{
+    const junk = [1e7, -1e7, NaN, Infinity, -Infinity, "12abc", null, undefined, 2.7, -0.5];
+    const ids = ["clock", "cpu", "gpu", "memory", "network"];
+    let n = 0;
+    for (const a of junk) for (const b of junk) {
+        const manual = { cpu: { x: a, y: b, w: a, h: b }, clock: { x: b, y: a, w: 3, h: 1 }, gpu: { x: 0, y: 0, w: b, h: a } };
+        const r = L.plan(ids, 1080, 1920, gu, gap, "auto", true, null, manual, true);
+        assert.ok(r.rows <= 64 + 12 * ids.length, `too many rows (${r.rows}) for ${a}, ${b}`);
+        render(r, r.cols);   // throws on overlaps
+        const forced = { cpu: { w: a, h: b }, gpu: a };
+        const f = L.plan(ids, 1080, 1920, gu, gap, "auto", true, forced, null, true);
+        assert.ok(f.rows < 200, `forced sizes made ${f.rows} rows`);
+        f.rects.forEach((q) => assert.ok([q.x, q.y, q.w, q.h].every(Number.isFinite), "non-number in " + JSON.stringify(q)));
+        n++;
+    }
+    console.log(`hostile config tests passed (${n} cases)`);
+}

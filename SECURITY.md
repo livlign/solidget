@@ -2,20 +2,31 @@
 
 ## Report a problem
 
-Please **don't** open a public issue for security problems. Instead use
+Please **don't** open a public issue for security problems. Use
 [Report a vulnerability](https://github.com/livlign/solidget/security/advisories/new)
-on GitHub. It stays private between you and the maintainers.
+instead. Only you and the maintainers can see it.
 
-Tell us what you found and how to reproduce it. We'll reply as soon as we can.
+Tell us what you found and how to make it happen. We'll reply as soon as we can.
 
 ## What Solidget does on your PC
 
-- Runs as part of Plasma, as you. It never needs root.
+- Runs inside Plasma, as you. It never needs root.
 - Reads hardware info from `/proc`, `/sys` and standard tools (`lspci`, `lsblk`).
-- Starts only these programs: its own `specs.py`, `cat` (to read a GPU power
-  file) and `notify-send` (for focus timer alerts).
-- Contacts only the websites listed in the README under "What goes online",
-  always over https.
-- Saves its settings in Plasma's normal config file. Nothing else is stored.
+- Starts only three programs: its own `specs.py`, `cat` (to read the GPU's
+  power use) and `notify-send` (for focus timer alerts).
+- Talks only to the websites listed in the README, always over https.
+- Saves its settings in Plasma's normal config file. Nothing else.
 
-`tests/guard.py` checks these promises on every pull request.
+## How it protects you
+
+| Risk | What we do |
+|---|---|
+| Someone sneaks a command in (a city name like `x; rm -rf ~`) | Every command is built with `Shell.command()`, which quotes each piece. A test feeds it nasty strings through a real shell. |
+| A song or photo title contains HTML that loads things from the internet | All text is shown as plain text. The guard fails if any label forgets. |
+| A website sends bad or strange data | Numbers, dates and names are checked and shortened before use. Images and links must be https. |
+| The config file is edited by hand or damaged | Sizes and positions are kept in range, so a bad value can't freeze Plasma. A test throws junk at the layout. |
+| Running the installer with `sudo` | It refuses. Only one read-only command (`dmidecode`) ever uses sudo. |
+| A new website or command slips in unnoticed | `tests/guard.py` only allows the ones listed above. |
+| Someone tampers with our GitHub build tools | Actions are pinned to exact versions. CodeQL scans the code every week. |
+
+All of this runs on every pull request (`./tests/run.sh`).

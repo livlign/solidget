@@ -179,6 +179,7 @@ GlassTile {
 
         // Zzz while napping, drifting up one step per second.
         PlasmaComponents.Label {
+            textFormat: Text.PlainText
             visible: tile.mood === "sleep"
             text: ["z", "zZ", "zZz"][tile.step % 3]
             x: cat.x + stage.spriteW * 0.6

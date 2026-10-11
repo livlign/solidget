@@ -109,12 +109,19 @@ QtObject {
         });
     }
 
+    // Answers come from the internet: only real coordinates, and a short name.
     function setLocation(la, lo, name) {
+        la = Number(la); lo = Number(lo);
+        if (!isFinite(la) || !isFinite(lo) || Math.abs(la) > 90 || Math.abs(lo) > 180) {
+            error = i18n("Location unavailable");
+            return;
+        }
         lat = la;
         lon = lo;
-        place = name;
+        place = String(name || "").slice(0, 60);
         refresh();
     }
+    function num(v) { v = Number(v); return isFinite(v) ? v : NaN; }
 
     function refresh() {
         if (!enabled || isNaN(lat)) return;
@@ -124,17 +131,22 @@ QtObject {
             + (fahrenheit ? "&temperature_unit=fahrenheit&wind_speed_unit=mph" : "");
         get(url, function (d) {
             if (!d || !d.current) { error = i18n("Weather unavailable"); return; }
-            temp = d.current.temperature_2m;
-            feelsLike = d.current.apparent_temperature;
-            code = d.current.weather_code;
+            temp = num(d.current.temperature_2m);
+            feelsLike = num(d.current.apparent_temperature);
+            code = Math.round(num(d.current.weather_code)) || 0;
             isDay = d.current.is_day === 1;
-            humidity = d.current.relative_humidity_2m;
-            wind = d.current.wind_speed_10m;
+            humidity = Math.round(num(d.current.relative_humidity_2m)) || 0;
+            wind = num(d.current.wind_speed_10m);
             var days = [];
-            for (var i = 0; d.daily && i < d.daily.time.length; i++)
-                days.push({ date: d.daily.time[i], code: d.daily.weather_code[i],
-                            max: d.daily.temperature_2m_max[i], min: d.daily.temperature_2m_min[i],
-                            sunrise: d.daily.sunrise ? d.daily.sunrise[i] : "", sunset: d.daily.sunset ? d.daily.sunset[i] : "" });
+            var iso = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;   // dates and times only
+            var dd = d.daily || {};
+            for (var i = 0; Array.isArray(dd.time) && i < Math.min(dd.time.length, 7); i++) {
+                if (!iso.test(dd.time[i])) continue;
+                days.push({ date: dd.time[i], code: Math.round(num(dd.weather_code[i])) || 0,
+                            max: num(dd.temperature_2m_max[i]), min: num(dd.temperature_2m_min[i]),
+                            sunrise: dd.sunrise && iso.test(dd.sunrise[i]) ? dd.sunrise[i] : "",
+                            sunset: dd.sunset && iso.test(dd.sunset[i]) ? dd.sunset[i] : "" });
+            }
             daily = days;
             error = "";
             ready = true;

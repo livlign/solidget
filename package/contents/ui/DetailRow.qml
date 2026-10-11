@@ -24,6 +24,7 @@ RowLayout {
         color: row.dot
     }
     PlasmaComponents.Label {
+        textFormat: Text.PlainText
         text: row.label
         opacity: 0.6
         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, row.u * 0.8)
@@ -31,6 +32,7 @@ RowLayout {
         elide: Text.ElideRight
     }
     PlasmaComponents.Label {
+        textFormat: Text.PlainText
         text: row.value
         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, row.u * 0.85)
         font.weight: Font.Medium

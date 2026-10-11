@@ -122,6 +122,7 @@ GlassTile {
                             elide: Text.ElideRight
                         }
                         PlasmaComponents.Label {
+                            textFormat: Text.PlainText
                             text: row.modelData.memText
                             visible: tile.width > Kirigami.Units.gridUnit * 18
                             opacity: 0.55
@@ -129,6 +130,7 @@ GlassTile {
                             font.features: { "tnum": 1 }
                         }
                         PlasmaComponents.Label {
+                            textFormat: Text.PlainText
                             text: row.modelData.cpuText
                             font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.lu * 0.85)
                             font.weight: Font.DemiBold

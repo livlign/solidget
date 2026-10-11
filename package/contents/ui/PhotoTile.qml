@@ -32,8 +32,8 @@ GlassTile {
                 if (!/^\/[A-Za-z0-9_.?=&%\/-]+$/.test(img.urlbase || "")) return;
                 // Full HD is plenty for a tile.
                 tile.imageUrl = "https://www.bing.com" + img.urlbase + "_1920x1080.jpg";
-                tile.caption = img.title || "";
-                var c = img.copyright || "";
+                tile.caption = String(img.title || "").slice(0, 120);
+                var c = String(img.copyright || "").slice(0, 200);
                 var open = c.lastIndexOf("(");
                 tile.credit = open > 0 ? c.slice(open + 1, -1) : "";
                 if (!tile.caption) tile.caption = open > 0 ? c.slice(0, open).trim() : c;
@@ -90,6 +90,7 @@ GlassTile {
         }
 
         PlasmaComponents.Label {
+            textFormat: Text.PlainText
             visible: photo.status !== Image.Ready
             anchors.centerIn: parent
             text: tile.imageUrl ? i18n("Loading photo…") : i18n("Photo of the day needs an internet connection")

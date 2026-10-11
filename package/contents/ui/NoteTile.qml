@@ -10,6 +10,9 @@ GlassTile {
     id: tile
     required property var app
 
+    // A sticky note, not a document: keeps the config file small.
+    readonly property int maxLength: 4000
+
     title: i18n("Note")
     subtitle: edit.activeFocus ? i18n("Typing…") : ""
     accent: app.accent("note")
@@ -19,7 +22,7 @@ GlassTile {
     Timer {
         id: saveTimer
         interval: 800
-        onTriggered: Plasmoid.configuration.noteText = edit.text
+        onTriggered: Plasmoid.configuration.noteText = edit.text.slice(0, tile.maxLength)
     }
 
     Flickable {
@@ -33,6 +36,7 @@ GlassTile {
 
         TextEdit {
             id: edit
+            textFormat: TextEdit.PlainText
             width: flick.width
             text: Plasmoid.configuration.noteText
             wrapMode: TextEdit.Wrap
@@ -42,9 +46,10 @@ GlassTile {
             font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
             enabled: !app.editing
             onTextChanged: if (activeFocus) saveTimer.restart()
-            onActiveFocusChanged: if (!activeFocus) Plasmoid.configuration.noteText = text
+            onActiveFocusChanged: if (!activeFocus) Plasmoid.configuration.noteText = text.slice(0, tile.maxLength)
 
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 visible: edit.text === "" && !edit.activeFocus
                 text: i18n("Click to write a note…")
                 opacity: 0.45

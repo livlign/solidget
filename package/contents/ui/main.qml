@@ -10,6 +10,7 @@ import org.kde.ksysguard.sensors as Sensors
 import "../code/layout.js" as Bento
 import "../code/format.js" as Fmt
 import "../code/palette.js" as Palette
+import "../code/shell.js" as Shell
 
 PlasmoidItem {
     id: root
@@ -378,11 +379,15 @@ PlasmoidItem {
     property var specs: ({})
     property var batteryState: ({ present: false })
 
-    readonly property string helper: "python3 '" + Qt.resolvedUrl("../code/specs.py").toString().replace(/^file:\/\//, "") + "'"
+    // Every command goes through Shell.command(), which quotes each argument.
+    // -I: isolated mode, so PYTHON* variables and user site-packages can't
+    // change what the helper runs.
+    readonly property string helperPath: decodeURIComponent(Qt.resolvedUrl("../code/specs.py").toString().replace(/^file:\/\//, ""))
+    function helper(args) { return Shell.command(["python3", "-I", helperPath].concat(args || [])); }
 
     P5Support.DataSource {
         engine: "executable"
-        connectedSources: [root.helper]
+        connectedSources: [root.helper()]
         onNewData: (source, data) => {
             disconnectSource(source);
             try {
@@ -397,7 +402,7 @@ PlasmoidItem {
     P5Support.DataSource {
         engine: "executable"
         interval: 60000
-        connectedSources: root.batteryState.present ? [root.helper + " battery"] : []
+        connectedSources: root.batteryState.present ? [root.helper(["battery"])] : []
         onNewData: (source, data) => {
             try { root.batteryState = JSON.parse(data["stdout"]); } catch (e) {}
         }
@@ -408,8 +413,10 @@ PlasmoidItem {
     P5Support.DataSource {
         engine: "executable"
         interval: 2000
-        connectedSources: root.specs.sensors && root.specs.sensors.gpuPowerFile
-            ? ["cat '" + root.specs.sensors.gpuPowerFile + "'"] : []
+        // The path comes from specs.py output; only a real amdgpu power file is read.
+        readonly property string file: root.specs.sensors && /^\/sys\/class\/drm\/card\d+\/device\/hwmon\/hwmon\d+\/power1_(average|input)$/.test(root.specs.sensors.gpuPowerFile || "")
+            ? root.specs.sensors.gpuPowerFile : ""
+        connectedSources: file ? [Shell.command(["cat", file])] : []
         onNewData: (source, data) => { root.gpuPowerSysfs = (parseInt(data["stdout"]) || 0) / 1e6; }
     }
     readonly property real gpuWatts: gpuPowerSysfs > 0 ? gpuPowerSysfs : (gpuPower.value || 0)
@@ -492,15 +499,15 @@ PlasmoidItem {
     // ---- World clocks ---------------------------------------------------------
     readonly property var worldClocks: (Plasmoid.configuration.worldClocks || "").split(";").map(function (x) {
         var p = x.split("|");
-        return p.length === 2 && p[1].trim() ? { name: p[0].trim(), zone: p[1].trim() } : null;
+        // Zones look like "Europe/London"; anything else in the config is dropped.
+        return p.length === 2 && /^[A-Za-z0-9_+-]+(\/[A-Za-z0-9_+-]+){0,2}$/.test(p[1].trim()) && p[1].trim().length < 64
+            ? { name: p[0].trim().slice(0, 40), zone: p[1].trim() } : null;
     }).filter(Boolean)
     property var tzOffsets: ({})      // zone -> minutes from UTC (DST-aware, refreshed hourly)
     P5Support.DataSource {
         engine: "executable"
         interval: 3600000
-        connectedSources: root.worldClocks.length
-            ? [root.helper + " tz " + root.worldClocks.map(function (c) { return "'" + c.zone.replace(/[^A-Za-z0-9_\/+-]/g, "") + "'"; }).join(" ")]
-            : []
+        connectedSources: root.worldClocks.length ? [root.helper(["tz"].concat(root.worldClocks.map(function (c) { return c.zone; })))] : []
         onNewData: (source, data) => { try { root.tzOffsets = JSON.parse(data["stdout"]); } catch (e) {} }
     }
     // "London, New York" -> looks each name up once (Open-Meteo geocoding)
@@ -512,7 +519,7 @@ PlasmoidItem {
         names.forEach(function (n, i) {
             weatherModel.get("https://geocoding-api.open-meteo.com/v1/search?count=1&name=" + encodeURIComponent(n), function (d) {
                 var r = d && d.results && d.results[0];
-                results[i] = r && r.timezone ? String(r.name).replace(/[;|]/g, " ") + "|" + r.timezone : null;
+                results[i] = r && typeof r.timezone === "string" ? String(r.name).replace(/[;|]/g, " ").slice(0, 40) + "|" + r.timezone : null;
                 if (--pending === 0) Plasmoid.configuration.worldClocks = results.filter(Boolean).join(";");
             });
         });
@@ -547,13 +554,13 @@ PlasmoidItem {
         onNewData: (source) => disconnectSource(source)
     }
     function notify(title, body) {
-        function q(t) { return "'" + String(t).replace(/'/g, "") + "'"; }
-        notifier.connectSource("notify-send -a Solidget -i chronometer " + q(title) + " " + q(body));
+        // "--" so a title starting with "-" is never read as an option.
+        notifier.connectSource(Shell.command(["notify-send", "-a", "Solidget", "-i", "chronometer", "--", title, body]));
     }
 
     // ---- Clipboard -------------------------------------------------------
 
-    TextEdit { id: clipboardHelper; visible: false }
+    TextEdit { textFormat: TextEdit.PlainText; id: clipboardHelper; visible: false }
     function copyToClipboard(text) {
         clipboardHelper.text = text;
         clipboardHelper.selectAll();
@@ -823,6 +830,7 @@ PlasmoidItem {
                 }
 
                 PlasmaComponents.Label {
+                    textFormat: Text.PlainText
                     visible: root.visibleTiles.length === 0
                     anchors.centerIn: parent
                     width: parent.width * 0.8
@@ -856,6 +864,7 @@ PlasmoidItem {
                 anchors.centerIn: parent
                 spacing: Kirigami.Units.smallSpacing
                 PlasmaComponents.Label {
+                    textFormat: Text.PlainText
                     text: i18n("Drag to move · drag the corner to resize")
                     opacity: 0.6
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
@@ -947,6 +956,7 @@ PlasmoidItem {
                     Layout.preferredHeight: Kirigami.Units.iconSizes.small
                 }
                 PlasmaComponents.Label {
+                    textFormat: Text.PlainText
                     text: i18n("Settings")
                     color: settingsPill.fg
                     font.family: root.look.fontFamily || Kirigami.Theme.defaultFont.family

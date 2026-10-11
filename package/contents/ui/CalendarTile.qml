@@ -62,6 +62,7 @@ GlassTile {
             Repeater {
                 model: 7
                 PlasmaComponents.Label {
+                    textFormat: Text.PlainText
                     required property int index
                     x: index * grid.cw; y: 0
                     width: grid.cw; height: grid.ch
@@ -91,6 +92,7 @@ GlassTile {
                         color: tile.accent
                     }
                     PlasmaComponents.Label {
+                        textFormat: Text.PlainText
                         anchors.centerIn: parent
                         visible: parent.modelData > 0
                         text: parent.modelData
@@ -108,6 +110,7 @@ GlassTile {
             visible: tile.height > tile.u * 10
             spacing: tile.u * 0.8
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 elide: Text.ElideRight
                 visible: !!tile.todayWeather
@@ -116,6 +119,7 @@ GlassTile {
                 font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.75)
             }
             PlasmaComponents.Label {
+                textFormat: Text.PlainText
                 Layout.maximumWidth: tile.width * 0.45
                 // Name only when there's room; the symbol alone otherwise.
                 text: tile.moon.glyph + (tile.width > tile.u * 20 ? " " + tile.moon.name : "")

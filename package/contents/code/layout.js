@@ -147,6 +147,16 @@ function fillHoles(result, cols, rows, fixed) {
 
 // A user size is either a span index into SPANS (older configs) or an
 // exact { w, h } from dragging the resize handle.
+// Saved sizes and positions come from a config file anyone can edit, so
+// every number is forced into a sane range before use. Without this, a
+// value like y=10000000 makes a board millions of rows tall and freezes Plasma.
+var MAX_ROW = 64;     // furthest row a tile may start on
+var MAX_H = 12;       // tallest a tile may be, in rows
+function cell(v, lo, hi) {
+    v = Math.floor(Number(v));
+    return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : lo;
+}
+
 function isExact(f) { return f !== undefined && f !== null && typeof f === "object"; }
 function isForced(f) { return isExact(f) || (f !== undefined && f !== null && f >= 0); }
 
@@ -162,13 +172,13 @@ function arrange(ids, cols, rows, forced, portrait) {
         var f = forced[id];
         if (isExact(f)) {
             fixed[i] = true;
-            return [[Math.max(1, Math.min(f.w, cols)), Math.max(1, f.h)]];
+            return [[cell(f.w, 1, cols), cell(f.h, 1, MAX_H)]];
         }
         return spansFor(id, cols, portrait);
     });
     var level = ids.map(function (id, i) {
         var f = forced[id];
-        return !isExact(f) && isForced(f) ? Math.min(f, options[i].length - 1) : 0;
+        return !isExact(f) && isForced(f) ? cell(f, 0, options[i].length - 1) : 0;
     });
     function sizes() { return level.map(function (l, i) { return options[i][l]; }); }
 
@@ -216,8 +226,8 @@ function overlaps(a, b) {
 }
 
 function clampRect(r, cols) {
-    var w = Math.max(1, Math.min(r.w, cols));
-    return { x: Math.max(0, Math.min(r.x, cols - w)), y: Math.max(0, r.y), w: w, h: Math.max(1, r.h) };
+    var w = cell(r.w, 1, cols);
+    return { x: cell(r.x, 0, cols - w), y: cell(r.y, 0, MAX_ROW), w: w, h: cell(r.h, 1, MAX_H) };
 }
 
 // Make `rects` ({ id: {x,y,w,h} }) overlap-free. `priority` keeps its spot;
@@ -258,7 +268,7 @@ function arrangeManual(ids, manual, cols, portrait) {
     ids.forEach(function (id) {
         if (settled[id]) return;
         var s = spansFor(id, cols, portrait)[0];
-        for (var y = 0; ; y++) {
+        for (var y = 0; y < 10000; y++) {
             for (var x = 0; x + s[0] <= cols; x++) {
                 var r = { x: x, y: y, w: s[0], h: s[1] };
                 if (!rects.some(function (q) { return overlaps(r, q); })) {

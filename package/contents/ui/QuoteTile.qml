@@ -22,6 +22,7 @@ GlassTile {
         anchors.fill: parent
         spacing: tile.u * 0.4
         PlasmaComponents.Label {
+            textFormat: Text.PlainText
             text: "“"
             color: tile.accent
             font.pixelSize: tile.u * 3
@@ -29,6 +30,7 @@ GlassTile {
             Layout.preferredHeight: tile.u * 1.4
         }
         PlasmaComponents.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             Layout.fillHeight: true
             text: tile.q[0]
@@ -42,6 +44,7 @@ GlassTile {
             verticalAlignment: Text.AlignTop
         }
         PlasmaComponents.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             text: "— " + tile.q[1]
             opacity: 0.65
