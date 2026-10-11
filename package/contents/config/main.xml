@@ -36,6 +36,10 @@
     <entry name="tileRects" type="String">
       <default></default>
     </entry>
+    <!-- auto (from the widget's shape), landscape or portrait -->
+    <entry name="orientation" type="String">
+      <default>auto</default>
+    </entry>
     <!-- binary (KiB, GiB) or decimal (kB, GB) -->
     <entry name="dataUnits" type="String">
       <default>binary</default>

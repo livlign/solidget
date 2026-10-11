@@ -32,8 +32,17 @@ var GROW_PRIORITY = ["clock", "cpu", "specs", "gpu", "network", "cores", "proces
 var DENSITY = { compact: 8, comfortable: 10, large: 13, huge: 17 };
 var DENSITY_ORDER = ["huge", "large", "comfortable", "compact"];
 
-function spansFor(id, cols) {
-    var list = SPANS[id] || [[1, 1]];
+// Portrait screens: tall, narrow grids read best with some tiles spanning
+// the full width instead of growing into 3-wide blocks.
+var SPANS_PORTRAIT = {
+    clock:     [[2, 1], [4, 1], [4, 2]],
+    network:   [[2, 1], [4, 1], [2, 2]],
+    cores:     [[2, 1], [2, 2], [4, 1]],
+    processes: [[2, 2], [2, 3]]
+};
+
+function spansFor(id, cols, portrait) {
+    var list = (portrait && SPANS_PORTRAIT[id]) || SPANS[id] || [[1, 1]];
     var out = [];
     for (var i = 0; i < list.length; i++) {
         var w = Math.min(list[i][0], cols);
@@ -137,7 +146,7 @@ function isForced(f) { return isExact(f) || (f !== undefined && f !== null && f 
 // rows:    rows that fit on screen (0 = unlimited / scrolling)
 // forced:  { id: spanIndex | {w, h} } for tiles the user sized by hand
 // Returns { rects: [{id,x,y,w,h,manual}], rows }
-function arrange(ids, cols, rows, forced) {
+function arrange(ids, cols, rows, forced, portrait) {
     forced = forced || {};
     var fixed = {};
     var options = ids.map(function (id, i) {
@@ -146,7 +155,7 @@ function arrange(ids, cols, rows, forced) {
             fixed[i] = true;
             return [[Math.max(1, Math.min(f.w, cols)), Math.max(1, f.h)]];
         }
-        return spansFor(id, cols);
+        return spansFor(id, cols, portrait);
     });
     var level = ids.map(function (id, i) {
         var f = forced[id];
@@ -229,7 +238,7 @@ function resolve(rects, cols, priority) {
 
 // Tiles with a saved spot go there; tiles without one (newly shown) take the
 // first free spot that fits their smallest size.
-function arrangeManual(ids, manual, cols) {
+function arrangeManual(ids, manual, cols, portrait) {
     var known = {};
     ids.forEach(function (id) { if (manual[id]) known[id] = manual[id]; });
     var settled = resolve(known, cols, null);
@@ -239,7 +248,7 @@ function arrangeManual(ids, manual, cols) {
     });
     ids.forEach(function (id) {
         if (settled[id]) return;
-        var s = spansFor(id, cols)[0];
+        var s = spansFor(id, cols, portrait)[0];
         for (var y = 0; ; y++) {
             for (var x = 0; x + s[0] <= cols; x++) {
                 var r = { x: x, y: y, w: s[0], h: s[1] };
@@ -257,7 +266,9 @@ function arrangeManual(ids, manual, cols) {
 // Pick grid dimensions for a pixel area.
 // density: "auto" or a DENSITY key. fill: true to fit the height (no scroll).
 // manual: { id: {x,y,w,h} } for a hand-edited layout, or null for automatic.
-function plan(ids, width, height, gridUnit, gap, density, fill, forced, manual) {
+// portrait: undefined = decide from the area's shape.
+function plan(ids, width, height, gridUnit, gap, density, fill, forced, manual, portrait) {
+    if (portrait === undefined || portrait === null) portrait = height > width;
     function dims(key) {
         var target = DENSITY[key] * gridUnit;
         var cols = Math.max(1, Math.floor((width + gap) / (target + gap)));
@@ -270,7 +281,7 @@ function plan(ids, width, height, gridUnit, gap, density, fill, forced, manual) 
         for (var d = 0; d < DENSITY_ORDER.length; d++) {
             var c = dims(DENSITY_ORDER[d]);
             if (!fill) { if (c.cols >= 2 || d === DENSITY_ORDER.length - 1) { chosen = c; break; } continue; }
-            var test = pack(ids.map(function (id) { return spansFor(id, c.cols)[0]; }), c.cols, c.rows);
+            var test = pack(ids.map(function (id) { return spansFor(id, c.cols, portrait)[0]; }), c.cols, c.rows);
             if (test) { chosen = c; break; }
         }
         if (!chosen) chosen = dims("compact");
@@ -279,16 +290,16 @@ function plan(ids, width, height, gridUnit, gap, density, fill, forced, manual) 
     }
     var result;
     if (manual) {
-        result = arrangeManual(ids, manual, chosen.cols);
+        result = arrangeManual(ids, manual, chosen.cols, portrait);
         // Keep the grid at least screen-sized so cells never change size
         // when tiles shrink (that's what made the layout "jump").
         result.rows = Math.max(result.rows, chosen.rows);
     } else {
-        result = arrange(ids, chosen.cols, chosen.rows, forced);
+        result = arrange(ids, chosen.cols, chosen.rows, forced, portrait);
     }
     var cellW = (width - gap * (chosen.cols - 1)) / chosen.cols;
     var cellH;
     if (fill && result.rows <= chosen.rows) cellH = (height - gap * (result.rows - 1)) / result.rows;
     else cellH = Math.min(cellW, DENSITY[chosen.key] * gridUnit * 1.1);
-    return { cols: chosen.cols, rows: result.rows, cellW: cellW, cellH: cellH, density: chosen.key, rects: result.rects };
+    return { cols: chosen.cols, rows: result.rows, cellW: cellW, cellH: cellH, density: chosen.key, rects: result.rects, portrait: portrait };
 }

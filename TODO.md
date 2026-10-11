@@ -6,7 +6,7 @@
       Today the pencil goes straight to edit-layout mode and Settings is in its toolbar.
 
 ## Layout
-- [ ] Presets assume a landscape screen. Add a **Screen orientation** choice
+- [x] Presets assume a landscape screen. Add a **Screen orientation** choice
       (Landscape / Portrait, default: detected from the widget's shape) and give
       each preset a tile order and preferred sizes per orientation.
 

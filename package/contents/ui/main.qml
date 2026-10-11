@@ -35,13 +35,16 @@ PlasmoidItem {
     readonly property var presetIds: ["essentials", "everything", "showcase", "performance", "everyday", "minimal"]
     readonly property var presets: ({
         essentials:  { name: i18n("Essentials"),  hint: i18n("Clock, your build and the vitals"),
-                       tiles: ["clock", "specs", "cpu", "gpu", "memory", "temps", "network"] },
+                       tiles: ["clock", "specs", "cpu", "gpu", "memory", "temps", "network"],
+                       portrait: ["clock", "specs", "cpu", "gpu", "temps", "memory", "network"] },
         everything:  { name: i18n("Everything"),  hint: i18n("Every tile your PC supports — great full screen"),
-                       tiles: ["clock", "specs", "cpu", "gpu", "cores", "processes", "memory", "temps", "network", "power", "disk", "battery"] },
+                       tiles: ["clock", "specs", "cpu", "gpu", "cores", "processes", "memory", "temps", "network", "power", "disk", "battery"],
+                       portrait: ["clock", "specs", "cpu", "gpu", "temps", "memory", "cores", "network", "processes", "power", "disk", "battery"] },
         showcase:    { name: i18n("Showcase"),    hint: i18n("Your build front and center"),
                        tiles: ["specs", "cpu", "gpu", "temps", "power"] },
         performance: { name: i18n("Performance"), hint: i18n("For gaming and heavy work"),
-                       tiles: ["cpu", "gpu", "cores", "temps", "power", "processes"] },
+                       tiles: ["cpu", "gpu", "cores", "temps", "power", "processes"],
+                       portrait: ["cpu", "gpu", "temps", "power", "cores", "processes"] },
         everyday:    { name: i18n("Everyday"),    hint: i18n("Calm essentials for daily use"),
                        tiles: ["clock", "cpu", "memory", "network", "disk", "battery"] },
         minimal:     { name: i18n("Minimal"),     hint: i18n("Just the vitals"),
@@ -110,8 +113,21 @@ PlasmoidItem {
         }
     }
 
+    // ---- Orientation ---------------------------------------------------------
+    // "auto" decides from the widget's shape; presets have a tile order per
+    // orientation and some tiles get portrait-friendly shapes (layout.js).
+    readonly property string orientationSetting: Plasmoid.configuration.orientation || "auto"
+    property real boardAspect: 1    // width / height, reported by the board
+    readonly property bool isPortrait: orientationSetting === "portrait"
+        || (orientationSetting === "auto" && boardAspect < 1)
+    onIsPortraitChanged: if (!customized) Qt.callLater(applyPreset, currentPreset)
+
+    function spanChoices(id) {
+        return Bento.spansFor(id, boardRef ? boardRef.plan.cols : 4, isPortrait);
+    }
+
     function applyPreset(id) {
-        var tiles = presets[id].tiles;
+        var tiles = (isPortrait && presets[id].portrait) || presets[id].tiles;
         var rest = allTiles.filter(function (t) { return tiles.indexOf(t) < 0; });
         Plasmoid.configuration.tileOrder = tiles.concat(rest).join(",");
         Plasmoid.configuration.hiddenTiles = rest.join(",");
@@ -457,7 +473,7 @@ PlasmoidItem {
                 readonly property real gap: Math.max(Kirigami.Units.largeSpacing, Math.min(scroll.width, scroll.height) / 70)
                 readonly property var plan: Bento.plan(root.visibleTiles, scroll.width, scroll.height,
                                                         Kirigami.Units.gridUnit, gap, root.density, true, root.layoutSpans,
-                                                        root.layoutRects)
+                                                        root.layoutRects, root.isPortrait)
                 readonly property var rectsById: {
                     var m = {};
                     plan.rects.forEach(function (r) { m[r.id] = r; });
@@ -472,6 +488,11 @@ PlasmoidItem {
                     return { x: Math.floor(p.x / (plan.cellW + gap)), y: Math.floor(p.y / (plan.cellH + gap)) };
                 }
                 Component.onCompleted: root.boardRef = board
+                onWidthChanged: if (scroll.height > 0) root.boardAspect = scroll.width / scroll.height
+                Connections {
+                    target: scroll
+                    function onHeightChanged() { if (scroll.height > 0) root.boardAspect = scroll.width / scroll.height; }
+                }
 
                 // Every tile's spot as shown now (hidden tiles keep their saved spot).
                 function currentRects() {
@@ -539,7 +560,7 @@ PlasmoidItem {
                 function setTileSize(id, value) {
                     var m = currentRects();
                     if (!m[id]) return;
-                    var choices = Bento.spansFor(id, plan.cols);
+                    var choices = Bento.spansFor(id, plan.cols, root.isPortrait);
                     var size = value === null || value === undefined || value === -1 ? choices[0]
                              : typeof value === "number" ? choices[Math.min(value, choices.length - 1)]
                              : [value.w, value.h];

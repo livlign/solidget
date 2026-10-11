@@ -101,7 +101,7 @@ GlassTile {
                         id: placeButton
                         required property var modelData
                         Layout.fillWidth: true
-                        Layout.preferredHeight: width * 0.62
+                        Layout.preferredHeight: width * (panel.app.isPortrait ? 1.5 : 0.62)
                         hoverEnabled: true
                         onClicked: panel.app.place(modelData.r)
                         QQC2.ToolTip.text: modelData.name
@@ -185,6 +185,15 @@ GlassTile {
                 Layout.fillWidth: true
             }
 
+            // ---- Screen ----
+            SectionLabel { text: i18n("Screen") }
+            Choice {
+                label: i18n("Orientation")
+                options: [{ value: "auto", text: i18n("Auto") }, { value: "landscape", text: i18n("Landscape") }, { value: "portrait", text: i18n("Portrait") }]
+                current: panel.app.orientationSetting
+                onPicked: (v) => Plasmoid.configuration.orientation = v
+            }
+
             // ---- Units ----
             SectionLabel { text: i18n("Units") }
             Choice {
@@ -259,7 +268,7 @@ GlassTile {
                     required property int index
                     readonly property bool available: panel.app.isAvailable(modelData)
                     readonly property bool shown: panel.app.hidden.indexOf(modelData) < 0
-                    readonly property var spanChoices: Bento.SPANS[modelData] || [[1, 1]]
+                    readonly property var spanChoices: panel.app.spanChoices(modelData)
 
                     Layout.fillWidth: true
                     implicitHeight: rowLayout.implicitHeight + Kirigami.Units.smallSpacing * 2
