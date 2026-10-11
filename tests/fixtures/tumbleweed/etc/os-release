@@ -1,0 +1,4 @@
+NAME="openSUSE Tumbleweed"
+VERSION_ID="20261009"
+ID="opensuse-tumbleweed"
+ID_LIKE="opensuse suse"

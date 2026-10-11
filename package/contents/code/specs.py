@@ -12,16 +12,39 @@ import json
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
 
 
+# Tests point this at a fake system (tests/fixtures/...) to check machines
+# we don't own: a Raspberry Pi, an Intel laptop, NVIDIA cards, ...
+ROOT = os.environ.get("SOLIDGET_SYSROOT", "")
+
+
 def read(path, default=""):
     try:
-        with open(path) as f:
+        with open(ROOT + path) as f:
             return f.read().strip()
     except OSError:
         return default
+
+
+def sysglob(pattern):
+    """glob() inside ROOT, returning paths as the real system would see them."""
+    return sorted(p[len(ROOT):] for p in glob.glob(ROOT + pattern))
+
+
+def have(tool):
+    return shutil.which(tool) is not None
+
+
+def ok(cmd, timeout=5):
+    """True if the command ran and succeeded."""
+    try:
+        return subprocess.run(cmd, capture_output=True, timeout=timeout).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
 
 
 def run(cmd, timeout=3):
@@ -58,6 +81,11 @@ def cpu():
             package = val
         elif key == "core id":
             cores.add((package, val))
+    if not model:
+        # ARM: lscpu knows the core type ("Cortex-A76"); the board model
+        # ("Raspberry Pi 5 Model B") is nicer when there is one.
+        model = read("/proc/device-tree/model").strip("\x00") or \
+            (re.search(r"Model name:\s*(.+)", run(["lscpu"])) or [None, ""])[1].strip()
     core_count = len(cores) or threads
     # "AMD Ryzen 5 5600X 6-Core Processor" -> "AMD Ryzen 5 5600X"
     name = re.sub(r"\((R|TM|tm|r)\)", "", model)
@@ -72,6 +100,39 @@ def cpu():
         "threads": threads or os.cpu_count() or 0,
         "maxGHz": round(int(max_khz) / 1e6, 2) if max_khz.isdigit() else None,
     }
+
+
+VENDOR_LABEL = {"amd": "AMD Radeon graphics", "intel": "Intel graphics", "nvidia": "NVIDIA graphics"}
+
+
+def tidy_gpu_name(name, vendor):
+    """'Radeon RX 6600/6600 XT/6600M' -> 'AMD Radeon RX 6600'."""
+    name = re.sub(r"/\S.*$", "", name.split(" / ")[0]).strip()
+    brand = {"amd": "AMD", "intel": "Intel", "nvidia": "NVIDIA"}.get(vendor, "")
+    if brand and name and not name.lower().startswith(brand.lower()):
+        name = brand + " " + name
+    return name
+
+
+def pci_ids_name(vendor_id, device_id):
+    """Look the card up in the PCI id list most distros ship (no lspci needed)."""
+    v, d = vendor_id.lower().replace("0x", ""), device_id.lower().replace("0x", "")
+    for path in ("/usr/share/hwdata/pci.ids", "/usr/share/misc/pci.ids", "/usr/share/pci.ids"):
+        text = read(path)
+        if not text:
+            continue
+        in_vendor = False
+        for line in text.splitlines():
+            if not line or line.startswith("#"):
+                continue
+            if not line.startswith("\t"):
+                in_vendor = line.startswith(v + " ")
+            elif in_vendor and line.startswith("\t" + d + " "):
+                name = line.strip()[len(d):].strip()
+                m = re.search(r"\[([^\]]+)\]\s*$", name)
+                return m.group(1) if m else name
+        return ""
+    return ""
 
 
 def pci_device_name(slot):
@@ -98,7 +159,7 @@ def gpus():
     if m:
         renderer = re.sub(r"\s*\(.*\)\s*$", "", m.group(1)).strip()
 
-    for card in sorted(glob.glob("/sys/class/drm/card[0-9]")):
+    for card in sysglob("/sys/class/drm/card[0-9]"):
         dev = os.path.join(card, "device")
         vendor_id = read(os.path.join(dev, "vendor"))
         vendor = {"0x1002": "amd", "0x8086": "intel", "0x10de": "nvidia"}.get(vendor_id, "")
@@ -109,14 +170,20 @@ def gpus():
         if renderer and vendor_of(renderer) == vendor:
             name, renderer = renderer, ""
         if not name:
-            name = pci_device_name(os.path.basename(os.path.realpath(dev)))
+            name = pci_device_name(os.path.basename(os.path.realpath(ROOT + dev)))
+        if not name:
+            name = pci_ids_name(vendor_id, read(os.path.join(dev, "device")))
         if not vendor and not name:
             continue
         # Integrated GPUs report tiny "VRAM" carve-outs; hide those.
         vram_bytes = int(vram) if vram.isdigit() else None
         if vram_bytes is not None and vram_bytes < 1024 ** 3:
             vram_bytes = None
-        result.append({"name": name or "Graphics", "vendor": vendor, "vramBytes": vram_bytes})
+        name = tidy_gpu_name(name, vendor) if name else VENDOR_LABEL.get(vendor, "Graphics")
+        result.append({"name": name, "vendor": vendor, "vramBytes": vram_bytes})
+    # Laptops with two GPUs: the dedicated one first (its own memory, or
+    # at least not the Intel chip built into the CPU).
+    result.sort(key=lambda g: (-(g["vramBytes"] or 0), g["vendor"] == "intel"))
     return result
 
 
@@ -196,6 +263,9 @@ def system():
         rel[k] = v.strip('"')
     os_name = rel.get("NAME", "Linux")
     version = rel.get("VERSION_ID", "")
+    # Rolling releases (Arch, Tumbleweed) put a build date here; it's noise.
+    if re.match(r"\d{8}", version):
+        version = ""
     m = re.search(r"(\d+\.\d+(\.\d+)?)", run(["plasmashell", "--version"]))
     return {
         "os": f"{os_name} {version}".strip(),
@@ -216,6 +286,9 @@ def live_sensors():
         sensors = json.loads(raw)["data"][0]
     except (ValueError, KeyError, IndexError):
         sensors = {}
+    # GPUs ksystemstats knows about (gpu0, gpu1, ...), so laptops with two
+    # GPUs read temperature and power from both.
+    out["gpuIds"] = sorted({m.group(1) for m in (re.match(r"gpu/(gpu\d+)/", sid) for sid in sensors) if m})
     for sid in sorted(sensors):
         if re.search(r"/fan\d*$", sid):
             label = sensors[sid][0]
@@ -227,8 +300,8 @@ def live_sensors():
     # amdgpu exposes board power as power1_average (µW), which ksystemstats
     # reports as 0 on some cards; the widget reads this file directly.
     out["gpuPowerFile"] = ""
-    for f in sorted(glob.glob("/sys/class/drm/card[0-9]/device/hwmon/hwmon*/power1_average")) + \
-             sorted(glob.glob("/sys/class/drm/card[0-9]/device/hwmon/hwmon*/power1_input")):
+    for f in sysglob("/sys/class/drm/card[0-9]/device/hwmon/hwmon*/power1_average") + \
+             sysglob("/sys/class/drm/card[0-9]/device/hwmon/hwmon*/power1_input"):
         if read(f).isdigit():
             out["gpuPowerFile"] = f
             break
@@ -238,8 +311,70 @@ def live_sensors():
     return out
 
 
+# Small programs some tiles use. Missing ones only switch off a detail; the
+# Settings "System check" says which package to install.
+TOOLS = {
+    # tool: (what it's for, {distro family: package})
+    "notify-send": ("Focus timer alerts",
+                    {"debian": "libnotify-bin", "fedora": "libnotify", "arch": "libnotify",
+                     "suse": "libnotify-tools"}),
+    "lspci": ("Graphics card name",
+              {"debian": "pciutils", "fedora": "pciutils", "arch": "pciutils", "suse": "pciutils"}),
+    "kscreen-doctor": ("Screen sizes in PC specs",
+                       {"debian": "kscreen", "fedora": "kscreen", "arch": "kscreen", "suse": "kscreen6"}),
+    "busctl": ("Fan speeds", {}),
+}
+# Shown to the user as a hint; never run.
+INSTALL = {"debian": "sudo apt install", "fedora": "sudo dnf install",  # guard: text only
+           "arch": "sudo pacman -S", "suse": "sudo zypper install"}     # guard: text only
+
+
+def family():
+    rel = {}
+    for line in read("/etc/os-release").splitlines():
+        k, _, v = line.partition("=")
+        rel[k] = v.strip('"')
+    ids = (rel.get("ID", "") + " " + rel.get("ID_LIKE", "")).split()
+    for fam, names in (("debian", ("debian", "ubuntu")), ("fedora", ("fedora", "rhel")),
+                       ("arch", ("arch",)), ("suse", ("suse", "opensuse"))):
+        if any(i in names or i.startswith(names) for i in ids):
+            return fam
+    return ""
+
+
+def check():
+    """What's missing, and the command that installs it."""
+    fam = family()
+    missing = []
+    for tool, (purpose, packages) in TOOLS.items():
+        if tool == "notify-send" and (have("gdbus") or have("busctl")):
+            continue        # notify() has a fallback
+        if not have(tool):
+            pkg = packages.get(fam, "")
+            missing.append({"tool": tool, "purpose": purpose,
+                            "install": INSTALL[fam] + " " + pkg if fam and pkg else ""})
+    return {"family": fam, "missing": missing}
+
+
+def notify(title, body):
+    """Desktop notification: notify-send if installed, else straight over D-Bus."""
+    title, body = title[:200], body[:500]
+    if have("notify-send"):
+        return ok(["notify-send", "-a", "Solidget", "-i", "chronometer", "--", title, body])
+    if have("gdbus"):
+        return ok(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications",
+                         "--object-path", "/org/freedesktop/Notifications",
+                         "--method", "org.freedesktop.Notifications.Notify",
+                         "Solidget", "0", "chronometer", title, body, "[]", "{}", "5000"])
+    if have("busctl"):
+        return ok(["busctl", "--user", "call", "org.freedesktop.Notifications",
+                         "/org/freedesktop/Notifications", "org.freedesktop.Notifications", "Notify",
+                         "susssasa{sv}i", "Solidget", "0", "chronometer", title, body, "0", "0", "5000"])
+    return False
+
+
 def battery():
-    for ps in sorted(glob.glob("/sys/class/power_supply/*")):
+    for ps in sysglob("/sys/class/power_supply/*"):
         if read(os.path.join(ps, "type")) == "Battery" and read(os.path.join(ps, "scope"), "System") == "System":
             cap = read(os.path.join(ps, "capacity"))
             return {"present": True,
@@ -273,9 +408,11 @@ if __name__ == "__main__":
         print(json.dumps(battery()))
     elif sys.argv[1:2] == ["tz"]:
         print(json.dumps(tz_offsets(sys.argv[2:])))
+    elif sys.argv[1:2] == ["notify"] and len(sys.argv) == 4:
+        print(json.dumps({"sent": notify(sys.argv[2], sys.argv[3])}))
     else:
         print(json.dumps({
             "cpu": cpu(), "gpus": gpus(), "memory": memory(), "board": board(),
             "drives": drives(), "displays": displays(), "system": system(),
-            "battery": battery(), "sensors": live_sensors(),
+            "battery": battery(), "sensors": live_sensors(), "check": check(),
         }))

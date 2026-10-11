@@ -26,7 +26,6 @@ ALLOWED_HOSTS = {
 # root.helper([...]) (our own specs.py).
 ALLOWED_PROGRAMS = {
     "cat",          # read the GPU power file from sysfs
-    "notify-send",  # focus timer notifications
 }
 
 # Links the widget may open in the browser (each is checked to be https first).
@@ -62,6 +61,9 @@ for folder, _, files in os.walk(ROOT):
         code = name.endswith((".qml", ".js", ".py"))   # not XML namespaces or metadata links
         for pattern, why in FORBIDDEN if code else []:
             for m in re.finditer(pattern, text):
+                line = text[text.rfind("\n", 0, m.start()) + 1:text.find("\n", m.start())]
+                if why.startswith("the widget must never need root") and "guard: text only" in line:
+                    continue    # a hint shown to the user, never executed
                 problems.append("%s  %s" % (where(path, text, m.start()), why))
 
         for m in re.finditer(r"https://([A-Za-z0-9.-]+)", text if code else ""):
@@ -86,7 +88,7 @@ for folder, _, files in os.walk(ROOT):
         # <img src="https://..."> would load an image from anywhere. Use
         # Text.PlainText; StyledText only for text we build ourselves.
         if name.endswith(".qml"):
-            for m in re.finditer(r"^[ \t]*(?:PlasmaComponents\.|QQC2\.)?(?:Label|Text|TextEdit|TextArea)\s*\{", text, re.M):
+            for m in re.finditer(r"^[ \t]*(?:component\s+\w+\s*:\s*)?(?:PlasmaComponents\.|QQC2\.)?(?:Label|Text|TextEdit|TextArea)\s*\{", text, re.M):
                 i, depth = m.end(), 1
                 while depth and i < len(text):
                     depth += {"{": 1, "}": -1}.get(text[i], 0)

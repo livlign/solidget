@@ -1,5 +1,19 @@
 # What's new
 
+## Unreleased
+
+- **Works on more distros and hardware.** The hardware check is tested on
+  Arch, Debian, Ubuntu, Fedora and openSUSE, plus simulated Raspberry Pi and
+  Intel + NVIDIA laptop setups.
+- **System check** in Settings → General: shows what's missing and the
+  exact command to install it.
+- Laptops with two GPUs show the dedicated one, the hotter temperature
+  and the total power.
+- Graphics without its own memory shows "Shared" instead of "0 B".
+- Better names when `lspci` isn't installed; no build numbers after
+  Arch or Tumbleweed.
+- Focus timer alerts work even without `notify-send`.
+
 ## 0.3.0
 
 The first public release.

@@ -1,0 +1,5 @@
+# trimmed copy of the PCI id list
+8086  Intel Corporation
+	46a6  Alder Lake-P GT2 [Iris Xe Graphics]
+10de  NVIDIA Corporation
+	25a0  GA107BM [GeForce RTX 3050 Ti Mobile]

@@ -42,6 +42,7 @@ GlassTile {
     // ---- Building blocks -----------------------------------------------------
 
     component Hint: PlasmaComponents.Label {
+        textFormat: Text.PlainText
         color: panel.pText
         opacity: 0.6
         font.pointSize: Kirigami.Theme.smallFont.pointSize
@@ -830,6 +831,56 @@ GlassTile {
                             options: [{ value: false, text: "MB/s" }, { value: true, text: "Mbps" }]
                             current: panel.app.networkBits
                             onPicked: (v) => Plasmoid.configuration.networkBits = v
+                        }
+                    }
+                }
+
+                // What's missing on this system, and how to get it.
+                Section {
+                    id: sysCheck
+                    title: i18n("System check")
+                    readonly property var specs: panel.app.specs
+                    readonly property bool helperOk: specs.cpu !== undefined
+                    // Give the sensors a few seconds before calling them missing.
+                    readonly property bool sensorsOk: panel.app.memTotal.value > 0 || panel.app.tick < 5
+                    readonly property var missing: specs.check ? specs.check.missing : []
+                    readonly property bool allGood: helperOk && sensorsOk && missing.length === 0
+
+                    Hint {
+                        text: sysCheck.specs.system
+                            ? i18n("%1 · Plasma %2", sysCheck.specs.system.os, sysCheck.specs.system.plasma || "6")
+                            : ""
+                        visible: text !== ""
+                    }
+                    SettingRow {
+                        visible: sysCheck.allGood
+                        label: i18n("Everything's in place")
+                        hint: i18n("All tiles have what they need.")
+                    }
+                    SettingRow {
+                        visible: !sysCheck.helperOk && panel.app.tick > 5
+                        label: i18n("Can't read your hardware")
+                        hint: i18n("PC specs, fans and battery need python3. Install it, then restart Plasma.")
+                    }
+                    SettingRow {
+                        visible: !sysCheck.sensorsOk
+                        label: i18n("No live stats")
+                        hint: i18n("CPU, memory and network numbers come from KDE's system monitor service. Install the \"ksystemstats\" package, then restart Plasma.")
+                    }
+                    Repeater {
+                        model: sysCheck.missing
+                        SettingRow {
+                            required property var modelData
+                            label: modelData.purpose
+                            hint: modelData.install
+                                ? i18n("Needs %1. To add it: %2", modelData.tool, modelData.install)
+                                : i18n("Needs %1 from your distribution.", modelData.tool)
+                            SButton {
+                                visible: modelData.install !== ""
+                                text: i18n("Copy")
+                                tip: i18n("Copy the install command")
+                                onClicked: panel.app.copyToClipboard(modelData.install)
+                            }
                         }
                     }
                 }

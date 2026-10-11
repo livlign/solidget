@@ -12,8 +12,9 @@ Tell us what you found and how to make it happen. We'll reply as soon as we can.
 
 - Runs inside Plasma, as you. It never needs root.
 - Reads hardware info from `/proc`, `/sys` and standard tools (`lspci`, `lsblk`).
-- Starts only three programs: its own `specs.py`, `cat` (to read the GPU's
-  power use) and `notify-send` (for focus timer alerts).
+- Starts only two programs directly: its own `specs.py` and `cat` (to read
+  the GPU's power use). `specs.py` in turn runs standard tools like `lspci`,
+  and `notify-send` for focus timer alerts, never through a shell.
 - Talks only to the websites listed in the README, always over https.
 - Saves its settings in Plasma's normal config file. Nothing else.
 

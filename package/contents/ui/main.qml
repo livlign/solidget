@@ -279,8 +279,13 @@ PlasmoidItem {
     Sensors.Sensor { id: gpuUsageS;     sensorId: "gpu/all/usage";               updateRateLimit: 1000 }
     Sensors.Sensor { id: gpuVramUsedS;  sensorId: "gpu/all/usedVram";            updateRateLimit: 2000 }
     Sensors.Sensor { id: gpuVramTotalS; sensorId: "gpu/all/totalVram";           updateRateLimit: 10000 }
-    Sensors.Sensor { id: gpuTempS;      sensorId: "gpu/gpu0/temperature";        updateRateLimit: 2000 }
-    Sensors.Sensor { id: gpuPowerS;     sensorId: "gpu/gpu0/power";              updateRateLimit: 1000 }
+    // Laptops can have two GPUs; read both and show the hotter one and the
+    // total power. gpuIds comes from specs.py (what ksystemstats offers).
+    readonly property var gpuIds: specs.sensors && specs.sensors.gpuIds && specs.sensors.gpuIds.length ? specs.sensors.gpuIds : ["gpu0"]
+    Sensors.Sensor { id: gpuTempS;      sensorId: "gpu/" + root.gpuIds[0] + "/temperature"; updateRateLimit: 2000 }
+    Sensors.Sensor { id: gpuPowerS;     sensorId: "gpu/" + root.gpuIds[0] + "/power";       updateRateLimit: 1000 }
+    Sensors.Sensor { id: gpuTemp2S;     sensorId: root.gpuIds.length > 1 ? "gpu/" + root.gpuIds[1] + "/temperature" : ""; updateRateLimit: 2000 }
+    Sensors.Sensor { id: gpuPower2S;    sensorId: root.gpuIds.length > 1 ? "gpu/" + root.gpuIds[1] + "/power" : "";       updateRateLimit: 1000 }
     Sensors.Sensor { id: memUsedS;      sensorId: "memory/physical/used";        updateRateLimit: 2000 }
     Sensors.Sensor { id: memTotalS;     sensorId: "memory/physical/total";       updateRateLimit: 10000 }
     Sensors.Sensor { id: memCacheS;     sensorId: "memory/physical/cache";       updateRateLimit: 5000 }
@@ -342,8 +347,8 @@ PlasmoidItem {
         gpuUsage = { value: gpuUsageS.value };
         gpuVramUsed = { value: gpuVramUsedS.value };
         gpuVramTotal = { value: gpuVramTotalS.value };
-        gpuTemp = { value: gpuTempS.value };
-        gpuPower = { value: gpuPowerS.value };
+        gpuTemp = { value: Math.max(gpuTempS.value || 0, gpuTemp2S.value || 0) };
+        gpuPower = { value: (gpuPowerS.value || 0) + (gpuPower2S.value || 0) };
         memUsed = { value: memUsedS.value };
         memTotal = { value: memTotalS.value };
         memCache = { value: memCacheS.value };
@@ -554,8 +559,9 @@ PlasmoidItem {
         onNewData: (source) => disconnectSource(source)
     }
     function notify(title, body) {
-        // "--" so a title starting with "-" is never read as an option.
-        notifier.connectSource(Shell.command(["notify-send", "-a", "Solidget", "-i", "chronometer", "--", title, body]));
+        // specs.py uses notify-send, or talks to the notification service
+        // directly on systems without it.
+        notifier.connectSource(root.helper(["notify", title, body]));
     }
 
     // ---- Clipboard -------------------------------------------------------

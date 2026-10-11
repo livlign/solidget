@@ -14,7 +14,10 @@ GaugeTile {
     value: app.gpuUsage.value || 0
     history: app.gpuHistory.values
     details: [
-        { label: i18n("VRAM"), value: app.bytesText(app.gpuVramUsed.value) + " / " + app.bytesText(app.gpuVramTotal.value, 0) },
+        // Built-in graphics (most Intel, some AMD) share the system memory.
+        app.gpuVramTotal.value > 0
+            ? { label: i18n("VRAM"), value: app.bytesText(app.gpuVramUsed.value) + " / " + app.bytesText(app.gpuVramTotal.value, 0) }
+            : { label: i18n("Memory"), value: i18n("Shared") },
         { label: i18n("Temperature"), value: app.tempText(app.gpuTemp.value), dot: app.tempColor(app.gpuTemp.value) },
         { label: i18n("Power"), value: app.gpuWatts > 0 ? Math.round(app.gpuWatts) + " W" : "–" }
     ]

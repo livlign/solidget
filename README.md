@@ -21,7 +21,12 @@ and the little everyday things, all in one good-looking board.
 
 ## Install
 
-You need KDE Plasma 6 (Fedora KDE, Kubuntu 25.04+, KDE neon, Arch…).
+Works on any Linux with **KDE Plasma 6**: Fedora KDE, Kubuntu 25.04+,
+Debian 13, openSUSE Tumbleweed, Arch, Manjaro, KDE neon, Bazzite and more.
+Plasma 5 (Ubuntu 24.04, Debian 12) isn't supported.
+
+A tile looks empty? Open **Settings → General → System check**. It tells
+you what's missing and the exact command to install it.
 
 **From Plasma (easiest).** Right-click your desktop → **Add Widgets…** →
 **Get New Widgets** → **Download New Plasma Widgets**. Search for

@@ -25,3 +25,38 @@ jobs:
         run: ./tests/run.sh
       - name: Shell scripts
         run: shellcheck install.sh tests/run.sh tools/package.sh
+
+  # The hardware script on other distros: each starts with only Python, so
+  # missing tools and different file layouts get exercised.
+  distros:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Arch
+            image: archlinux:latest
+            setup: pacman -Sy --noconfirm python
+          - name: Debian 13
+            image: debian:trixie
+            setup: apt-get update -qq && apt-get install -y -qq python3 tzdata
+          - name: Ubuntu 26.04
+            image: ubuntu:26.04
+            setup: apt-get update -qq && apt-get install -y -qq python3 tzdata
+          - name: Fedora 44
+            image: registry.fedoraproject.org/fedora:44
+            setup: dnf -q -y install python3
+          - name: openSUSE Tumbleweed
+            image: registry.opensuse.org/opensuse/tumbleweed:latest
+            setup: zypper -q -n in python3 timezone
+    name: ${{ matrix.name }}
+    container: ${{ matrix.image }}
+    steps:
+      - name: Install Python
+        run: ${{ matrix.setup }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Hardware script
+        run: python3 tests/test_specs.py
