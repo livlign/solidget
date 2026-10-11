@@ -1,6 +1,6 @@
 # What's new
 
-## Unreleased
+## 0.6.0
 
 - **New Plasma style, now the default.** Tiles use your Plasma Style's own
   widget background, your accent color and plain headings, so the board
