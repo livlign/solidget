@@ -80,6 +80,15 @@ class Canvas:
 def shape(name, w, h, draw, outline=True):
     c = Canvas(w, h)
     draw(c)
+    if outline:
+        # A pixel of room left, right and on top, so the outline is never cut
+        # off by the edge of the canvas (the bottom stays flush: things stand
+        # on the floor).
+        big = Canvas(w + 2, h + 1)
+        for y in range(h):
+            for x in range(w):
+                big.g[y + 1][x + 1] = c.g[y][x]
+        c = big
     SPRITES[name] = c.rows(outline)
 
 
@@ -331,17 +340,17 @@ shape("pine_snow", 18, 29, lambda c: pine(c, True))
 
 def palm(c):
     for i in range(18):                      # curved trunk
-        x = int(10 + (i / 18) ** 2 * 4)
+        x = int(12 + (i / 18) ** 2 * 4)
         c.rect(x, 11 + i, 3, 1, "H" if i % 3 == 0 else "t")
     # Fronds: arcs out from the top that droop at the ends.
     for dx, lift in ((-10, 1), (10, 1), (-9, -6), (9, -6), (-4, -11), (4, -11)):
         for t in range(12):
             k = t / 11
-            x = 11 + dx * k
+            x = 13 + dx * k
             y = 11 + lift * k + 8 * k * k
             c.rect(int(round(x)), int(round(y)), 2, 2 if t < 9 else 1, "g" if t % 4 else "G")
-    c.ell(11.5, 11, 2.2, 1.8, "B")
-shape("palm", 22, 30, palm)
+    c.ell(13.5, 11, 2.2, 1.8, "B")
+shape("palm", 27, 30, palm)
 
 
 def bush(c):

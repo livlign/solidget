@@ -1,5 +1,19 @@
 # What's new
 
+## Unreleased
+
+- **RGB theme** is calmer: a thin rim on every tile, cut from one rainbow
+  laid over the whole board, flowing slowly from top to bottom at a slight
+  angle. No more glow or moving parts, and it no longer redraws the
+  desktop ten times a second.
+- The widget no longer runs off the bottom of the screen: if it's bigger
+  than its screen (the desktop's layout area can be larger than the screen
+  after scaling or rotation changes), it trims itself to fit, and the
+  placements measure the real screen. A board arranged by hand with more
+  rows than fit also shrinks its rows to fit.
+- The palm tree's fronds (and the edges of some other pictures, like the
+  pines, bush and hydrant) are no longer cut off.
+
 ## 0.7.0
 
 - **New Uptime tile.** How long your PC has been on, over a scene you pick:

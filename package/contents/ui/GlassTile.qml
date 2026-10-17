@@ -111,29 +111,48 @@ Item {
     readonly property bool rgbOn: look ? look.rgb === true : false
     readonly property string edgeColor: look && look.edge ? look.edge : ""
     readonly property real rgbPhase: rgbOn && look.rgbClock ? look.rgbClock.phase : 0
-    // One color field across the whole board: the hue at a point depends on
-    // where it is on the board, so where one tile's rim ends the next one's
-    // carries on, and it all flows along together.
-    readonly property real boardW: parent && parent.parent ? Math.max(1, parent.parent.width) : Math.max(1, width)
-    readonly property real gx: rgbOn && parent ? parent.x : 0
-    readonly property real gy: rgbOn && parent ? parent.y : 0
-    function rgbAt(f) {      // f: 0..1 across this tile
-        var h = rgbPhase - (gx + f * width + gy * 0.6) / (boardW * 1.4);
-        return Qt.hsla((h % 1 + 1) % 1, 1, 0.55, 1);
-    }
-    Repeater {
-        model: tile.rgbOn ? [[5, 0.14], [2, 1]] : []
-        Rectangle {
-            required property var modelData
-            x: -modelData[0]; y: -modelData[0]
-            width: tile.width + modelData[0] * 2; height: tile.height + modelData[0] * 2
-            radius: tile.radius + modelData[0]
-            opacity: modelData[1]
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: tile.rgbAt(0) }
-                GradientStop { position: 0.5; color: tile.rgbAt(0.5) }
-                GradientStop { position: 1; color: tile.rgbAt(1) }
+    // A thin rim cut from one rainbow gradient laid over the whole board.
+    // It runs top to bottom, tilted a little to the right, and drifts down
+    // a tiny step each second, so the colors flow down across the tiles.
+    readonly property real rgbHue: ((rgbPhase % 1) + 1) % 1
+    readonly property Item rgbBoard: rgbOn && parent && parent.parent ? parent.parent : null
+    // This tile's spot on the board (the slot it sits in).
+    readonly property real rgbX: rgbBoard ? parent.x : 0
+    readonly property real rgbY: rgbBoard ? parent.y : 0
+    // How far one full rainbow stretches, along the flow.
+    readonly property real rgbSpan: rgbBoard ? Math.max(200, rgbBoard.height * 0.7) : 400
+    function rgbStop(k) { return Qt.hsla((((k - rgbHue) % 1) + 1) % 1, 1, 0.58, 0.9); }
+    Shape {
+        id: rgbRim
+        visible: tile.rgbOn
+        anchors.fill: parent
+        z: 1                // over the card (it's only an outline)
+        preferredRendererType: Shape.CurveRenderer
+        readonly property real sw: 2
+        readonly property real r: tile.radius
+        ShapePath {
+            strokeWidth: 0
+            strokeColor: "transparent"
+            fillRule: ShapePath.OddEvenFill
+            // Direction of the flow: down, 15 degrees toward the right.
+            fillGradient: LinearGradient {
+                spread: ShapeGradient.RepeatSpread
+                x1: -tile.rgbX; y1: -tile.rgbY
+                x2: -tile.rgbX + tile.rgbSpan * 0.259; y2: -tile.rgbY + tile.rgbSpan * 0.966
+                GradientStop { position: 0;    color: tile.rgbStop(0) }
+                GradientStop { position: 0.17; color: tile.rgbStop(0.17) }
+                GradientStop { position: 0.33; color: tile.rgbStop(0.33) }
+                GradientStop { position: 0.5;  color: tile.rgbStop(0.5) }
+                GradientStop { position: 0.67; color: tile.rgbStop(0.67) }
+                GradientStop { position: 0.83; color: tile.rgbStop(0.83) }
+                GradientStop { position: 1;    color: tile.rgbStop(1) }
+            }
+            // A ring: the card's outline minus a slightly smaller one.
+            PathRectangle { width: rgbRim.width; height: rgbRim.height; radius: rgbRim.r }
+            PathRectangle {
+                x: rgbRim.sw; y: rgbRim.sw
+                width: rgbRim.width - rgbRim.sw * 2; height: rgbRim.height - rgbRim.sw * 2
+                radius: Math.max(0, rgbRim.r - rgbRim.sw)
             }
         }
     }
