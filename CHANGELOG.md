@@ -1,6 +1,6 @@
 # What's new
 
-## Unreleased
+## 0.7.0
 
 - **New Uptime tile.** How long your PC has been on, over a scene you pick:
   the sky outside right now (sunrise, a blue day, sunset, stars and the
