@@ -80,9 +80,9 @@ See errors: `journalctl --user -u plasma-plasmashell -f | grep -i solidget`
 
 ## Releasing (maintainers)
 
-Bump `Version` in `package/metadata.json`, add a section to `CHANGELOG.md`,
-then push a tag like `v0.4.0`. GitHub builds and publishes the release.
-Then upload the file to the KDE Store.
+Bump `Version` in `package/metadata.json` and `packaging/solidget.spec`
+(plus a `%changelog` line there), add a section to `CHANGELOG.md`, then push a tag like `v0.4.0`. GitHub builds and publishes the release.
+Then upload the file to the KDE Store. Copr rebuilds the RPM by itself.
 
 ## Where things are
 

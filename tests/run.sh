@@ -11,6 +11,9 @@ check "layout engine"   node tests/layout.test.js
 check "code and config" node tests/code.test.js
 check "hardware script" python3 tests/test_specs.py
 check "security guard"  python3 tests/guard.py
+check "rpm version"     sh -c 'v=$(python3 -c "import json; print(json.load(open(\"package/metadata.json\"))[\"KPlugin\"][\"Version\"])") &&
+    grep -q "^Version: *$v\$" packaging/solidget.spec && grep -q -- "- $v-" packaging/solidget.spec ||
+    { echo "packaging/solidget.spec: set Version and add a %changelog entry for $v"; exit 1; }'
 if command -v shellcheck >/dev/null; then
     check "shell scripts"   shellcheck install.sh tests/run.sh tools/package.sh
 fi
