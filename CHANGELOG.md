@@ -1,6 +1,6 @@
 # What's new
 
-## Unreleased
+## 0.7.1
 
 - **RGB theme** is calmer: a thin rim on every tile, cut from one rainbow
   laid over the whole board, flowing slowly from top to bottom at a slight
