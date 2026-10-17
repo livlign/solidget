@@ -57,3 +57,17 @@ function uptime(seconds) {
     if (h > 0) return h + "h " + m + "m";
     return m + "m";
 }
+
+// 74:12:05 (hours can pass 24).
+function uptimeClock(seconds) {
+    seconds = Math.max(0, Math.floor(seconds || 0));
+    var h = Math.floor(seconds / 3600), m = Math.floor(seconds % 3600 / 60), s = seconds % 60;
+    return h + ":" + (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+}
+
+// Whole days, d, h, m and s, for building longer text.
+function uptimeParts(seconds) {
+    seconds = Math.max(0, Math.floor(seconds || 0));
+    return { d: Math.floor(seconds / 86400), h: Math.floor(seconds % 86400 / 3600),
+             m: Math.floor(seconds % 3600 / 60), s: seconds % 60 };
+}

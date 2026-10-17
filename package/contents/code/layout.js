@@ -29,12 +29,13 @@ var SPANS = {
     quote:     [[2, 1], [3, 1], [2, 2]],
     note:      [[1, 1], [2, 1], [2, 2]],
     worldclock:[[2, 1], [2, 2]],
-    focus:     [[1, 1], [2, 1], [2, 2]]
+    focus:     [[1, 1], [2, 1], [2, 2]],
+    uptime:    [[2, 1], [2, 2], [3, 2]]
 };
 
 // Who gets extra space first.
 var GROW_PRIORITY = ["clock", "photo", "cpu", "specs", "gpu", "network", "media", "calendar", "pet", "cores", "processes",
-                     "worldclock", "focus", "quote", "note",
+                     "worldclock", "focus", "uptime", "quote", "note",
                      "memory", "temps", "power", "disk", "battery"];
 
 // Target cell edge in grid units for each density setting.

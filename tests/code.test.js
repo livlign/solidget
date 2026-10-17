@@ -12,6 +12,7 @@ function load(file, names) {
     return new Function(src + "; return { " + names.join(", ") + " };")();
 }
 
+const hex = /^#[0-9a-f]{6}$/i;
 let passed = 0;
 function test(name, fn) {
     try { fn(); passed++; }
@@ -19,7 +20,7 @@ function test(name, fn) {
 }
 
 // ---- format.js -------------------------------------------------------------
-const F = load("format.js", ["bytes", "rate", "temp", "toFahrenheit", "driveSize", "percent", "ghz", "uptime"]);
+const F = load("format.js", ["bytes", "rate", "temp", "toFahrenheit", "driveSize", "percent", "ghz", "uptime", "uptimeClock", "uptimeParts"]);
 
 test("bytes: binary and decimal units", () => {
     assert.strictEqual(F.bytes(0), "0 B");
@@ -53,6 +54,43 @@ test("small helpers", () => {
     assert.strictEqual(F.ghz(3110), "3.11 GHz");
     assert.strictEqual(F.uptime(97 * 60), "1h 37m");
     assert.strictEqual(F.uptime(3 * 86400 + 7200), "3d 2h");
+});
+test("uptime as a running clock and in parts", () => {
+    assert.strictEqual(F.uptimeClock(0), "0:00:00");
+    assert.strictEqual(F.uptimeClock(3 * 86400 + 3725), "73:02:05");
+    assert.strictEqual(F.uptimeClock(NaN), "0:00:00");
+    assert.deepStrictEqual(F.uptimeParts(86400 + 3661), { d: 1, h: 1, m: 1, s: 1 });
+});
+
+// ---- sky.js ----------------------------------------------------------------
+const S = load("sky.js", ["at", "minutesOf", "moonPhase", "scatter", "mix"]);
+test("sky: night, dawn, day and dusk around the sun", () => {
+    const rise = S.minutesOf("2026-10-15T06:10", 0), set = S.minutesOf("2026-10-15T17:40", 0);
+    assert.deepStrictEqual([rise, set], [370, 1060]);
+    assert.strictEqual(S.at(120, rise, set).phase, "night");
+    assert.strictEqual(S.at(360, rise, set).phase, "dawn");
+    assert.strictEqual(S.at(720, rise, set).phase, "day");
+    assert.strictEqual(S.at(1070, rise, set).phase, "dusk");
+    assert.strictEqual(S.at(1380, rise, set).phase, "night");
+    const noon = S.at((rise + set) / 2, rise, set);
+    assert.ok(noon.sun.up && noon.sun.height > 0.99 && noon.stars === 0 && !noon.moon.up);
+    const midnight = S.at(0, rise, set);
+    assert.ok(!midnight.sun.up && midnight.moon.up && midnight.stars === 1 && midnight.dark);
+    for (let t = 0; t < 1440; t += 7) {
+        const k = S.at(t, rise, set);
+        assert.ok(hex.test(k.top) && hex.test(k.bottom), "bad color at " + t);
+    }
+    // Missing or nonsense times fall back to 6:30 / 18:30.
+    assert.strictEqual(S.minutesOf("junk", 390), 390);
+    assert.strictEqual(S.at(720, NaN, NaN).phase, "day");
+    assert.strictEqual(S.at(720, 900, 300).phase, "day");
+});
+test("sky: moon phase and steady stars", () => {
+    assert.ok(S.moonPhase(new Date(Date.UTC(2000, 0, 6, 18, 14))) < 0.001);
+    const full = S.moonPhase(new Date(Date.UTC(2024, 0, 25, 17, 54)));   // a full moon
+    assert.ok(Math.abs(full - 0.5) < 0.03, "full moon gave " + full);
+    assert.deepStrictEqual(S.scatter(5, 3), S.scatter(5, 3));
+    S.scatter(50).forEach((p) => assert.ok(p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1));
 });
 
 // ---- shell.js --------------------------------------------------------------
@@ -88,9 +126,61 @@ test("quotes: one per day, always text + author", () => {
     }
 });
 
+// ---- petcare.js -------------------------------------------------------------
+const C = load("petcare.js", ["parse", "serialize", "resume", "levels", "step", "act", "wish", "happiness", "ACTIONS"]);
+const H = 3600, T0 = 1790000000;
+test("pet care: needs run down and come back", () => {
+    let s = C.parse("", T0);
+    assert.deepStrictEqual(C.levels(s, T0), { food: 100, fun: 100, clean: 100, potty: 0 });
+    const later = C.levels(s, T0 + 4 * H);
+    assert.strictEqual(later.food, 50);
+    assert.strictEqual(later.potty, 67);
+    assert.strictEqual(C.levels(s, T0 + 20 * H).food, 0);
+    s = C.act(s, "feed", T0 + 4 * H);
+    assert.strictEqual(C.levels(s, T0 + 4 * H).food, 100);
+    s = C.act(s, "walk", T0 + 4 * H);
+    assert.strictEqual(C.levels(s, T0 + 4 * H).potty, 0);
+    C.ACTIONS.forEach((a) => C.act(s, a, T0));   // every button works
+});
+test("pet care: skipped walks make a mess, clean-up clears it", () => {
+    let s = C.parse("", T0), ev;
+    [s, ev] = C.step(s, T0 + 2 * H);
+    assert.strictEqual(ev, "");
+    s = C.act(s, "feed", T0 + 2 * H);
+    [s, ev] = C.step(s, T0 + 5 * H);
+    assert.strictEqual(ev, "poop");
+    assert.strictEqual(C.wish(C.levels(s, T0 + 5 * H), s), "clean");
+    [s, ev] = C.step(s, T0 + 11 * H);
+    assert.strictEqual(ev, "puddle");
+    for (let i = 0; i < 10; i++) [s] = C.step(s, T0 + (20 + i * 7) * H);
+    assert.ok(s.poops + s.puddles <= 6, "mess is capped");
+    assert.ok(C.levels(s, T0 + 20 * H).clean < 100);
+    s = C.act(s, "clean", T0 + 90 * H);
+    assert.strictEqual(s.poops + s.puddles, 0);
+});
+test("pet care: time stops while the PC is off", () => {
+    let s = C.act(C.parse("", T0), "feed", T0);
+    s = C.resume(s, T0 + 48 * H);
+    assert.strictEqual(C.levels(s, T0 + 48 * H).food, 100);
+    const short = C.resume(C.parse("", T0), T0 + 600);   // 10 minutes away: no change
+    assert.strictEqual(short.fed, T0);
+});
+test("pet care: config text is never trusted", () => {
+    const bad = ['{"fed":"x","poops":99,"puddles":-4,"washed":1e20}', "[]", "null", "{", '{"fed":-5}', "\"\""];
+    bad.forEach((t) => {
+        const s = C.parse(t, T0);
+        assert.ok(s.poops >= 0 && s.poops <= 3 && s.puddles >= 0 && s.puddles <= 3, t);
+        assert.ok(s.washed <= T0 + 60 && s.fed > 0, t);
+    });
+    const round = C.parse(C.serialize(C.act(C.parse("", T0), "bath", T0 + 5)), T0 + 10);
+    assert.strictEqual(round.washed, T0 + 5);
+    const lv = C.levels(C.parse("", T0), T0);
+    assert.strictEqual(C.wish(lv, C.parse("", T0)), "");
+    assert.strictEqual(C.happiness(lv), 100);
+});
+
 // ---- palette.js ------------------------------------------------------------
 const P = load("palette.js", ["ACCENTS", "STYLES", "STYLE_ORDER", "THEMES", "THEME_ORDER", "TILE_HUE", "LOOKS", "accentPair", "heatFor", "vendorColor", "plasmaPalette", "nativePair", "nativeHeat"]);
-const hex = /^#[0-9a-f]{6}$/i;
 
 // Tile ids from main.qml, so a new tile can't be forgotten here.
 const main = read("ui/main.qml");
@@ -167,6 +257,22 @@ test("poodle sprite sheet matches the tile", () => {
     rows.forEach((r) => assert.ok(counts[r] >= 1, "no frame count for " + r));
     // Every activity points at a real row.
     for (const m of pet.matchAll(/row: "(\w+)"/g)) assert.ok(rows.includes(m[1]), "unknown row " + m[1]);
+});
+test("every prop the pet uses is in the props sheet", () => {
+    const P2 = load("props.js", ["AT", "SHEET"]);
+    const png = fs.readFileSync(path.join(root, "images", "props.png"));
+    assert.deepStrictEqual([png.readUInt32BE(16), png.readUInt32BE(20)], P2.SHEET, "props.js is out of date: run tools/props.py");
+    const ui = ["PetTile.qml", "PetRoom.qml", "PetOutside.qml"].map((f) => read("ui/" + f)).join("\n");
+    const names = new Set([...ui.matchAll(/name: "(\w+)"(?=\s*[;\n}])/g)].map((m) => m[1]));
+    // PetOutside's layouts: ["picture", x, "far" | "", raise]
+    for (const m of ui.matchAll(/\["(\w+)", [\d.]+, "(?:far)?", -?\d+\]/g)) names.add(m[1]);
+    assert.ok(names.has("hydrant") && names.has("cactus"), "didn't find the outdoor layouts");
+    ["ball", "bone", "duck", "heart", "sparkle", "drop", "poop", "i_home"].forEach((n) => names.add(n));
+    // Built from parts: care buttons and wishes ("i_" + action), friends (kind + frame).
+    for (const a of ["pet", "feed", "bath", "clean", "walk", "play"]) names.add("i_" + a);
+    for (const f of ["bird", "butterfly", "squirrel", "rabbit", "pal", "crab"]) { names.add(f + "1"); names.add(f + "2"); }
+    names.forEach((n) => assert.ok(P2.AT[n], "props.png has no picture called " + n));
+    Object.values(P2.AT).forEach((r) => assert.ok(r[0] + r[2] <= P2.SHEET[0] && r[1] + r[3] <= P2.SHEET[1], "outside the sheet"));
 });
 test("every tile has a QML file and a name", () => {
     const files = fs.readdirSync(path.join(root, "ui"));

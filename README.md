@@ -9,9 +9,12 @@ and the little everyday things, all in one good-looking board.
 
 ## What you get
 
-- **20 tiles.** CPU, GPU, memory, temperatures, network, storage, fans, top apps,
+- **21 tiles.** CPU, GPU, memory, temperatures, network, storage, power and fans, top apps,
   clock and weather, calendar, music controls, photo of the day, world clocks,
-  focus timer, sticky note, quote of the day, and a pixel pet (a poodle or a cat) that reacts to your CPU.
+  focus timer, sticky note, quote of the day, and uptime over a scene you pick
+  (the real sky, a heartbeat, a sleepy face, planets or your own picture).
+- **A pixel pet** (a poodle or a cat) with its own room. Pet it, feed it, bath it,
+  walk it to the park, the snow or the beach, and clean up if you forget.
 - **Your look.** 5 styles (Plasma, Glass, Flat, Clear, Pixel) × 10 color themes, or
   pick a ready-made look like *Retro Terminal* or *Paper*.
 - **Fits any space.** A corner card, a sidebar, or a whole spare monitor,
@@ -19,7 +22,7 @@ and the little everyday things, all in one good-looking board.
 - **Arrange it your way.** Drag tiles, resize them, hide the ones you don't need.
 - **Private by default.** Your computer name, Wi-Fi name, IP and location are
   hidden, so screenshots are safe to share.
-- **Light on your PC.** About 5% of one CPU core with all 20 tiles on (a little more when your PC is busy).
+- **Light on your PC.** About 5% of one CPU core with all tiles on (a little more when your PC is busy).
 
 ## Install
 
@@ -34,6 +37,16 @@ you what's missing and the exact command to install it.
 **Get New Widgets** → **Download New Plasma Widgets**. Search for
 "Solidget" and click **Install**. Updates show up in Discover.
 It's also on the [KDE Store](https://store.kde.org/p/2378131/).
+
+**On Fedora (Copr).** Installs for everyone on the PC and updates with
+your system:
+
+```sh
+sudo dnf copr enable livlign/solidget
+sudo dnf install solidget
+```
+
+Then add it from **Add Widgets…**.
 
 **From a file.** Download `solidget-….plasmoid` from the
 [latest release](https://github.com/livlign/solidget/releases/latest). Then
@@ -70,7 +83,7 @@ Everything runs on your PC. A few tiles fetch public data, and only when they're
 
 | Tile | Talks to | Why |
 |---|---|---|
-| Clock & weather | open-meteo.com, ipwho.is | Weather, and your rough location if you didn't set a city |
+| Clock & weather, Uptime (sky scene) | open-meteo.com, ipwho.is | Weather and sunrise/sunset, and your rough location if you didn't set a city |
 | World clocks | open-meteo.com | Find a city's time zone, once per city |
 | Photo of the day | bing.com | Today's photo, once a day |
 

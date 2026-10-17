@@ -42,13 +42,21 @@ Item {
     property real bodyOpacity: solid ? 1.0 : look ? look.bodyAlpha : (dark ? 0.66 : 0.72)
     property bool showHeader: true
     default property alias content: body.data
+    // A picture filling the whole card behind the content (the Uptime
+    // tile's scenes), cut to the card's rounded corners.
+    property alias backdrop: backdropItem.data
+    // Content reaches the card's edges (no padding), cut to its corners.
+    property bool bleed: false
 
     // Size helpers for children: `u` is a font/spacing unit that scales with
     // the tile, so a tile on a 4K wall dashboard reads from across the room.
     readonly property real u: Math.max(Kirigami.Units.gridUnit * 0.75, Math.min(width, height * 1.4) / 14)
     // Plasma: the same padding on every tile, as in Plasma's own widgets.
+    // (Plasma's frame margins count from the outside of its shadow band, which
+    // sits outside the tile: measure from the card's visible edge instead.)
     readonly property real pad: nativeOn
-        ? Math.max(Kirigami.Units.largeSpacing * 1.5, frame.margins.left, frame.margins.top)
+        ? Math.max(Kirigami.Units.largeSpacing * 1.5, u * 0.85,
+                   frame.margins.left - frame.inset.left, frame.margins.top - frame.inset.top)
         : Math.max(Kirigami.Units.largeSpacing, u * 0.9)
     readonly property bool wide: width > height * 1.6
     readonly property bool tall: height > width * 1.4
@@ -83,15 +91,55 @@ Item {
         radius: Kirigami.Units.cornerRadius
         color: Kirigami.Theme.backgroundColor
     }
+    // Plasma style: the frame image has a see-through band around the card
+    // (room for its shadow). Let that band spill outside the tile so the
+    // visible card fills the tile, the same size as in the other styles.
     KSvg.FrameSvgItem {
         id: frame
         visible: tile.nativeOn
         anchors.fill: parent
+        anchors.leftMargin: -inset.left
+        anchors.topMargin: -inset.top
+        anchors.rightMargin: -inset.right
+        anchors.bottomMargin: -inset.bottom
         imagePath: tile.solid ? "dialogs/background" : "widgets/background"
     }
 
+    // RGB theme: a rainbow rim with a soft halo. The hues turn with the shared
+    // clock and are offset by where the tile sits, so the colors sweep
+    // across the board like an RGB keyboard.
+    readonly property bool rgbOn: look ? look.rgb === true : false
+    readonly property string edgeColor: look && look.edge ? look.edge : ""
+    readonly property real rgbPhase: rgbOn && look.rgbClock ? look.rgbClock.phase : 0
+    // One color field across the whole board: the hue at a point depends on
+    // where it is on the board, so where one tile's rim ends the next one's
+    // carries on, and it all flows along together.
+    readonly property real boardW: parent && parent.parent ? Math.max(1, parent.parent.width) : Math.max(1, width)
+    readonly property real gx: rgbOn && parent ? parent.x : 0
+    readonly property real gy: rgbOn && parent ? parent.y : 0
+    function rgbAt(f) {      // f: 0..1 across this tile
+        var h = rgbPhase - (gx + f * width + gy * 0.6) / (boardW * 1.4);
+        return Qt.hsla((h % 1 + 1) % 1, 1, 0.55, 1);
+    }
+    Repeater {
+        model: tile.rgbOn ? [[5, 0.14], [2, 1]] : []
+        Rectangle {
+            required property var modelData
+            x: -modelData[0]; y: -modelData[0]
+            width: tile.width + modelData[0] * 2; height: tile.height + modelData[0] * 2
+            radius: tile.radius + modelData[0]
+            opacity: modelData[1]
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: tile.rgbAt(0) }
+                GradientStop { position: 0.5; color: tile.rgbAt(0.5) }
+                GradientStop { position: 1; color: tile.rgbAt(1) }
+            }
+        }
+    }
+
     RectangularShadow {
-        visible: tile.shadowOn
+        visible: tile.shadowOn && !tile.rgbOn
         anchors.fill: card
         offset.y: Kirigami.Units.smallSpacing * 1.5
         radius: tile.radius
@@ -142,11 +190,13 @@ Item {
             }
             PathRectangle { width: card.width; height: card.height; radius: tile.radius }
         }
-        // Border: a hairline for Glass/Clear, a solid frame for Pixel.
+        // Border: a hairline for Glass/Clear, a solid frame for Pixel, or the
+        // theme's own hairline (Snow, Midnight) when the style has none.
         ShapePath {
             fillColor: "transparent"
-            strokeWidth: tile.borderWidth
-            strokeColor: tile.borderWidth === 0 ? "transparent"
+            strokeWidth: tile.borderWidth === 0 && tile.edgeColor !== "" ? 1 : tile.borderWidth
+            strokeColor: tile.borderWidth === 0 && tile.edgeColor !== "" ? tile.edgeColor
+                : tile.borderWidth === 0 ? "transparent"
                 : tile.borderWidth > 1 ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.45)
                 : tile.dark ? Qt.rgba(1, 1, 1, 0.07 + tile.shownLevel * 0.05)
                 : Qt.rgba(0, 0, 0, 0.08)
@@ -157,6 +207,26 @@ Item {
                 radius: tile.radius
             }
         }
+    }
+
+    Item {
+        id: backdropItem
+        anchors.fill: parent
+        visible: children.length > 0
+        layer.enabled: visible && tile.radius > 0
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: backdropMask
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1
+        }
+    }
+    Rectangle {
+        id: backdropMask
+        anchors.fill: parent
+        radius: tile.nativeOn ? Kirigami.Units.cornerRadius : tile.radius
+        visible: false
+        layer.enabled: backdropItem.layer.enabled || body.layer.enabled
     }
 
     // Light catching the top edge of the glass.
@@ -187,7 +257,8 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: tile.pad
+        // Edge-to-edge content (bleed) fills the card; everything else is padded.
+        anchors.margins: tile.bleed ? 0 : tile.pad
         spacing: tile.u * 0.4
 
         RowLayout {
@@ -249,6 +320,13 @@ Item {
             id: body
             Layout.fillWidth: true
             Layout.fillHeight: true
+            layer.enabled: tile.bleed && tile.radius > 0
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: backdropMask
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1
+            }
         }
     }
 }

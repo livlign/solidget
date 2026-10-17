@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as QQC2
+import QtQuick.Dialogs as Dialogs
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
@@ -556,7 +557,8 @@ GlassTile {
                 { value: 0, text: i18n("Look") },
                 { value: 1, text: i18n("Layout") },
                 { value: 2, text: i18n("Tiles") },
-                { value: 3, text: i18n("General") }
+                { value: 3, text: i18n("Personal") },
+                { value: 4, text: i18n("General") }
             ]
             current: panel.tab
             onPicked: (v) => panel.tab = v
@@ -898,6 +900,248 @@ GlassTile {
                 }
             }
 
+            // ================= Personal =================
+            Page {
+                Section {
+                    title: i18n("Uptime")
+                    hint: i18n("How long your PC has been on, over a scene. Tip: click the tile to try the next scene.")
+
+                    // Scenes, two to a row.
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: Kirigami.Units.smallSpacing
+                        rowSpacing: Kirigami.Units.smallSpacing
+                        Repeater {
+                            model: [
+                                { value: "sky",    text: i18n("Sky"),    tip: i18n("Sunrise, day, sunset and stars, with the real moon and weather") },
+                                { value: "ticks",  text: i18n("Ticks"),  tip: i18n("Ticks around the edge, a seconds hand going round") },
+                                { value: "binary", text: i18n("Binary"), tip: i18n("A binary clock, with 0s and 1s raining behind it") },
+                                { value: "terminal", text: i18n("Terminal"), tip: i18n("uptime -p, in a little terminal") },
+                                { value: "pulse",  text: i18n("Pulse"),  tip: i18n("A heartbeat that races with the CPU") },
+                                { value: "mood",   text: i18n("Mood"),   tip: i18n("A face that gets sleepier the longer you stay up") },
+                                { value: "orbit",  text: i18n("Orbit"),  tip: i18n("Planets for minutes, hours, days and weeks") },
+                                { value: "aurora", text: i18n("Aurora"), tip: i18n("Soft colors drifting, in your theme") },
+                                { value: "image",  text: i18n("Picture"), tip: i18n("Your own picture") },
+                                { value: "plain",  text: i18n("Plain"),  tip: i18n("Just the numbers") }
+                            ]
+                            SButton {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                text: modelData.text
+                                tip: modelData.tip
+                                checked: panel.app.uptimeOptions.scene === modelData.value
+                                onClicked: Plasmoid.configuration.uptimeScene = modelData.value
+                            }
+                        }
+                    }
+
+                    // The picture scene
+                    ColumnLayout {
+                        visible: panel.app.uptimeOptions.scene === "image"
+                        Layout.fillWidth: true
+                        spacing: Kirigami.Units.smallSpacing
+                        RowLayout {
+                            Layout.fillWidth: true
+                            SButton {
+                                Layout.fillWidth: true
+                                iconName: "document-open"
+                                text: panel.app.uptimeOptions.image ? i18n("Change picture…") : i18n("Choose a picture…")
+                                onClicked: imagePicker.open()
+                            }
+                            SButton {
+                                visible: panel.app.uptimeOptions.image !== ""
+                                iconName: "edit-clear"
+                                tip: i18n("Remove the picture")
+                                onClicked: Plasmoid.configuration.uptimeImage = ""
+                            }
+                        }
+                        Hint {
+                            visible: panel.app.uptimeOptions.image !== ""
+                            text: decodeURIComponent(panel.app.uptimeOptions.image.replace(/^file:\/\//, ""))
+                            elide: Text.ElideMiddle
+                            maximumLineCount: 1
+                        }
+                        SettingRow {
+                            label: i18n("Picture")
+                            Segmented {
+                                options: [{ value: "fill", text: i18n("Fill") }, { value: "fit", text: i18n("Fit") }]
+                                current: panel.app.uptimeOptions.fit
+                                onPicked: (v) => Plasmoid.configuration.uptimeImageFit = v
+                            }
+                        }
+                        SettingRow {
+                            label: i18n("Darken")
+                            Segmented {
+                                options: [{ value: 0, text: "0" }, { value: 25, text: "25%" }, { value: 50, text: "50%" }, { value: 75, text: "75%" }]
+                                current: panel.app.uptimeOptions.dim
+                                onPicked: (v) => Plasmoid.configuration.uptimeImageDim = v
+                            }
+                        }
+                        Dialogs.FileDialog {
+                            id: imagePicker
+                            title: i18n("Choose a picture")
+                            nameFilters: [i18n("Pictures (*.png *.jpg *.jpeg *.webp *.gif *.bmp)")]
+                            onAccepted: Plasmoid.configuration.uptimeImage = selectedFile.toString()
+                        }
+                    }
+
+                    SettingRow {
+                        label: i18n("Show as")
+                        Segmented {
+                            options: [{ value: "short", text: "3d 2h" }, { value: "long", text: i18n("Words") },
+                                      { value: "clock", text: "74:12:05" }, { value: "days", text: i18n("Days") }]
+                            current: panel.app.uptimeOptions.format
+                            onPicked: (v) => Plasmoid.configuration.uptimeFormat = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Title")
+                        SField {
+                            width: Kirigami.Units.gridUnit * 9
+                            text: Plasmoid.configuration.uptimeLabel
+                            placeholder: i18n("Up for")
+                            onEdited: (v) => Plasmoid.configuration.uptimeLabel = v.slice(0, 40)
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Font")
+                        PlasmaComponents.ComboBox {
+                            id: fontBox
+                            width: Kirigami.Units.gridUnit * 10
+                            readonly property var families: [""].concat(["pixel"], Qt.fontFamilies())
+                            model: families.map(function (f) { return f === "" ? i18n("Same as the look") : f === "pixel" ? i18n("Pixel") : f; })
+                            currentIndex: Math.max(0, families.indexOf(panel.app.uptimeOptions.font))
+                            onActivated: (i) => Plasmoid.configuration.uptimeFont = families[i]
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Weight")
+                        Segmented {
+                            options: [{ value: "auto", text: i18n("Auto") }, { value: "light", text: i18n("Thin") },
+                                      { value: "regular", text: i18n("Normal") }, { value: "bold", text: i18n("Bold") }]
+                            current: panel.app.uptimeOptions.weight
+                            onPicked: (v) => Plasmoid.configuration.uptimeWeight = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Size")
+                        Segmented {
+                            options: [{ value: "s", text: "S" }, { value: "m", text: "M" }, { value: "l", text: "L" }, { value: "xl", text: "XL" }]
+                            current: panel.app.uptimeOptions.size
+                            onPicked: (v) => Plasmoid.configuration.uptimeSize = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Color")
+                        Segmented {
+                            options: [{ value: "auto", text: i18n("Auto") }, { value: "light", text: i18n("Light") },
+                                      { value: "dark", text: i18n("Dark") }, { value: "accent", text: i18n("Accent") }]
+                            current: panel.app.uptimeOptions.color
+                            onPicked: (v) => Plasmoid.configuration.uptimeColor = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Position")
+                        Segmented {
+                            options: [{ value: "top", text: i18n("Top") }, { value: "center", text: i18n("Middle") }, { value: "bottom", text: i18n("Bottom") }]
+                            current: panel.app.uptimeOptions.align
+                            onPicked: (v) => Plasmoid.configuration.uptimeAlign = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Show when it started")
+                        SToggle {
+                            checked: Plasmoid.configuration.uptimeShowBoot
+                            onToggled: Plasmoid.configuration.uptimeShowBoot = checked
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Show your record")
+                        hint: i18n("The longest your PC has stayed on.")
+                        SToggle {
+                            checked: Plasmoid.configuration.uptimeShowRecord
+                            onToggled: Plasmoid.configuration.uptimeShowRecord = checked
+                        }
+                    }
+                }
+
+                Section {
+                    title: i18n("Desk pet")
+                    hint: i18n("Use the buttons on the tile to pet, feed, wash, clean up after, walk and play with it. Click the pet to pet it.")
+                    SettingRow {
+                        label: i18n("Pet")
+                        Segmented {
+                            options: [{ value: "dog", text: i18n("Poodle") }, { value: "cat", text: i18n("Cat") }]
+                            current: panel.app.petKind
+                            onPicked: (v) => Plasmoid.configuration.petKind = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Name")
+                        SField {
+                            width: Kirigami.Units.gridUnit * 9
+                            text: Plasmoid.configuration.petName
+                            placeholder: i18n("No name")
+                            onEdited: (v) => Plasmoid.configuration.petName = v.slice(0, 24)
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Size")
+                        Segmented {
+                            options: [{ value: "s", text: i18n("Small") }, { value: "m", text: i18n("Medium") }, { value: "l", text: i18n("Large") }]
+                            current: panel.app.petOptions.size
+                            onPicked: (v) => Plasmoid.configuration.petSize = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Walks go to")
+                        hint: i18n("Mix picks somewhere new each time. Weather goes out in the snow when it's snowing where you are.")
+                        PlasmaComponents.ComboBox {
+                            width: Kirigami.Units.gridUnit * 8
+                            readonly property var values: ["mix", "auto", "grass", "snow", "sand"]
+                            model: [i18n("Mix"), i18n("Weather"), i18n("The park"), i18n("The snow"), i18n("The beach")]
+                            currentIndex: Math.max(0, values.indexOf(panel.app.petOptions.ground))
+                            onActivated: (i) => Plasmoid.configuration.petGround = values[i]
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Care buttons")
+                        Segmented {
+                            options: [{ value: "always", text: i18n("Always") }, { value: "hover", text: i18n("On hover") }, { value: "off", text: i18n("Off") }]
+                            current: panel.app.petOptions.buttons
+                            onPicked: (v) => Plasmoid.configuration.petButtons = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Needs looking after")
+                        hint: i18n("Food, fun, baths and walks run down over time, only while it's on screen. Off: always happy.")
+                        SToggle {
+                            checked: Plasmoid.configuration.petNeeds
+                            onToggled: Plasmoid.configuration.petNeeds = checked
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Furnished room")
+                        hint: i18n("Off shows just the pet, like before.")
+                        SToggle {
+                            checked: Plasmoid.configuration.petRoom
+                            onToggled: Plasmoid.configuration.petRoom = checked
+                        }
+                    }
+                    SettingRow {
+                        visible: Plasmoid.configuration.petRoom
+                        label: i18n("Room")
+                        hint: i18n("Nerd: a dark den with a desk setup, game covers and a server rack.")
+                        Segmented {
+                            options: [{ value: "cozy", text: i18n("Cozy") }, { value: "nerd", text: i18n("Nerd") }]
+                            current: panel.app.petOptions.roomStyle
+                            onPicked: (v) => Plasmoid.configuration.petRoomStyle = v
+                        }
+                    }
+                }
+            }
+
             // ================= General =================
             Page {
                 Section {
@@ -936,18 +1180,6 @@ GlassTile {
                 }
 
                 Section {
-                    title: i18n("Desk pet")
-                    SettingRow {
-                        label: i18n("Pet")
-                        Segmented {
-                            options: [{ value: "dog", text: i18n("Poodle") }, { value: "cat", text: i18n("Cat") }]
-                            current: panel.app.petKind
-                            onPicked: (v) => Plasmoid.configuration.petKind = v
-                        }
-                    }
-                }
-
-                Section {
                     title: i18n("Focus timer")
                     SettingRow {
                         label: i18n("Focus / break")
@@ -967,11 +1199,19 @@ GlassTile {
                 Section {
                     title: i18n("Units")
                     SettingRow {
-                        label: i18n("Temperature")
+                        label: i18n("Weather")
+                        Segmented {
+                            options: [{ value: false, text: "°C" }, { value: true, text: "°F" }]
+                            current: panel.app.weatherFahrenheit
+                            onPicked: (v) => Plasmoid.configuration.weatherUnit = v ? "f" : "c"
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("PC temperatures")
                         Segmented {
                             options: [{ value: false, text: "°C" }, { value: true, text: "°F" }]
                             current: panel.app.useFahrenheit
-                            onPicked: (v) => Plasmoid.configuration.weatherUnit = v ? "f" : "c"
+                            onPicked: (v) => Plasmoid.configuration.sensorUnit = v ? "f" : "c"
                         }
                     }
                     SettingRow {

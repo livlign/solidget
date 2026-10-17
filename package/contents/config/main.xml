@@ -76,6 +76,39 @@
     <entry name="petKind" type="String">
       <default>dog</default>
     </entry>
+    <!-- The pet's name, shown on a tag in the corner of its room; empty: no tag -->
+    <entry name="petName" type="String">
+      <default></default>
+    </entry>
+    <!-- How big the pet is: s, m or l -->
+    <entry name="petSize" type="String">
+      <default>s</default>
+    </entry>
+    <!-- Where walks go: mix (somewhere new each time), auto (snow when it
+         snows, else the park), grass, snow or sand -->
+    <entry name="petGround" type="String">
+      <default>mix</default>
+    </entry>
+    <!-- Care buttons on the tile: always, hover or off -->
+    <entry name="petButtons" type="String">
+      <default>always</default>
+    </entry>
+    <!-- Food, fun, baths and walks run down over time -->
+    <entry name="petNeeds" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- A furnished room; off shows the pet on a plain line -->
+    <entry name="petRoom" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- The room's look: cozy (a warm living room) or nerd (a dark gaming den) -->
+    <entry name="petRoomStyle" type="String">
+      <default>nerd</default>
+    </entry>
+    <!-- Care state (JSON written by the widget): when it last ate, played... -->
+    <entry name="petCare" type="String">
+      <default></default>
+    </entry>
     <!-- Focus timer lengths in minutes -->
     <entry name="focusMinutes" type="Int">
       <default>25</default>
@@ -93,9 +126,67 @@
     <entry name="weatherCity" type="String">
       <default></default>
     </entry>
-    <!-- Temperature unit for every tile and the weather: c or f -->
+    <!-- Temperature unit for the PC's sensors: c or f; empty = same as the weather -->
+    <entry name="sensorUnit" type="String">
+      <default></default>
+    </entry>
+    <!-- Temperature unit for the weather: c or f -->
     <entry name="weatherUnit" type="String">
       <default>c</default>
+    </entry>
+    <!-- Uptime tile. Scene: sky, ticks, binary, terminal, pulse, mood, orbit, aurora, image or plain -->
+    <entry name="uptimeScene" type="String">
+      <default>binary</default>
+    </entry>
+    <!-- short (3d 2h), long (3 days, 2 hours), clock (74:12:05) or days (3.1) -->
+    <entry name="uptimeFormat" type="String">
+      <default>short</default>
+    </entry>
+    <!-- Font family name; pixel = the bundled pixel font; empty = the look's font -->
+    <entry name="uptimeFont" type="String">
+      <default></default>
+    </entry>
+    <!-- auto, light, regular or bold -->
+    <entry name="uptimeWeight" type="String">
+      <default>auto</default>
+    </entry>
+    <!-- auto, light, dark or accent -->
+    <entry name="uptimeColor" type="String">
+      <default>auto</default>
+    </entry>
+    <!-- s, m, l or xl -->
+    <entry name="uptimeSize" type="String">
+      <default>m</default>
+    </entry>
+    <!-- bottom, center or top -->
+    <entry name="uptimeAlign" type="String">
+      <default>bottom</default>
+    </entry>
+    <!-- The tile's title; empty means "Up for" -->
+    <entry name="uptimeLabel" type="String">
+      <default></default>
+    </entry>
+    <entry name="uptimeShowBoot" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="uptimeShowRecord" type="Bool">
+      <default>false</default>
+    </entry>
+    <!-- A local picture (file URL) for the image scene -->
+    <entry name="uptimeImage" type="String">
+      <default></default>
+    </entry>
+    <!-- fill (crop to the tile) or fit (whole picture) -->
+    <entry name="uptimeImageFit" type="String">
+      <default>fill</default>
+    </entry>
+    <!-- Darken the picture so the numbers stay readable, 0 to 80 percent -->
+    <entry name="uptimeImageDim" type="Int">
+      <default>25</default>
+    </entry>
+    <!-- Longest uptime seen, in seconds -->
+    <entry name="uptimeRecord" type="Int">
+      <default>0</default>
     </entry>
   </group>
 </kcfg>
