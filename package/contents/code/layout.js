@@ -319,7 +319,11 @@ function plan(ids, width, height, gridUnit, gap, density, fill, forced, manual, 
     }
     var cellW = (width - gap * (chosen.cols - 1)) / chosen.cols;
     var cellH;
-    if (fill && result.rows <= chosen.rows) cellH = (height - gap * (result.rows - 1)) / result.rows;
+    var fitted = (height - gap * (result.rows - 1)) / result.rows;
+    if (fill && result.rows <= chosen.rows) cellH = fitted;
+    // A hand-arranged layout with more rows than fit: squeeze the rows to the
+    // height (down to a readable minimum) rather than run off the screen.
+    else if (fill && manual) cellH = Math.max(gridUnit * 5, fitted);
     else cellH = Math.min(cellW, DENSITY[chosen.key] * gridUnit * 1.1);
     return { cols: chosen.cols, rows: result.rows, cellW: cellW, cellH: cellH, density: chosen.key, rects: result.rects, portrait: portrait };
 }

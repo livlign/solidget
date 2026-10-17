@@ -246,7 +246,11 @@ PlasmoidItem {
         }
         var L = c.layout;
         var m = Kirigami.Units.gridUnit;
-        var W = L.width - 2 * m, H = L.height - 2 * m;
+        // The real screen, not just the desktop's layout area: that can be a
+        // little bigger (after display scaling or rotation changes), which
+        // put the bottom of the widget past the edge of the screen.
+        var W = Math.min(L.width, Screen.width || L.width) - 2 * m;
+        var H = Math.min(L.height, Screen.height || L.height) - 2 * m;
         var x = m + r[0] * W + (r[0] > 0 ? m / 2 : 0);
         var y = m + r[1] * H + (r[1] > 0 ? m / 2 : 0);
         var w = r[2] * W - (r[0] > 0 ? m / 2 : 0) - (r[0] + r[2] < 0.999 ? m / 2 : 0);
@@ -272,6 +276,27 @@ PlasmoidItem {
         target: Plasmoid.configuration
         function onPlaceRequestChanged() { root.handlePlaceRequest(); }
     }
+
+    // A widget that reaches past the edge of its screen (sized under another
+    // scale, or the layout area is bigger than the screen) is trimmed back,
+    // keeping the same margin as the other sides. Checked after loading and
+    // whenever the screen changes size.
+    function fitToScreen() {
+        var c = appletContainer();
+        if (!c || !(Screen.width > 0 && Screen.height > 0)) return;
+        // The same margin as on the top and left (within reason), so it looks even.
+        var m = Kirigami.Units.gridUnit;
+        var mr = c.x > 0 ? Math.min(c.x, m * 3) : m, mb = c.y > 0 ? Math.min(c.y, m * 3) : m;
+        var maxW = Screen.width - mr - c.x, maxH = Screen.height - mb - c.y;
+        if (c.width <= maxW + 1 && c.height <= maxH + 1) return;
+        c.width = Math.max(Kirigami.Units.gridUnit * 10, Math.min(c.width, maxW));
+        c.height = Math.max(Kirigami.Units.gridUnit * 8, Math.min(c.height, maxH));
+        c.layout.positionItem(c);
+        if (typeof c.layout.save === "function") c.layout.save();
+    }
+    readonly property real screenSize: Screen.width * 10000 + Screen.height
+    onScreenSizeChanged: fitTimer.restart()
+    Timer { id: fitTimer; interval: 2500; running: true; onTriggered: root.fitToScreen() }
     Component.onCompleted: {
         Qt.callLater(handlePlaceRequest);
         wakePet();
@@ -432,7 +457,7 @@ PlasmoidItem {
     property real gpuPowerSysfs: 0
     P5Support.DataSource {
         engine: "executable"
-        interval: 2000
+        interval: 1000
         // The path comes from specs.py output; only a real amdgpu power file is read.
         readonly property string file: root.specs.sensors && /^\/sys\/class\/drm\/card\d+\/device\/hwmon\/hwmon\d+\/power1_(average|input)$/.test(root.specs.sensors.gpuPowerFile || "")
             ? root.specs.sensors.gpuPowerFile : ""
@@ -473,15 +498,11 @@ PlasmoidItem {
             edge: !nativeStyle && th.edge ? th.edge : ""
         };
     }
-    // RGB theme: one shared, slowly turning hue. Five small steps a second,
-    // and only while the theme is on (every step redraws the desktop).
-    QtObject { id: rgbClock; property real phase: 0 }
-    Timer {
-        interval: 200
-        running: root.look.rgb && !root.editing
-        repeat: true
-        onTriggered: rgbClock.phase = (rgbClock.phase + 0.012) % 1
-    }
+    // RGB theme: one color for every tile's rim, drifting once round the
+    // rainbow every two minutes. It moves on the shared tick, in steps too
+    // small to see, so it looks smooth without redrawing more than once a
+    // second.
+    QtObject { id: rgbClock; property real phase: (root.tick % 120) / 120 }
     // Bundled pixel font (Silkscreen, SIL OFL; see fonts/OFL.txt).
     FontLoader { id: pixelFont; source: "../fonts/Silkscreen-Regular.ttf" }
     readonly property string pixelFontName: pixelFont.status === FontLoader.Ready ? pixelFont.name : ""
