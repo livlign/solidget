@@ -1,5 +1,28 @@
 # What's new
 
+## 0.8.0
+
+- **Fetch, for real.** The pet's toy now moves on its own: it flies,
+  bounces lower each time, rolls to a stop and comes off the walls. Play
+  throws it in from the front; the pet watches it, runs it down, carries it
+  back in its mouth and begs for another throw, a few rounds over, with a
+  lap of the room, a good shake or a toss of its own now and then.
+  Afterwards it's too wound up to nap for a while, and goes back to the toy
+  left lying about. On its own it takes a toy from the basket and plays.
+- **A livelier pet.** New poses (lying about awake, scratching an itch,
+  rolling on its back, barking) and routines: sniffing around the room,
+  barking out of the window, a roll on the rug, coming over to say hi, the
+  zoomies, chasing its tail. It comes over when your mouse does.
+- **Naps when it's tired**, not every few minutes: energy runs down while
+  it's awake (faster at night) and a nap fills it back up.
+- **Its own bed.** In the den it naps on its own floor cushion, not the
+  people's bed; and the den's bed (a single on narrow tiles) shows at every
+  tile size.
+- **Bowls always full.** It has a drink or a snack when it likes (with
+  needs on, a snack counts as a meal).
+- **Feed gives a treat**: a biscuit, jerky, cheese or a fish, dropped from
+  your hand and caught in the air, sometimes after a trick.
+
 ## 0.7.1
 
 - **RGB theme** is calmer: a thin rim on every tile, cut from one rainbow
