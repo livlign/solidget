@@ -6,9 +6,10 @@ import QtQuick.Shapes
 // back wall, seen from the front, on the line where wall meets floor, so
 // everything sits where it would in a real room. The window shows the real
 // sky and weather.
-//   style "nerd": a dark den. Bed with shelves above on the left, a desk
-//     with two monitors and a gaming chair on the right, a city outside
-//     (lit windows and neon after dark).
+//   style "nerd": a dark den. Bed (a single on narrow tiles) with shelves above on the left (with the
+//     pet's own floor cushion in front of it), a desk with two monitors and
+//     a gaming chair on the right, a city outside (lit windows and neon
+//     after dark).
 //   style "cozy": warm wallpaper and a honey floor. A bookshelf and plant
 //     on the left, an armchair, lamp, picture and clock on the right, the
 //     dog's own bed on the floor, hills and a cottage outside.
@@ -23,7 +24,6 @@ Item {
     property real footFront: height           // ... and at depth 1
     property var sky: null                    // Sky.at(...) for now
     property var app: null
-    property bool bowlFull: false
     property bool showTub: false
     property string style: "nerd"             // nerd | cozy
     property int tick: 0
@@ -68,10 +68,11 @@ Item {
         basket: nerd ? rightMid : leftMid, chair: rightMid, desk: rightMid,
         window: 0.5, door: 1
     })
-    // Where the pet naps (the nerd room's bed is against the back wall; the
-    // dog bed is on the floor), and it goes out through the front.
-    readonly property real bedDepth: nerd ? 0 : 0.6
-    readonly property real bedRaise: nerd ? 13 * px : 3 * px
+    // Where the pet naps: its own bed on the floor (the dog bed, or in the
+    // den a cushion in front of the people's bed), kept off the side wall.
+    readonly property real bedDepth: 0.6
+    readonly property real bedRaise: nerd ? 2 * px : 3 * px
+    readonly property real petBedX: Math.max(floorLeft(at(bedDepth)) + px * 19, (nerd ? leftMid : 0.24) * width) / Math.max(1, width)
     // The door is in the right-hand wall, near the back: the pet goes to
     // the floor in front of it (the far right, at this depth).
     readonly property real doorT0: 0.08          // along the side wall: 0 = back corner, 1 = front
@@ -82,6 +83,9 @@ Item {
     function doorTop(t) { return sideFloor(t) - (sideFloor(t) - sideCeil(t)) * 0.74; }
     readonly property real doorDepth: Math.max(0, Math.min(1, (sideFloor((doorT0 + doorT1) / 2) - footBack) / Math.max(1, footFront - footBack)))
     function leftOf(name, w) { return spots[name] * width - w / 2; }
+    // The toy basket's middle, as a fraction of the width (it sits on the
+    // floor by the right wall, halfway to the front).
+    readonly property real basketX: (floorRight(at(0.5)) - px * 16) / Math.max(1, width)
 
     // ---- Colors ----
     readonly property var pal: nerd ? ({
@@ -291,10 +295,13 @@ Item {
             x: room.leftL + (room.sideSpace - width) / 2
             y: Math.min(room.winY, room.standY - 24 * room.px - height - room.px * 2)
         }
+        // The double bed, or a single where that doesn't fit. On a small
+        // tile it stands in front of the curtain's hem rather than go missing.
         Prop {
-            name: "bed_front"; px: room.px
-            visible: room.sideSpace >= width
-            x: room.spots.bed * room.width - width / 2
+            name: room.sideSpace >= 30 * room.px ? "bed_front" : "bed_single"
+            px: room.px
+            visible: room.winX - room.backL - room.px * 2 >= width
+            x: Math.max(room.backL + room.px, Math.min(room.spots.bed * room.width - width / 2, room.winX - room.px - width))
             y: room.standY - height
         }
         // Right: a poster, the desk with two monitors, the chair in front.
@@ -341,6 +348,12 @@ Item {
             // Pulled out to the right, so the screens show.
             x: desk.x + desk.width * 0.78 - width / 2
             y: room.at(0.22) - height
+        }
+        // The pet's own cushion on the floor.
+        Prop {
+            name: "cushion"; px: room.px
+            x: room.petBedX * room.width - width / 2
+            y: room.at(room.bedDepth) - height + room.px * 2
         }
     }
 
@@ -393,19 +406,19 @@ Item {
         // On the floor: the dog's bed and a toy basket.
         Prop {
             name: "bed"; px: room.px
-            x: Math.max(room.floorLeft(room.at(room.bedDepth)) + room.px, room.spots.bed * room.width - width / 2)
+            x: room.petBedX * room.width - width / 2
             y: room.at(room.bedDepth) - height + room.px * 2
         }
         Prop {
             name: "basket"; px: room.px
             visible: room.roomy
-            x: room.floorRight(room.at(0.5)) - width - room.px * 6
+            x: room.basketX * room.width - width / 2
             y: room.at(0.5) - height
         }
     }
 
-    // Shared: bowls, and the tub at bath time.
-    Prop { name: room.bowlFull ? "bowl_full" : "bowl"; px: room.px; x: room.leftOf("bowl", width); y: room.standY - height }
+    // Shared: bowls (always topped up), and the tub at bath time.
+    Prop { name: "bowl_full"; px: room.px; x: room.leftOf("bowl", width); y: room.standY - height }
     Prop { name: "water"; px: room.px; x: room.leftOf("water", width); y: room.standY - height }
     Prop { name: "tub"; px: room.px; visible: room.showTub; x: room.leftOf("tub", width); y: room.standY - height + room.px * 2; z: 2 }
 

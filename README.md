@@ -13,8 +13,8 @@ and the little everyday things, all in one good-looking board.
   clock and weather, calendar, music controls, photo of the day, world clocks,
   focus timer, sticky note, quote of the day, and uptime over a scene you pick
   (the real sky, a heartbeat, a sleepy face, planets or your own picture).
-- **A pixel pet** (a poodle or a cat) with its own room. Pet it, feed it, bath it,
-  walk it to the park, the snow or the beach, and clean up if you forget.
+- **A pixel pet** (a poodle or a cat) with its own room and bed. Pet it, give it treats,
+  play fetch, bath it, walk it to the park, the snow or the beach, and clean up if you forget.
 - **Your look.** 5 styles (Plasma, Glass, Flat, Clear, Pixel) × 10 color themes, or
   pick a ready-made look like *Retro Terminal* or *Paper*.
 - **Fits any space.** A corner card, a sidebar, or a whole spare monitor,

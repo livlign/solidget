@@ -178,6 +178,42 @@ def lie(eyes="closed", mouth="", breathe=0):
     return p.rows()
 
 
+def scratch(i):
+    """Sitting, a hind leg up scratching behind the ear, eyes shut in bliss."""
+    p = Pose()
+    gy = GROUND
+    p.ell(21, gy - 3.6, 5.2, 4.2)                                   # rump
+    p.ell(16, gy - 5.5, 3.8, 3.8)                                   # chest
+    p.curls()
+    leg(p, 14, gy - 4, gy)                                          # front leg
+    head(p, 9, gy - 11 + [0, 1, 0, 1][i], "happy" if i % 2 else "closed", "tongue" if i % 2 else "")
+    # The hind leg, over it all: from the rump up to the ear, paw a-blur.
+    tip = (17 + [0, 1, 0, -1][i], gy - 12 - [0, 1, 2, 1][i])
+    for t in (0, 0.25, 0.5, 0.75, 1):
+        x, y = 23 + (tip[0] - 23) * t, gy - 2 + (tip[1] - gy + 2) * t
+        p.ring(x, y, 1.5, 1.5)
+    for t in (0, 0.25, 0.5, 0.75, 1):
+        x, y = 23 + (tip[0] - 23) * t, gy - 2 + (tip[1] - gy + 2) * t
+        p.ell(x, y, 1.5, 1.5, "s")
+    return p.rows()
+
+
+def roll(i):
+    """On its back, belly up, paws waving: a good roll on the rug."""
+    p = Pose()
+    sway = [0, 1, 0, -1][i]
+    for n, x in enumerate((10, 14, 19, 23)):                        # paws in the air
+        up = 9 + (1 if (n + i) % 2 else 0)
+        for y in range(up, 19):
+            p.pt([(x + sway - 1, y), (x + sway + 2, y)], "K")
+            p.pt([(x + sway, y), (x + sway + 1, y)], "s" if n % 2 else "b")
+    p.ell(17 + sway * 0.5, 19.5, 7.6, 3.4)                         # back on the floor
+    p.curls()
+    p.ell(17 + sway * 0.5, 18.4, 4.6, 1.6, "m")                    # light belly
+    head(p, 7, 18 + (i % 2), "happy", "tongue")
+    return p.rows()
+
+
 WALK = [((1, -1, -1, 1), (0, 0, 0, 0)), ((0, 0, 0, 0), (0, 1, 1, 0)),
         ((-1, 1, 1, -1), (0, 0, 0, 0)), ((0, 0, 0, 0), (1, 0, 0, 1))]
 RUN = [((-2, -2, 2, 2), (1, 1, 1, 1)), ((-1, 0, 1, 1), (0, 0, 0, 0)),
@@ -206,9 +242,16 @@ F = {
               stand(wiggle=-2, eyes="closed", ears_up=1), stand(wiggle=1, eyes="happy", mouth="tongue")],
     # Sitting up, one paw raised: asking for something.
     "beg":   [sit(paw=2, rear=1, mouth="tongue"), sit(paw=3, rear=1, eyes="happy", mouth="tongue")],
+    # Lying down awake: resting, looking about, blinking.
+    "rest":  [lie("open"), lie("open", breathe=1), lie("closed"), lie("open", "tongue", breathe=1)],
+    "scratch": [scratch(i) for i in range(4)],
+    "roll":  [roll(i) for i in range(4)],
+    # Sitting up, ears up, woofing at something.
+    "bark":  [sit(ears_up=1), sit(ears_up=1, mouth="yawn", hop=1), sit(ears_up=1), sit(ears_up=1, mouth="yawn", hop=1)],
 }
 
-MOODS = ["walk", "run", "sit", "wag", "sniff", "bow", "yawn", "sleep", "hot", "eat", "pee", "shake", "beg"]
+MOODS = ["walk", "run", "sit", "wag", "sniff", "bow", "yawn", "sleep", "hot", "eat", "pee", "shake", "beg",
+         "rest", "scratch", "roll", "bark"]
 COLORS = {"k": "#4a2c17", "K": "#8a5530", "b": "#e2a66b", "h": "#d0904f", "s": "#c27f45",
           "m": "#f0c590", "e": "#1a1110", "w": "#ffffff", "n": "#1a1110", "t": "#f28ba8"}
 CELL_W, CELL_H = W, H
