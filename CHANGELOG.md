@@ -1,6 +1,6 @@
 # What's new
 
-## 0.8.0
+## 0.7.2
 
 - **Fetch, for real.** The pet's toy now moves on its own: it flies,
   bounces lower each time, rolls to a stop and comes off the walls. Play
