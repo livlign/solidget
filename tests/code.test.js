@@ -233,10 +233,11 @@ test("network download and upload colors differ", () => {
 // ---- QML <-> files <-> settings -------------------------------------------
 test("pet sprites are well formed", () => {
     const pet = read("ui/PetTile.qml");
-    // Every [ "row", "row", ... ] list of sprite rows (the Zzz label's short strings aside).
+    // Every [ "row", "row", ... ] list of sprite rows (not lists of names,
+    // like the Zzz label's or the treats: sprite rows have empty "." pixels).
     const frames = [...pet.matchAll(/\[((?:\s*"[^"]*",?)+)\]/g)]
         .map((m) => [...m[1].matchAll(/"([^"]*)"/g)].map((r) => r[1]))
-        .filter((rows) => rows[0].length > 5);
+        .filter((rows) => rows[0].length > 5 && rows.some((r) => r.includes(".")));
     assert.ok(frames.length >= 5, "found " + frames.length + " cat frames");
     frames.forEach((rows, i) => {
         assert.ok(rows.every((r) => r.length === rows[0].length), "frame " + i + " has uneven rows");

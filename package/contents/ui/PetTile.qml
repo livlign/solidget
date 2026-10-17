@@ -6,17 +6,24 @@ import org.kde.plasma.components as PlasmaComponents
 import "../code/sky.js" as Sky
 
 // A pixel pet that lives in the tile, in its own little room.
-// - Poodle: keeps busy with a little routine (sits, wags, sniffs, yawns,
-//   play-bows, trots, naps in its bed, drinks) and gets livelier with the
-//   CPU: hops at medium load; zooms, spins and chases its ball when busy;
-//   lies down panting when hot. Frames come from images/poodle.png (made by
+// - Poodle: keeps busy with little routines (sniffs around the room, barks
+//   out the window, scratches an itch, rolls on the rug, lies about, comes
+//   over to say hi, has the zoomies, drinks) and naps in its bed once it's
+//   tired (sooner at night). It comes over when the mouse does, and gets
+//   livelier with the
+//   CPU: hops at medium load; zooms, spins and plays with its toys when
+//   busy; lies down panting when hot. Frames come from images/poodle.png (made by
 //   tools/poodle.py); the room and everything in it from images/props.png
 //   (tools/props.py).
 // - Cat: the same, drawn square by square in the theme's color.
 // It has needs (food, fun, a bath now and then, and walks: skip those and
-// there's a mess to clean up). The buttons pet, feed, wash, clean up after,
-// walk or play with it. Walks go outside: a park, the snow or the beach,
-// with a tree to pee on and an animal friend to chase.
+// there's a mess to clean up). Its bowls are always full, so it has a
+// drink or a snack when it likes. The buttons pet it, give it a treat
+// (caught in the air, sometimes for a trick first), wash, clean up after,
+// walk or play with it. It naps on its own bed or cushion. Walks go outside: a park, the snow or the beach,
+// with a tree to pee on and an animal friend to chase. Play is a game of
+// fetch: the toy flies, bounces and rolls on its own, and the pet chases it
+// down, brings it back (or doesn't), and is too wound up to nap for a while.
 // It animates at a few frames per second and stands still while asleep
 // (every frame makes Plasma redraw the desktop).
 GlassTile {
@@ -142,7 +149,7 @@ GlassTile {
     // What the cat shows for each activity.
     readonly property var catPose: ({ walk: "walk", sniff: "walk", hop: "walk", run: "run", ball: "run", spin: "run",
         shake: "run", hot: "walk", sit: "sit", wag: "sit", bow: "sit", yawn: "sit", beg: "sit", pee: "sit",
-        eat: "eat", sleep: "sleep" })
+        scratch: "sit", bark: "sit", eat: "eat", sleep: "sleep", rest: "sleep", roll: "sleep" })
 
     // ---- What the PC is doing ----
     readonly property real load: app.cpuUsage.value || 0
@@ -156,29 +163,44 @@ GlassTile {
         wag:   { row: "wag",   ms: 200, speed: 0,     calm: 3, busy: 2, zoom: 0 },
         sniff: { row: "sniff", ms: 280, speed: 0.004, calm: 3, busy: 1, zoom: 0 },
         yawn:  { row: "yawn",  ms: 380, speed: 0,     calm: 1, busy: 0, zoom: 0 },
+        scratch: { row: "scratch", ms: 150, speed: 0, calm: 1, busy: 1, zoom: 0 },
         bow:   { row: "bow",   ms: 240, speed: 0,     calm: 2, busy: 2, zoom: 1 },
         walk:  { row: "walk",  ms: 220, speed: 0.014, calm: 3, busy: 3, zoom: 0 },
         hop:   { row: "walk",  ms: 160, speed: 0.022, calm: 0, busy: 3, zoom: 1 },
         run:   { row: "run",   ms: 140, speed: 0.045, calm: 0, busy: 1, zoom: 3 },
         spin:  { row: "run",   ms: 140, speed: 0,     calm: 0, busy: 0, zoom: 2 },
         ball:  { row: "run",   ms: 140, speed: 0.04,  calm: 1, busy: 2, zoom: 2 },
-        sleep: { row: "sleep", ms: 0,   speed: 0,     calm: 1, busy: 0, zoom: 0 },
+        sleep: { row: "sleep", ms: 0,   speed: 0 },
+        rest:  { row: "rest",  ms: 420, speed: 0 },
+        roll:  { row: "roll",  ms: 200, speed: 0 },
+        bark:  { row: "bark",  ms: 260, speed: 0 },
         hot:   { row: "hot",   ms: 450, speed: 0 },
         eat:   { row: "eat",   ms: 260, speed: 0 },
         pee:   { row: "pee",   ms: 400, speed: 0 },
         shake: { row: "shake", ms: 110, speed: 0 },
         beg:   { row: "beg",   ms: 380, speed: 0 }
     })
-    readonly property var sheetRows: ["walk", "run", "sit", "wag", "sniff", "bow", "yawn", "sleep", "hot", "eat", "pee", "shake", "beg"]
-    readonly property var sheetFrames: ({ walk: 4, run: 4, sit: 4, wag: 4, sniff: 4, bow: 4, yawn: 4, sleep: 2, hot: 2, eat: 4, pee: 2, shake: 4, beg: 2 })
+    readonly property var sheetRows: ["walk", "run", "sit", "wag", "sniff", "bow", "yawn", "sleep", "hot", "eat", "pee", "shake", "beg",
+                                      "rest", "scratch", "roll", "bark"]
+    readonly property var sheetFrames: ({ walk: 4, run: 4, sit: 4, wag: 4, sniff: 4, bow: 4, yawn: 4, sleep: 2, hot: 2, eat: 4, pee: 2, shake: 4, beg: 2,
+                                          rest: 4, scratch: 4, roll: 4, bark: 4 })
 
     property string activity: "sit"
     property int remaining: 12           // frames (or seconds, asleep) until the next activity
     property string place: "home"        // home | out
     property string fx: ""               // hearts | bubbles | drops | sparkles | pee
     property string toy: "ball"
+    property int playedAt: -1000         // app.tick when the last game ended
+    readonly property bool excited: app.tick - playedAt < 120
+    // Runs down while awake (faster when running about, and at night) and
+    // fills up again asleep. Naps only come once it's low.
+    property real energy: 0.8
+    readonly property bool tired: energy < 0.45
+    property int noticedAt: -1000        // app.tick when it last came over to the mouse
     property bool inTub: false
-    property bool bowlFull: false
+    property string treat: ""            // a treat on its way to the mouth, or being eaten
+    property real treatFall: 1           // 0 = up out of sight, 1 = at the mouth
+    NumberAnimation { id: treatDrop; target: tile; property: "treatFall"; from: 0; to: 1; duration: 450; easing.type: Easing.InQuad }
 
     // Where the pet is: pos across the tile (0..1) and depth across the
     // floor (0 = back, by the wall and furniture; 1 = the front edge).
@@ -190,13 +212,16 @@ GlassTile {
     // A plan is a list of steps run in order:
     //   { go: x, d: depth, run }   walk (or run) somewhere
     //   { act, frames, fx, face }   do something there ("face": "left" or "right")
+    //   { fetch: true }             run the toy down and pick it up
     //   { place: "out" | "home" } or { call: "functionName" }
     property var plan: []
     property var job: null
 
     function startPlan(steps) {
-        // Whatever was going on stops: no half-filled bowl or empty tub left behind.
-        bowlFull = false;
+        // Whatever was going on stops: no half-filled bowl or empty tub left
+        // behind, and the toy is dropped where the pet stands.
+        dropToy();
+        treat = "";
         inTub = false;
         fx = "";
         wander = null;
@@ -212,7 +237,10 @@ GlassTile {
             if (s.call) { tile[s.call](); continue; }
             job = s;
             fx = s.fx || "";
-            if (s.go !== undefined) {
+            if (s.fetch) {
+                activity = "run";
+                remaining = 200;        // gives up on the toy after a while
+            } else if (s.go !== undefined) {
                 activity = s.run ? "run" : "walk";
                 remaining = 400;        // a long way at most; arriving ends the step
             } else {
@@ -253,43 +281,131 @@ GlassTile {
 
     function pickActivity() {
         wander = null;
-        if (isCat) {   // the cat follows the CPU, with naps in its bed
-            activity = mood === "hot" ? "hot" : load < 8 ? "sleep" : mood === "zoom" ? "run" : Math.random() < 0.3 ? "sit" : "walk";
+        var canPlay = place === "home" && stage.width > 0 && mood !== "hot";
+        if (mood !== "hot") {
+            var r = routine();
+            if (r) return startPlan(r);
+        }
+        if (isCat) {   // the cat follows the CPU, and naps when it's quiet and the cat is tired
+            var sleepy = load < 8 && !excited && (energy < 0.6 || (stage.sky && stage.sky.dark));
+            activity = mood === "hot" ? "hot" : sleepy ? "sleep" : mood === "zoom" ? "run" : Math.random() < 0.3 ? "sit" : "walk";
             remaining = activity === "sleep" ? 10 + Math.floor(Math.random() * 10) : 10;
         } else if (mood === "hot") {
             activity = "hot"; remaining = 20;
             return;
         } else {
-            // Now and then, something in the room (calm moments only).
-            // (Not before the tile has a size: the spots wouldn't be known yet.)
-            if (place === "home" && mood === "calm" && po.room && stage.width > 0 && Math.random() < 0.25) {
-                var r = Math.random();
-                if (r < 0.4 || (stage.sky && stage.sky.dark && r < 0.7))
-                    return startPlan([{ go: posAt(room.spots.bed), d: Math.min(1, room.bedDepth + 0.25) }, { go: posAt(room.spots.bed), d: room.bedDepth },
-                                      { act: "sleep", frames: 15 + Math.floor(Math.random() * 15) }]);
-                if (r < 0.75)
-                    return startPlan(approach(room.spots.water).concat([{ act: "eat", frames: 10, face: "left" }]));
-                if (room.roomy)
-                    return startPlan(approach(room.spots.basket).concat([{ act: "sniff", frames: 6, face: "left" }, { act: "bow", frames: 6 }]));
-            }
+            // Still wound up after a game: as lively as on a busy CPU.
+            var m = mood === "calm" && excited ? "busy" : mood;
             var names = Object.keys(acts), total = 0;
-            names.forEach(function (n) { total += acts[n][mood] || 0; });
+            names.forEach(function (n) { total += acts[n][m] || 0; });
             var x = Math.random() * total;
             for (var i = 0; i < names.length; i++) {
-                x -= acts[names[i]][mood] || 0;
+                x -= acts[names[i]][m] || 0;
                 if (x < 0) { activity = names[i]; break; }
             }
-            // A short nap (8-15 s); everything else 3-6 s worth of frames.
-            remaining = activity === "sleep" ? 8 + Math.floor(Math.random() * 8)
-                 : Math.round((3000 + Math.random() * 3000) / Math.max(120, acts[activity].ms));
+            if (activity === "ball") {
+                if (canPlay) return startPlan(soloPlay());
+                activity = "run";
+            }
+            // 3-6 s worth of frames.
+            remaining = Math.round((3000 + Math.random() * 3000) / Math.max(120, acts[activity].ms));
             if (activity === "spin" || Math.random() < 0.3) facingLeft = !facingLeft;
         }
         // Moving about: off to a random spot on the floor, not just sideways.
-        if (["walk", "hop", "run", "ball"].indexOf(activity) >= 0) {
+        if (["walk", "hop", "run"].indexOf(activity) >= 0) {
             var d = 0.15 + Math.random() * 0.85;
             wander = { x: onFloor(Math.random(), d), d: d };
         }
     }
+    // Something with a bit more to it than a single act, about half the
+    // time: a plan picked by weight from what fits the moment. Null: none.
+    function routine() {
+        if (place !== "home" || stage.width <= 0 || Math.random() < 0.45) return null;
+        var night = stage.sky && stage.sky.dark, calm = mood === "calm" && !excited;
+        var rnd = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };
+        var spot = function (d0, d1) { var d = d0 + Math.random() * (d1 - d0); return { go: onFloor(0.1 + Math.random() * 0.8, d), d: d }; };
+        var list = [];
+        function add(w, make) { if (w > 0) list.push({ w: w, make: make }); }
+
+        // A nap: off to bed (or wherever it is), with a yawn first. Up after
+        // with a stretch and a shake.
+        add(tired && calm ? (night ? 10 : 5) : 0, function () {
+            var bed = po.room ? [{ go: posAt(room.petBedX), d: Math.min(1, room.bedDepth + 0.25) }, { go: posAt(room.petBedX), d: room.bedDepth }]
+                              : [{ act: "rest", frames: 6 }];
+            return [{ act: "yawn", frames: 4 }].concat(bed, [{ act: "sleep", frames: rnd(20, 45) },
+                    { act: "yawn", frames: 4 }, { act: "bow", frames: 4 }, { act: "shake", frames: 6 }]);
+        });
+        // Lying about, awake: looking around, the odd yawn.
+        add(tired ? 4 : calm ? 2 : 0, function () {
+            return [spot(0.4, 1), { act: "rest", frames: rnd(14, 26) }].concat(Math.random() < 0.5 ? [{ act: "yawn", frames: 4 }] : [],
+                   [{ act: "bow", frames: 4 }]);
+        });
+        // A drink.
+        add(po.room ? 2 : 0, function () { return approach(room.spots.water).concat([{ act: "eat", frames: 10, face: "left" }]); });
+        // A snack from the bowl (always full), more often when hungry.
+        add(po.needs && lv.food < 50 ? 5 : 1.5, function () {
+            return approach(room.spots.bowl).concat([{ act: "eat", frames: rnd(12, 20), face: "left" }, { call: "snack" }]);
+        });
+        // A rummage in the toy basket.
+        add(po.room && room.roomy ? 1 : 0, function () {
+            return [{ go: posAt(room.basketX), d: 0.55 }, { act: "sniff", frames: 6 }, { act: "bow", frames: 4 }];
+        });
+        // Looking out of the window, and barking at whatever is out there.
+        add(po.room ? (night ? 1 : 3) : 0, function () {
+            var at = posAt(room.spots.window);
+            return [{ go: at, d: 0.3 }, { go: at, d: 0 }, { act: "sit", frames: rnd(6, 10) }]
+                .concat(night || Math.random() < 0.3 ? [] : [{ act: "bark", frames: rnd(6, 10), fx: "woof" }, { act: "wag", frames: 4 }]);
+        });
+        // A sniff around the room, nose to the floor.
+        add(3, function () {
+            var steps = [];
+            for (var i = rnd(2, 3); i > 0; i--) steps.push(spot(0.1, 1), { act: "sniff", frames: rnd(4, 8) });
+            return steps;
+        });
+        // An itch, then a shake.
+        add(2, function () { return [{ act: "scratch", frames: rnd(10, 16) }, { act: "shake", frames: 4 }]; });
+        // A good roll on the rug.
+        add(calm ? 2 : 1, function () {
+            return [spot(0.55, 0.85), { act: "roll", frames: rnd(10, 16) }, { act: "shake", frames: 4 }, { act: "wag", frames: 4 }];
+        });
+        // Over to say hi to you.
+        add(2, function () {
+            var d = 0.85 + Math.random() * 0.15;
+            return [{ go: onFloor(posAt(0.3 + Math.random() * 0.4), d), d: d }, { act: Math.random() < 0.5 ? "beg" : "wag", frames: rnd(8, 12),
+                      fx: Math.random() < 0.4 ? "hearts" : "" }];
+        });
+        // The zoomies: laps of the room and a spin.
+        add(calm ? (tired ? 0 : 0.7) : 3, function () {
+            var steps = [{ act: "bow", frames: 3 }];
+            for (var i = rnd(3, 5); i > 0; i--) { var s = spot(0.05, 1); s.run = true; steps.push(s); }
+            return steps.concat([{ act: "spin", frames: rnd(6, 10) }, { act: "wag", frames: 4 }]);
+        });
+        // Chasing its own tail.
+        add(tired ? 0 : 1, function () { return [{ act: "spin", frames: rnd(8, 14) }, { act: "sit", frames: 4 }]; });
+        // Playing on its own (more if a toy is lying about, or after a game).
+        add(tired ? 0.5 : toyOut || excited ? 4 : 1.5, soloPlay);
+
+        var total = 0;
+        list.forEach(function (o) { total += o.w; });
+        var x = Math.random() * total;
+        for (var i = 0; i < list.length; i++) {
+            x -= list[i].w;
+            if (x < 0) return list[i].make();
+        }
+        return null;
+    }
+
+    // The mouse comes over: the pet comes to see you (now and then, and not
+    // when it's busy with something, or fast asleep).
+    function noticeYou(px) {
+        if (job || place !== "home" || stage.width <= 0 || mood === "hot" || app.tick - noticedAt < 20) return;
+        if (asleep && Math.random() < 0.7) return;
+        noticedAt = app.tick;
+        var d = 0.85 + Math.random() * 0.15;
+        startPlan([{ go: onFloor(posAt(Math.max(0, Math.min(1, px / stage.width))), d), d: d, run: excited || mood !== "calm" },
+                   { act: Math.random() < 0.6 ? "wag" : "beg", frames: 10 }]);
+    }
+
     // A big change in the PC wakes the pet and changes plans right away
     // (unless it's busy with something you asked).
     onMoodChanged: if (!job) pickActivity()
@@ -318,12 +434,14 @@ GlassTile {
         switch (what) {
         case "pet":
             return startPlan(home.concat([{ act: isCat ? "sit" : "wag", frames: 16, fx: "hearts" }]));
-        case "feed":
-            return startPlan(home.concat([{ call: "fillBowl" }, { act: isCat ? "sit" : "beg", frames: 4 }],
-                                         approach(room.spots.bowl, true),
-                                         [{ act: "eat", frames: 24, face: "left" }, { call: "emptyBowl" },
-                                          { go: Math.min(1, mouthAt(room.spots.bowl) + 0.06), d: 0.5 },
-                                          { act: isCat ? "sit" : "wag", frames: 8, fx: "hearts" }]));
+        case "feed":   // a treat: over to you, maybe a trick, sit pretty, catch it
+            var d = 0.85 + Math.random() * 0.1, r = Math.random();
+            var trick = r < 0.2 ? [{ act: "roll", frames: 8 }] : r < 0.4 ? [{ act: "spin", frames: 8 }]
+                      : r < 0.55 ? [{ act: "bow", frames: 5 }] : [];
+            return startPlan(home.concat([{ go: onFloor(posAt(0.35 + Math.random() * 0.3), d), d: d, run: true }], trick,
+                                         [{ act: "beg", frames: 4 }, { call: "giveTreat" }, { act: "beg", frames: 2 },
+                                          { act: "eat", frames: 12 }, { call: "treatGone" },
+                                          { act: "wag", frames: 10, fx: "hearts" }]));
         case "bath":
             return startPlan(home.concat([{ go: posAt(room.spots.tub), d: 0.35 }, { go: posAt(room.spots.tub), d: 0 }, { call: "intoTub" },
                                           { act: "sit", frames: 22, fx: "bubbles" }, { call: "outOfTub" },
@@ -332,13 +450,11 @@ GlassTile {
                                           { act: isCat ? "sit" : "wag", frames: 8, fx: "sparkles" }]));
         case "clean":
             return startPlan(home.concat([{ act: isCat ? "sit" : "wag", frames: 10, fx: "sparkles" }]));
-        case "play":
+        case "play":   // fetch: you throw, it brings it back, a few times over
             toy = ["ball", "bone", "duck"][Math.floor(Math.random() * 3)];
-            return startPlan(home.concat([{ act: isCat ? "sit" : "bow", frames: 6 },
-                                          { go: Math.random() < 0.5 ? 0.1 : 0.9, d: 0.8, run: true },
-                                          { act: "ball", frames: 12 },
-                                          { go: 0.5, d: 0.3, run: true },
-                                          { act: isCat ? "sit" : "wag", frames: 8 }]));
+            roundsLeft = 3 + Math.floor(Math.random() * 3);
+            return startPlan(home.concat([{ act: "bow", frames: 6 }, { call: "throwToy" },
+                                          { act: "bow", frames: 2 }, { fetch: true }, { call: "fetchRound" }]));
         case "walk":
             return goForWalk();
         }
@@ -367,6 +483,7 @@ GlassTile {
     }
 
     function goForWalk() {
+        toyOut = false;      // the toy stays home
         scenes = pickScenes();
         sceneIndex = 0;
         // Over to the door in the right-hand wall, and out.
@@ -406,10 +523,163 @@ GlassTile {
     function nextScene() { sceneIndex++; enterScene(); }
     function chaseFriend() { plan = [{ go: friendPos, d: friendDepth, run: true }].concat(plan); }
     function enterHome() { pos = posAt(room.spots.door); depth = room.doorDepth; facingLeft = true; }
-    function fillBowl() { bowlFull = true; }
-    function emptyBowl() { bowlFull = false; }
+    // Treats: a dog biscuit, jerky, cheese or a fish (the cat's favorite).
+    function giveTreat() {
+        var kinds = isCat ? ["fish", "fish", "cheese", "jerky"] : ["biscuit", "biscuit", "jerky", "cheese", "fish"];
+        treat = kinds[Math.floor(Math.random() * kinds.length)];
+        treatDrop.restart();
+    }
+    function treatGone() { treat = ""; }
+    // A snack from the bowl counts as a meal (written down only when it was
+    // getting hungry, not every nibble).
+    function snack() { if (po.needs && lv.food < 70) app.petAct("feed"); }
     function intoTub() { inTub = true; }
     function outOfTub() { inTub = false; }
+
+    // ---- The toy: flies, bounces and rolls on its own, or rides in the mouth ----
+    property bool toyOut: false
+    property bool toyHeld: false
+    property real toyX: 0.5              // its middle, as a fraction of the width
+    property real toyD: 0.5              // depth, like the pet's
+    property real toyZ: 0                // height off the floor, in pet pixels
+    property real toyVX: 0
+    property real toyVD: 0
+    property real toyVZ: 0
+    property int toyIdle: 0              // seconds lying about; it's put away after a while
+    property int roundsLeft: 0
+    property int soloLeft: 0
+    readonly property bool toyMoving: toyOut && !toyHeld && (toyZ > 0 || toyVZ > 0 || toyVX !== 0 || toyVD !== 0)
+
+    // Where the mouth is in the frame, facing left, as fractions [x, y].
+    readonly property var mouth: isCat ? [0.2, 0.5]
+        : ["walk", "run", "sniff", "eat", "pee"].indexOf(dogRow) >= 0 ? [0.19, dogRow === "sniff" || dogRow === "eat" ? 0.8 : 0.6]
+        : [0.3, dogRow === "bow" ? 0.7 : 0.6]
+    function mouthX() { return pet.x + stage.petW * (facingLeft ? mouth[0] : 1 - mouth[0]); }
+    function mouthY() { return pet.y + stage.petH * mouth[1]; }
+
+    // You throw it in from the front.
+    function throwToy() {
+        toyOut = true; toyHeld = false; toyIdle = 0;
+        toyX = 0.3 + Math.random() * 0.4; toyD = 1; toyZ = 16;
+        toyVX = (Math.random() - 0.5) * 0.07;
+        toyVD = -(0.04 + Math.random() * 0.06);
+        toyVZ = 3 + Math.random() * 4;
+    }
+    // Let go of it, right where the mouth is.
+    function dropToy() {
+        if (!toyHeld) return;
+        toyHeld = false; toyIdle = 0;
+        toyX = mouthX() / Math.max(1, stage.width);
+        toyD = depth;
+        toyZ = Math.max(0, (stage.footY(depth) - mouthY()) / stage.px - toyItem.height / stage.px / 2);
+        toyVX = 0; toyVD = 0; toyVZ = 0;
+    }
+    // Flung up with a toss of the head: mostly the way it's facing.
+    function tossToy() {
+        dropToy();
+        var dir = (facingLeft ? -1 : 1) * (Math.random() < 0.8 ? 1 : -1);
+        toyVX = dir * (0.012 + Math.random() * 0.03);
+        toyVD = (Math.random() - 0.5) * 0.09;
+        toyVZ = 5 + Math.random() * 4;
+    }
+    // Pushed along the floor with the nose.
+    function nudgeToy() {
+        dropToy();
+        toyVX = (facingLeft ? -1 : 1) * (0.02 + Math.random() * 0.025);
+        toyVD = (Math.random() - 0.5) * 0.06;
+    }
+    function toyFromBasket() {
+        toyOut = true; toyHeld = true; toyIdle = 0;
+        toyVX = 0; toyVD = 0; toyVZ = 0; toyZ = 0;
+    }
+    function toyTick() {
+        toyX += toyVX;
+        toyD += toyVD;
+        if (toyZ > 0 || toyVZ > 0) {         // in the air: falls, bounces lower each time
+            toyZ += toyVZ;
+            toyVZ -= 1.4;
+            if (toyZ <= 0) {
+                toyZ = 0;
+                toyVZ = toyVZ < -3 ? -toyVZ * 0.45 : 0;
+                toyVX *= 0.75; toyVD *= 0.75;
+            }
+        } else {                             // rolling: slows down
+            toyVX *= 0.85; toyVD *= 0.85;
+            if (Math.abs(toyVX) + Math.abs(toyVD) < 0.002) { toyVX = 0; toyVD = 0; }
+        }
+        // Off the walls (and the front edge).
+        if (toyD < 0) { toyD = 0; toyVD = -toyVD * 0.6; }
+        if (toyD > 1) { toyD = 1; toyVD = -toyVD * 0.6; }
+        var y = stage.footY(toyD), half = toyItem.width / 2;
+        var lo = (place === "home" && po.room ? room.floorLeft(y) : 0) + half;
+        var hi = (place === "home" && po.room ? room.floorRight(y) : stage.width) - half;
+        var w = Math.max(1, stage.width);
+        if (toyX < lo / w) { toyX = lo / w; toyVX = Math.abs(toyVX) * 0.6; }
+        if (toyX > hi / w) { toyX = hi / w; toyVX = -Math.abs(toyVX) * 0.6; }
+    }
+    // One step after the toy, wherever it is now; snaps it up once it's
+    // low enough. Returns true when done (caught, or given up).
+    function fetchStep() {
+        if (!toyOut || toyHeld || --remaining <= 0) return true;
+        var tp = toyX * stage.width, left = pet.x + stage.petW / 2 > tp;
+        var x = posFor(tp - stage.petW * (left ? mouth[0] : 1 - mouth[0]));
+        if (stepTo(x, toyD, true) && toyZ < 4) {
+            facingLeft = left;
+            toyHeld = true; toyIdle = 0;
+            toyVX = 0; toyVD = 0; toyVZ = 0; toyZ = 0;
+            return true;
+        }
+        return false;
+    }
+
+    // A round of fetch with you: back with the toy (mostly), then again.
+    function fetchRound() {
+        if (!toyHeld) return;                // lost it: game over
+        var steps = [], r = Math.random();
+        if (r < 0.2) {                       // keep-away: a lap of the room with it first
+            for (var i = 0; i < 2; i++) {
+                var d = 0.2 + Math.random() * 0.8;
+                steps.push({ go: onFloor(Math.random(), d), d: d, run: true });
+            }
+        } else if (r < 0.35) {               // gives it a good shake
+            steps.push({ act: "shake", frames: 8 });
+        } else if (r < 0.5) {                // a little game of its own on the way
+            steps.push({ call: "tossToy" }, { act: "bow", frames: 3 }, { fetch: true });
+        }
+        steps.push({ go: onFloor(posAt(0.3 + Math.random() * 0.4), 0.9), d: 0.9, run: Math.random() < 0.5 },
+                   { call: "dropToy" });
+        if (--roundsLeft > 0)
+            steps.push({ act: Math.random() < 0.5 ? "beg" : "bow", frames: 6 }, { call: "throwToy" },
+                       { act: "bow", frames: 2 }, { fetch: true }, { call: "fetchRound" });
+        else
+            steps.push({ act: "wag", frames: 14, fx: "hearts" }, { call: "donePlaying" });
+        plan = steps.concat(plan);
+    }
+    function donePlaying() { playedAt = app.tick; }
+
+    // Playing on its own: a toy from the basket (or the one lying about),
+    // tossed, nudged and chased a few times, then left where it lands.
+    function soloPlay() {
+        soloLeft = 1 + Math.floor(Math.random() * 3);
+        if (toyOut) return [{ fetch: true }, { call: "soloRound" }];
+        toy = ["ball", "bone", "duck"][Math.floor(Math.random() * 3)];
+        var b = po.room && room.roomy ? room.basketX : 0.15 + Math.random() * 0.7;
+        return [{ go: posAt(b), d: 0.55 }, { act: "sniff", frames: 4 }, { call: "toyFromBasket" }, { call: "soloRound" }];
+    }
+    function soloRound() {
+        var steps;
+        if (!toyHeld || soloLeft-- <= 0) {
+            dropToy();
+            steps = [{ act: Math.random() < 0.5 ? "wag" : "sit", frames: 6 }];
+        } else {
+            var r = Math.random();
+            steps = r < 0.45 ? [{ call: "tossToy" }, { act: "bow", frames: 3 }, { fetch: true }]
+                  : r < 0.75 ? [{ act: "sniff", frames: 2 }, { call: "nudgeToy" }, { fetch: true }]
+                  : [{ act: "shake", frames: 8 }, { call: "tossToy" }, { fetch: true }];
+            steps.push({ call: "soloRound" });
+        }
+        plan = steps.concat(plan);
+    }
 
     readonly property bool asleep: activity === "sleep"
 
@@ -423,7 +693,7 @@ GlassTile {
     readonly property bool flies: friendKind === "bird" || friendKind === "butterfly"
 
     Timer {
-        interval: tile.isCat ? (tile.activity === "run" || tile.activity === "ball" ? 200 : tile.activity === "hot" ? 500 : 333)
+        interval: tile.isCat ? (tile.activity === "run" ? 200 : tile.activity === "hot" ? 500 : 333)
                              : Math.max(110, (tile.acts[tile.activity] || tile.acts.sit).ms)
         running: tile.visible && !tile.asleep && !app.editing
         repeat: true
@@ -441,17 +711,16 @@ GlassTile {
                 if (tile.friendPos > 0.95) { tile.friendPos = 0.95; tile.friendLeft = true; }
             }
             var j = tile.job;
+            if (j && j.fetch) {                      // chasing the toy
+                if (tile.fetchStep()) tile.runNext();
+                return;
+            }
             if (j && j.go !== undefined) {           // walking somewhere
                 if (tile.stepTo(j.go, j.d === undefined ? tile.depth : j.d, j.run)) tile.runNext();
                 return;
             }
             if (tile.wander) {                       // strolling about
-                if (tile.stepTo(tile.wander.x, tile.wander.d, tile.activity !== "walk")) {
-                    // Fetch: the ball bounces back off the wall, the pet runs after it.
-                    if (tile.activity === "ball" && tile.remaining-- > 0)
-                        tile.wander = { x: tile.onFloor(tile.pos < 0.5 ? 0.9 : 0.1, tile.depth), d: tile.depth };
-                    else tile.pickActivity();
-                }
+                if (tile.stepTo(tile.wander.x, tile.wander.d, tile.activity !== "walk")) tile.pickActivity();
                 return;
             }
             if (tile.isCat && tile.activity === "hot") tile.pos = Math.max(0, Math.min(1, tile.pos + (tile.facingLeft ? -0.008 : 0.008)));
@@ -460,10 +729,24 @@ GlassTile {
             }
         }
     }
+    // The toy in flight: a smoother step than the pet's, only while it moves.
+    Timer {
+        interval: 80
+        running: tile.toyMoving && tile.visible && !app.editing
+        repeat: true
+        onTriggered: tile.toyTick()
+    }
     // Asleep: breathe and drift the Zzz on the shared tick; wake when rested.
+    // A toy left lying about for a few minutes is put away.
     Connections {
         target: app
         function onTickChanged() {
+            if (tile.toyOut && !tile.toyHeld && !tile.job && ++tile.toyIdle > 180) tile.toyOut = false;
+            var a = tile.activity;
+            var e = tile.energy + (a === "sleep" ? 0.012 : a === "rest" ? 0.003
+                                   : a === "run" || a === "spin" || a === "ball" ? -0.004 : -0.0012)
+                                - (stage.sky && stage.sky.dark ? 0.0008 : 0);
+            tile.energy = Math.max(0, Math.min(1, e));
             if (!tile.asleep || !tile.visible) return;
             tile.step++;
             if (--tile.remaining <= 0) {
@@ -503,7 +786,10 @@ GlassTile {
     accent2: app.accent2("pet")
     level: asleep ? 0.15 : mood === "calm" ? 0.35 : mood === "busy" ? 0.6 : 0.85
 
-    HoverHandler { id: hover }
+    HoverHandler {
+        id: hover
+        onHoveredChanged: if (hovered) tile.noticeYou(point.position.x)
+    }
 
     Item {
         id: stage
@@ -548,7 +834,6 @@ GlassTile {
             floorY: stage.floorY
             standY: stage.backY
             sky: stage.sky
-            bowlFull: tile.bowlFull
             showTub: tile.inTub || tile.fx === "bubbles"
             style: tile.po.roomStyle
             tick: visible ? tile.app.tick : 0
@@ -585,8 +870,8 @@ GlassTile {
 
         // Without the room, the bowl and tub still turn up when needed.
         Prop {
-            visible: !tile.po.room && tile.place === "home" && (tile.bowlFull || tile.activity === "eat")
-            name: tile.bowlFull ? "bowl_full" : "bowl"
+            visible: !tile.po.room && tile.place === "home" && tile.activity === "eat" && tile.treat === ""
+            name: "bowl_full"
             px: stage.rpx
             x: stage.width * room.spots.bowl - width / 2
             y: stage.backY - height
@@ -605,7 +890,7 @@ GlassTile {
             readonly property real mouthX: tile.facingLeft ? pet.x + stage.petW * (tile.isCat ? 0.2 : 0.07) : pet.x + stage.petW * (tile.isCat ? 0.8 : 0.93)
             readonly property bool water: Math.abs(mouthX - room.spots.water * stage.width) < Math.abs(mouthX - room.spots.bowl * stage.width)
             visible: tile.po.room && tile.place === "home" && tile.activity === "eat" && tile.depth < 0.05
-            name: water ? "water" : tile.bowlFull ? "bowl_full" : "bowl"
+            name: water ? "water" : "bowl_full"
             px: stage.rpx
             x: (water ? room.spots.water : room.spots.bowl) * stage.width - width / 2
             y: stage.backY - height
@@ -635,18 +920,24 @@ GlassTile {
             }
         }
 
-        // The toy, for fetch: rolls and bounces ahead of the pet.
+        // The toy: in the mouth, or loose on the floor with a shadow under it.
+        Rectangle {
+            visible: toyItem.visible && !tile.toyHeld
+            readonly property real k: Math.max(0.3, 1 - tile.toyZ / 30)
+            width: toyItem.width * k; height: stage.px * 1.5; radius: height / 2
+            x: tile.toyX * stage.width - width / 2
+            y: stage.footY(tile.toyD) - height * 0.6
+            color: Qt.rgba(0, 0, 0, 0.25 * k)
+            z: 1 + tile.toyD - 0.001
+        }
         Prop {
-            visible: tile.activity === "ball"
+            id: toyItem
+            visible: tile.toyOut && tile.place === "home"
             name: tile.toy
             px: stage.px
-            // Rolls ahead of the pet but stays on the floor, never into a wall.
-            readonly property real floorY: stage.footY(tile.depth)
-            readonly property real lo: tile.place === "home" && tile.po.room ? room.floorLeft(floorY) : 0
-            readonly property real hi: tile.place === "home" && tile.po.room ? room.floorRight(floorY) : stage.width
-            x: Math.max(lo, Math.min(hi - width, pet.x + (tile.facingLeft ? -width * 1.5 : stage.petW + width * 0.5)))
-            y: floorY - height - stage.px * [0, 3, 5, 3][tile.step % 4]
-            z: pet.z + 0.01
+            x: (tile.toyHeld ? tile.mouthX() : tile.toyX * stage.width) - width / 2
+            y: tile.toyHeld ? tile.mouthY() - height / 2 : stage.footY(tile.toyD) - height - tile.toyZ * stage.px
+            z: tile.toyHeld ? pet.z + 0.01 : 1 + tile.toyD
         }
 
         // Friend, outside
@@ -664,7 +955,7 @@ GlassTile {
         Item {
             id: pet
             readonly property bool onBed: tile.asleep && tile.place === "home" && tile.po.room
-                && Math.abs(tile.depth - room.bedDepth) < 0.05 && Math.abs(tile.pos - tile.posAt(room.spots.bed)) < 0.03
+                && Math.abs(tile.depth - room.bedDepth) < 0.05 && Math.abs(tile.pos - tile.posAt(room.petBedX)) < 0.03
             width: stage.petW
             height: stage.petH
             // Kept on the floor: in the den it narrows toward the back.
@@ -737,6 +1028,16 @@ GlassTile {
             z: 2
         }
 
+        // A treat: dropped from above (your hand), caught, then chewed.
+        Prop {
+            visible: tile.treat !== "" && tile.place === "home"
+            name: tile.treat || "biscuit"
+            px: stage.px
+            x: tile.mouthX() - width / 2
+            y: -height + (tile.mouthY() - height / 2 + height) * tile.treatFall
+            z: pet.z + 0.02
+        }
+
         // ---- Effects, a step per frame ----
         Repeater {      // hearts float up
             model: tile.fx === "hearts" ? 3 : 0
@@ -793,6 +1094,20 @@ GlassTile {
             width: stage.px * (2 + Math.min(6, tile.step % 10)); height: stage.px * 1.5; radius: height / 2
             color: "#f2d64b"
             opacity: 0.8
+        }
+
+        // Woof! at the window.
+        PlasmaComponents.Label {
+            textFormat: Text.PlainText
+            visible: tile.fx === "woof" && tile.activity === "bark" && tile.step % 4 >= 1
+            text: i18n("woof!")
+            x: pet.x + stage.petW * (tile.step % 8 < 4 ? 0.0 : 0.4)
+            y: pet.y - height * 0.6
+            color: tile.accent
+            font.pixelSize: stage.px * 4
+            font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
+            font.weight: Font.Bold
+            z: 5
         }
 
         // Thought bubble: what it wants, on and off.

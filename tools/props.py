@@ -102,6 +102,16 @@ def bed(c):
     c.dots("D", 7, "A")
 shape("bed", 35, 13, bed)
 
+def cushion(c):
+    # The pet's floor cushion in the den: plump, with a tufted button.
+    c.ell(16, 6.2, 15.5, 3.8, "M")
+    c.ell(16, 5.2, 14.5, 3.4, "v")
+    c.ell(15, 4.4, 10, 1.8, "m")
+    c.put(16, 5, "M")
+    c.put(9, 6, "M")
+    c.put(23, 6, "M")
+shape("cushion", 32, 10, cushion)
+
 grid("bowl", ["..........",
               "kkkkkkkkkk",
               ".krrrrrrk.",
@@ -129,6 +139,25 @@ grid("duck", ["..kkk..",
               "kkyyykk",
               "kyyyyyk",
               ".kkkkk."])
+# Treats, for the Feed button.
+grid("biscuit", [".kk...kk.",
+                 "kttkkkttk",
+                 "ktttEtttk",
+                 ".kk...kk."])
+grid("jerky", ["kkkk....",
+               "kBbbkkk.",
+               ".kkbBbbk",
+               "....kkkk"])
+grid("cheese", ["....kk",
+                "..kkyk",
+                "kkyyyk",
+                "kyYyYk",
+                "kkkkkk"])
+grid("fish", ["..kkkk...k",
+              ".kcxcckkuk",
+              "kcccccccuk",
+              ".kuuuuukuk",
+              "..kkkk...k"])
 grid("poop", ["..k..",
               ".kbk.",
               "kbBbk",
@@ -248,28 +277,31 @@ def shelf_wall(c):
 shape("shelf_wall", 20, 21, shelf_wall)
 
 
-def bed_front(c):
+def bed_front(c, w=28):
     # A low bed against the wall, seen from the foot end: a padded, button-
-    # tufted headboard, two soft grey pillows, a deep blue duvet with gentle
-    # folds, a teal throw across the foot, and a dark frame.
-    c.ell(14, 5, 14, 5.5, "V")                                    # headboard, rounded top
-    c.rect(0, 5, 28, 6, "V")
-    c.ell(14, 5.2, 12.6, 4.4, "N")
-    c.rect(1, 5, 26, 6, "N")
-    for x in (5, 10, 14, 18, 23):                                 # tufting
+    # tufted headboard, soft grey pillows, a deep blue duvet with gentle
+    # folds, a teal throw across the foot, and a dark frame. `w` wide: the
+    # double has two pillows, a narrow single one.
+    m = w / 2
+    c.ell(m, 5, m, 5.5, "V")                                      # headboard, rounded top
+    c.rect(0, 5, w, 6, "V")
+    c.ell(m, 5.2, m - 1.4, 4.4, "N")
+    c.rect(1, 5, w - 2, 6, "N")
+    for x in ((5, 10, 14, 18, 23) if w > 20 else (4, 8, 12)):     # tufting
         c.put(x, 4, "V"); c.put(x, 8, "V")
-    c.ell(8, 11, 5.2, 2.3, "s"); c.ell(8, 10.6, 4.6, 1.8, "a")    # pillows
-    c.ell(20, 11, 5.2, 2.3, "s"); c.ell(20, 10.6, 4.6, 1.8, "a")
-    c.rect(1, 13, 26, 7, "j")                                     # duvet
-    c.rect(1, 13, 26, 1, "i")                                     # its lit top edge
-    for x in (7, 14, 21):                                         # soft folds
+    for px in ((8, w - 8) if w > 20 else (m,)):                   # pillows
+        c.ell(px, 11, 5.2, 2.3, "s"); c.ell(px, 10.6, 4.6, 1.8, "a")
+    c.rect(1, 13, w - 2, 7, "j")                                  # duvet
+    c.rect(1, 13, w - 2, 1, "i")                                  # its lit top edge
+    for x in range(7 if w > 20 else 5, w - 4, 7):                 # soft folds
         c.rect(x, 14, 1, 2, "i")
-    c.rect(1, 16, 26, 3, "T")                                     # throw across the foot
-    c.rect(1, 16, 26, 1, "I")
-    c.rect(1, 19, 26, 2, "j")                                     # duvet hanging over the end
-    c.rect(0, 21, 28, 2, "x")                                     # frame
-    c.rect(1, 23, 2, 1, "x"); c.rect(25, 23, 2, 1, "x")           # feet
+    c.rect(1, 16, w - 2, 3, "T")                                  # throw across the foot
+    c.rect(1, 16, w - 2, 1, "I")
+    c.rect(1, 19, w - 2, 2, "j")                                  # duvet hanging over the end
+    c.rect(0, 21, w, 2, "x")                                      # frame
+    c.rect(1, 23, 2, 1, "x"); c.rect(w - 3, 23, 2, 1, "x")        # feet
 shape("bed_front", 28, 24, bed_front)
+shape("bed_single", 17, 24, lambda c: bed_front(c, 17))
 
 
 def desk_front(c):
