@@ -80,8 +80,28 @@ class OtherMachines(unittest.TestCase):
         self.assertEqual((d["cpu"]["cores"], d["cpu"]["threads"]), (8, 16))
         names = [g["name"] for g in d["gpus"]]
         self.assertEqual(names, ["NVIDIA GeForce RTX 3050 Ti Mobile", "Intel Iris Xe Graphics"])
-        self.assertEqual(d["battery"], {"present": True, "percent": 76, "status": "Discharging"})
+        self.assertEqual(d["battery"], {"present": True, "percent": 76, "status": "Discharging",
+                                        "ac": False, "watts": 9.8, "minutes": 196})
         self.assertEqual(machine("intel-laptop", "battery")["percent"], 76)
+
+    def test_charging_over_usb_c(self):
+        # Charge/current instead of energy/power, and a USB-C charger.
+        root = tempfile.mkdtemp(prefix="solidget-usbc-")
+        self.addCleanup(shutil.rmtree, root, True)
+        files = {"BAT1/type": "Battery", "BAT1/status": "Charging", "BAT1/capacity": "40",
+                 "BAT1/current_now": "2000000", "BAT1/voltage_now": "15000000",
+                 "BAT1/charge_now": "2000000", "BAT1/charge_full": "5000000",
+                 "ucsi-source-psy-1/type": "USB", "ucsi-source-psy-1/online": "1",
+                 "AC/type": "Mains", "AC/online": "0"}
+        for name, text in files.items():
+            path = os.path.join(root, "sys/class/power_supply", name)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as f:
+                f.write(text + "\n")
+        env = {"SOLIDGET_SYSROOT": root, "PATH": EMPTY_BIN, "HOME": "/nonexistent"}
+        out = subprocess.run([sys.executable, "-I", SPECS, "battery"], capture_output=True, text=True, timeout=30, env=env)
+        self.assertEqual(json.loads(out.stdout), {"present": True, "percent": 40, "status": "Charging",
+                                                  "ac": True, "watts": 30.0, "minutes": 90})
 
     def test_rolling_release_has_no_build_date(self):
         self.assertEqual(machine("tumbleweed")["system"]["os"], "openSUSE Tumbleweed")

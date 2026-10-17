@@ -373,13 +373,46 @@ def notify(title, body):
     return False
 
 
+def number(path):
+    v = read(path)
+    return int(v) if re.fullmatch(r"-?\d+", v) else None
+
+
 def battery():
-    for ps in sysglob("/sys/class/power_supply/*"):
+    supplies = sysglob("/sys/class/power_supply/*")
+    # Charger: a "Mains" supply, or USB-C power delivery ("USB") on newer laptops.
+    chargers = [number(os.path.join(ps, "online")) for ps in supplies
+                if read(os.path.join(ps, "type")) in ("Mains", "USB")]
+    chargers = [c for c in chargers if c is not None]
+    for ps in supplies:
         if read(os.path.join(ps, "type")) == "Battery" and read(os.path.join(ps, "scope"), "System") == "System":
             cap = read(os.path.join(ps, "capacity"))
+            status = read(os.path.join(ps, "status"), "Unknown")
+            # Drivers report power directly (µW) or as current (µA) x voltage (µV).
+            power = number(os.path.join(ps, "power_now"))
+            if power is None:
+                amps, volts = number(os.path.join(ps, "current_now")), number(os.path.join(ps, "voltage_now"))
+                power = amps * volts // 1000000 if amps is not None and volts is not None else None
+            watts = round(abs(power) / 1e6, 1) if power else 0
+            # Minutes until empty (or full), from energy (µWh) or charge (µAh).
+            now, full = number(os.path.join(ps, "energy_now")), number(os.path.join(ps, "energy_full"))
+            rate = abs(power) if power else 0
+            if now is None:
+                now, full = number(os.path.join(ps, "charge_now")), number(os.path.join(ps, "charge_full"))
+                amps = number(os.path.join(ps, "current_now"))
+                rate = abs(amps) if amps else 0
+            minutes = None
+            if rate and now is not None and status == "Discharging":
+                minutes = round(now / rate * 60)
+            elif rate and now is not None and full and status == "Charging":
+                minutes = round(max(0, full - now) / rate * 60)
             return {"present": True,
                     "percent": int(cap) if cap.isdigit() else None,
-                    "status": read(os.path.join(ps, "status"), "Unknown")}
+                    "status": status,
+                    # No charger file: going by the battery's own status.
+                    "ac": any(c == 1 for c in chargers) if chargers else status in ("Charging", "Full", "Not charging"),
+                    "watts": watts,
+                    "minutes": minutes if minutes is not None and 0 < minutes < 6000 else None}
     return {"present": False}
 
 

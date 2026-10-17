@@ -96,9 +96,38 @@ def head(p, hx, hy, eyes="open", mouth="", ears_up=0, look_down=0):
         p.pt([(nx, ny + 3), (nx + 1, ny + 3)], "t")
 
 
-def stand(legs=(0, 0, 0, 0), lifts=(0, 0, 0, 0), bob=0, eyes="open", mouth="", ears_up=0, head_dy=0, head_dx=0, wiggle=0, bow=0):
-    """Standing side-on, head turned to you. legs: lower-leg shifts for
-    (near front, far front, near back, far back)."""
+def side_head(p, hx, hy, eyes="open", mouth="", ears_up=0):
+    """Head in profile, nose pointing left (the way the body walks): a round
+    curly crown, a short muzzle, one eye, and a round bear ear on top, like
+    the face-on head."""
+    hx, hy = round(hx), round(hy)
+    p.ring(hx, hy, 4.6, 4.2)
+    p.ell(hx, hy, 4.6, 4.2)                                        # skull
+    p.ell(hx - 0.5, hy - 3.2, 3.2, 1.8)                             # top-knot
+    p.curls(lambda x, y: x < hx - 1 and y > hy - 1)
+    ey_ = hy - 3.4 - ears_up                                        # round bear ear on top, toward the back
+    p.ring(hx + 2.5, ey_, 2.5, 2.4)
+    p.ell(hx + 2.5, ey_, 2.5, 2.4, "s")
+    p.ell(hx + 2.5, ey_ + 0.3, 1.2, 1.1, "m")
+    p.ring(hx - 4, hy + 1.6, 2.3, 1.7)
+    p.ell(hx - 4, hy + 1.6, 2.3, 1.7, "m")                          # short muzzle
+    p.pt([(hx - 6, hy + 0.8), (hx - 5, hy + 0.8), (hx - 6, hy + 1.8)], "n")
+    ex, ey = hx - 3, hy - 1
+    if eyes == "open":
+        p.pt([(ex, ey), (ex + 1, ey), (ex, ey + 1), (ex + 1, ey + 1)], "e")
+        p.pt([(ex, ey)], "w")
+    elif eyes == "happy":
+        p.pt([(ex - 1, ey + 1), (ex, ey), (ex + 1, ey + 1)], "e")
+    else:
+        p.pt([(ex, ey + 1), (ex + 1, ey + 1)], "e")
+    if mouth in ("tongue", "pant"):
+        p.pt([(hx - 5, hy + 3.2), (hx - 4, hy + 3.2)] + ([(hx - 5, hy + 4.2)] if mouth == "tongue" else []), "t")
+
+
+def stand(legs=(0, 0, 0, 0), lifts=(0, 0, 0, 0), bob=0, eyes="open", mouth="", ears_up=0, head_dy=0, head_dx=0, wiggle=0, bow=0, side=False):
+    """Standing side-on, head turned to you (or in profile, `side`, looking
+    where it goes). legs: lower-leg shifts for (near front, far front, near
+    back, far back)."""
     p = Pose()
     nf, ff, nb, fb = legs
     lnf, lff, lnb, lfb = lifts
@@ -110,21 +139,28 @@ def stand(legs=(0, 0, 0, 0), lifts=(0, 0, 0, 0), bob=0, eyes="open", mouth="", e
     p.curls()
     leg(p, 12, by + 2 + bow, dx=nf, lift=lnf)                     # near legs
     leg(p, 21 + wiggle, by + 2, dx=nb, lift=lnb)
-    head(p, 10 + head_dx, by - 6.5 + head_dy + bow, eyes, mouth, ears_up, look_down=1 if head_dy > 2 else 0)
+    if side:
+        side_head(p, 10 + head_dx, by - 5.5 + head_dy + bow, eyes, mouth, ears_up)
+    else:
+        head(p, 10 + head_dx, by - 6.5 + head_dy + bow, eyes, mouth, ears_up, look_down=1 if head_dy > 2 else 0)
     return p.rows()
 
 
-def sit(eyes="open", mouth="", wiggle=0, hop=0, ears_up=0):
-    """Sitting side-on, head turned to you."""
+def sit(eyes="open", mouth="", wiggle=0, hop=0, ears_up=0, paw=0, rear=0):
+    """Sitting side-on, head turned to you. paw lifts the front paw (begging);
+    rear sits the chest up straighter."""
     p = Pose()
     gy = GROUND - hop
     p.ell(21 + wiggle, gy - 3.6, 5.2, 4.2)                          # round rump on the ground
-    p.ell(16, gy - 5.5, 3.8, 3.8)                                   # upright chest
+    p.ell(16 + rear * 0.5, gy - 5.5 - rear, 3.8, 3.8 + rear * 0.5)   # upright chest
     p.curls()
     p.ring(23.5 + wiggle, gy - 0.6, 2.4, 1.3)                       # hind paw
     p.ell(23.5 + wiggle, gy - 0.6, 2.4, 1.3)
-    leg(p, 14, gy - 4, gy)                                          # front leg
-    head(p, 10, gy - 11.5, eyes, mouth, ears_up)
+    if paw:                                                         # front paw up, bent
+        leg(p, 13, gy - 6 - rear - paw, gy - paw - 2)
+    else:
+        leg(p, 14, gy - 4, gy)                                      # front leg
+    head(p, 10 + rear * 0.3, gy - 11.5 - rear, eyes, mouth, ears_up)
     return p.rows()
 
 
@@ -148,21 +184,31 @@ RUN = [((-2, -2, 2, 2), (1, 1, 1, 1)), ((-1, 0, 1, 1), (0, 0, 0, 0)),
        ((2, 1, -2, -1), (1, 1, 0, 0)), ((0, -1, 0, 1), (0, 0, 0, 0))]
 
 F = {
-    "walk":  [stand(l, k, bob=i % 2) for i, (l, k) in enumerate(WALK)],
-    "run":   [stand(l, k, bob=[2, 0, 1, 0][i], mouth="tongue", ears_up=[1, 0, 1, 0][i]) for i, (l, k) in enumerate(RUN)],
+    "walk":  [stand(l, k, bob=i % 2, side=True) for i, (l, k) in enumerate(WALK)],
+    "run":   [stand(l, k, bob=[2, 0, 1, 0][i], mouth="tongue", ears_up=[1, 0, 1, 0][i], side=True) for i, (l, k) in enumerate(RUN)],
     "sit":   [sit(), sit(), sit(eyes="closed"), sit()],
     "wag":   [sit(eyes="happy", mouth="tongue", wiggle=-1), sit(eyes="happy", mouth="tongue", wiggle=1, hop=1),
               sit(eyes="happy", mouth="tongue", wiggle=-1), sit(eyes="open", mouth="tongue", wiggle=1)],
-    "sniff": [stand(head_dy=4, head_dx=-1), stand(head_dy=4, head_dx=-2, lifts=(1, 0, 0, 0)),
-              stand(head_dy=4, head_dx=-1), stand(head_dy=3, head_dx=-1, lifts=(0, 0, 1, 0))],
+    "sniff": [stand(head_dy=5, head_dx=-1, side=True), stand(head_dy=6, head_dx=-2, lifts=(1, 0, 0, 0), side=True),
+              stand(head_dy=5, head_dx=-1, side=True), stand(head_dy=4, head_dx=-1, lifts=(0, 0, 1, 0), side=True)],
     "bow":   [stand(bow=3, eyes="happy", mouth="tongue", wiggle=-1), stand(bow=3, eyes="happy", mouth="tongue", wiggle=1),
               stand(bow=3, mouth="tongue", wiggle=-1), stand(bow=2, mouth="tongue", bob=1)],
     "yawn":  [sit(eyes="closed"), sit(eyes="closed", mouth="yawn"), sit(eyes="closed", mouth="yawn"), sit(eyes="closed")],
     "sleep": [lie(), lie(breathe=1)],
     "hot":   [lie("open", "tongue"), lie("open", "pant", breathe=1)],
+    # Head down in the bowl, chewing.
+    "eat":   [stand(head_dy=5, head_dx=-3, eyes="closed", side=True), stand(head_dy=6, head_dx=-3, eyes="closed", side=True),
+              stand(head_dy=5, head_dx=-3, eyes="closed", lifts=(0, 0, 0, 1), side=True), stand(head_dy=6, head_dx=-3, eyes="closed", side=True)],
+    # A back leg up by the tree.
+    "pee":   [stand(lifts=(0, 0, 5, 0), legs=(0, 0, 3, 0), eyes="happy", side=True), stand(lifts=(0, 0, 5, 0), legs=(0, 0, 3, 0), eyes="closed", side=True)],
+    # Shaking off the bath water.
+    "shake": [stand(wiggle=-2, eyes="closed", ears_up=1), stand(wiggle=2, eyes="closed"),
+              stand(wiggle=-2, eyes="closed", ears_up=1), stand(wiggle=1, eyes="happy", mouth="tongue")],
+    # Sitting up, one paw raised: asking for something.
+    "beg":   [sit(paw=2, rear=1, mouth="tongue"), sit(paw=3, rear=1, eyes="happy", mouth="tongue")],
 }
 
-MOODS = ["walk", "run", "sit", "wag", "sniff", "bow", "yawn", "sleep", "hot"]
+MOODS = ["walk", "run", "sit", "wag", "sniff", "bow", "yawn", "sleep", "hot", "eat", "pee", "shake", "beg"]
 COLORS = {"k": "#4a2c17", "K": "#8a5530", "b": "#e2a66b", "h": "#d0904f", "s": "#c27f45",
           "m": "#f0c590", "e": "#1a1110", "w": "#ffffff", "n": "#1a1110", "t": "#f28ba8"}
 CELL_W, CELL_H = W, H

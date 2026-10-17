@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.plasma.plasmoid
@@ -12,6 +13,7 @@ import "../code/layout.js" as Bento
 import "../code/format.js" as Fmt
 import "../code/palette.js" as Palette
 import "../code/shell.js" as Shell
+import "../code/petcare.js" as PetCare
 
 PlasmoidItem {
     id: root
@@ -20,7 +22,7 @@ PlasmoidItem {
 
     readonly property var allTiles: ["clock", "specs", "cpu", "gpu", "memory", "temps", "network",
                                      "cores", "processes", "power", "disk", "battery",
-                                     "pet", "photo", "media", "calendar", "quote", "note", "worldclock", "focus"]
+                                     "pet", "photo", "media", "calendar", "quote", "note", "worldclock", "focus", "uptime"]
     readonly property var tileInfo: ({
         clock:     { name: i18n("Clock & date"),  icon: "clock" },
         specs:     { name: i18n("PC specs"),      icon: "computer" },
@@ -41,7 +43,8 @@ PlasmoidItem {
         quote:     { name: i18n("Quote of the day"), icon: "format-text-blockquote" },
         note:      { name: i18n("Sticky note"),   icon: "knotes" },
         worldclock:{ name: i18n("World clocks"),  icon: "preferences-system-time" },
-        focus:     { name: i18n("Focus timer"),   icon: "chronometer" }
+        focus:     { name: i18n("Focus timer"),   icon: "chronometer" },
+        uptime:    { name: i18n("Uptime"),        icon: "clock" }
     })
 
     readonly property var presetIds: ["essentials", "daily", "everything", "showcase", "performance", "everyday", "minimal"]
@@ -50,11 +53,11 @@ PlasmoidItem {
                        tiles: ["clock", "specs", "cpu", "gpu", "memory", "temps", "network"],
                        portrait: ["clock", "specs", "cpu", "gpu", "temps", "memory", "network"] },
         daily:       { name: i18n("Daily"),       hint: i18n("Photo, calendar, music, pet and your day"),
-                       tiles: ["clock", "photo", "calendar", "media", "pet", "worldclock", "quote", "focus", "note"],
-                       portrait: ["clock", "photo", "media", "calendar", "pet", "worldclock", "quote", "focus", "note"] },
+                       tiles: ["clock", "photo", "calendar", "media", "pet", "uptime", "worldclock", "quote", "focus", "note"],
+                       portrait: ["clock", "photo", "media", "calendar", "pet", "uptime", "worldclock", "quote", "focus", "note"] },
         everything:  { name: i18n("Everything"),  hint: i18n("Every tile your PC supports — great full screen"),
-                       tiles: ["clock", "photo", "specs", "cpu", "gpu", "pet", "cores", "processes", "memory", "temps", "network", "media", "calendar", "power", "disk", "battery", "worldclock", "focus", "quote", "note"],
-                       portrait: ["clock", "photo", "specs", "cpu", "gpu", "temps", "memory", "pet", "cores", "network", "media", "calendar", "processes", "power", "disk", "battery", "worldclock", "focus", "quote", "note"] },
+                       tiles: ["clock", "photo", "specs", "cpu", "gpu", "pet", "cores", "processes", "memory", "temps", "network", "media", "calendar", "power", "disk", "battery", "uptime", "worldclock", "focus", "quote", "note"],
+                       portrait: ["clock", "photo", "specs", "cpu", "gpu", "temps", "memory", "pet", "cores", "network", "media", "calendar", "processes", "power", "disk", "battery", "uptime", "worldclock", "focus", "quote", "note"] },
         showcase:    { name: i18n("Showcase"),    hint: i18n("Your build front and center"),
                        tiles: ["specs", "cpu", "gpu", "temps", "power"] },
         performance: { name: i18n("Performance"), hint: i18n("For gaming and heavy work"),
@@ -126,7 +129,7 @@ PlasmoidItem {
         case "gpu":     return !!(specs.gpus && specs.gpus.length > 0) || gpuVramTotal.value > 0;
         case "battery": return !!batteryState.present;
         case "temps":   return cpuTempValue > 0 || gpuTemp.value > 0;
-        case "power":   return gpuWatts > 0 || !!(specs.sensors && (specs.sensors.fans.length > 0 || specs.sensors.gpuPowerFile));
+        case "power":   return gpuWatts > 0 || !!batteryState.present || !!(specs.sensors && (specs.sensors.fans.length > 0 || specs.sensors.gpuPowerFile));
         default:        return true;
         }
     }
@@ -269,7 +272,10 @@ PlasmoidItem {
         target: Plasmoid.configuration
         function onPlaceRequestChanged() { root.handlePlaceRequest(); }
     }
-    Component.onCompleted: Qt.callLater(handlePlaceRequest)
+    Component.onCompleted: {
+        Qt.callLater(handlePlaceRequest);
+        wakePet();
+    }
 
     // ---- Live sensors (ksystemstats) -------------------------------------
 
@@ -411,9 +417,11 @@ PlasmoidItem {
         }
     }
 
+    // Every 10 s while the Power or Battery tile is shown, so plugging in shows
+    // up quickly; once a minute otherwise (each check starts python).
     P5Support.DataSource {
         engine: "executable"
-        interval: 60000
+        interval: root.visibleTiles.indexOf("power") >= 0 || root.visibleTiles.indexOf("battery") >= 0 ? 10000 : 60000
         connectedSources: root.batteryState.present ? [root.helper(["battery"])] : []
         onNewData: (source, data) => {
             try { root.batteryState = JSON.parse(data["stdout"]); } catch (e) {}
@@ -449,18 +457,34 @@ PlasmoidItem {
             style: styleId, theme: themeId, dark: dark, plasmaFrame: nativeStyle,
             body: th.body || plasmaBody,
             text: th.text || "",
-            bodyAlpha: st.bodyAlpha === null ? (dark ? 0.66 : 0.72)
+            // Opaque themes (Snow, Midnight, RGB) are solid in every style but Plasma's.
+            bodyAlpha: th.opaque && !nativeStyle ? 1
+                     : st.bodyAlpha === null ? (dark ? 0.66 : 0.72)
                      : typeof st.bodyAlpha === "object" ? (dark ? st.bodyAlpha.dark : st.bodyAlpha.light)
                      : st.bodyAlpha,
             radius: st.radius, glow: st.glow, shadow: st.shadow, border: st.border,
             highlight: st.highlight, roundCaps: st.roundCaps,
-            tint: st.tint, bevel: st.bevel, hardShadow: st.hardShadow,
+            // Opaque themes keep their exact white or black: no tint toward the tile color.
+            tint: th.opaque ? 0 : st.tint, bevel: st.bevel, hardShadow: st.hardShadow,
             fontFamily: st.font === "pixel" && pixelFont.status === FontLoader.Ready ? pixelFont.name : "",
-            meter: st.meter, chart: st.chart
+            meter: st.meter, chart: st.chart,
+            // RGB: every tile reads the moving phase from here.
+            rgb: th.rgb === true && !nativeStyle, rgbClock: rgbClock,
+            edge: !nativeStyle && th.edge ? th.edge : ""
         };
+    }
+    // RGB theme: one shared, slowly turning hue. Five small steps a second,
+    // and only while the theme is on (every step redraws the desktop).
+    QtObject { id: rgbClock; property real phase: 0 }
+    Timer {
+        interval: 200
+        running: root.look.rgb && !root.editing
+        repeat: true
+        onTriggered: rgbClock.phase = (rgbClock.phase + 0.012) % 1
     }
     // Bundled pixel font (Silkscreen, SIL OFL; see fonts/OFL.txt).
     FontLoader { id: pixelFont; source: "../fonts/Silkscreen-Regular.ttf" }
+    readonly property string pixelFontName: pixelFont.status === FontLoader.Ready ? pixelFont.name : ""
     // Plasma's own colors, read here where nothing overrides them.
     readonly property color plasmaText: Kirigami.Theme.textColor
     readonly property color plasmaBody: Kirigami.Theme.backgroundColor
@@ -494,8 +518,12 @@ PlasmoidItem {
     // Every tile formats through these, so one setting changes the whole board.
 
     readonly property string petKind: Plasmoid.configuration.petKind === "cat" ? "cat" : "dog"
-    readonly property bool useFahrenheit: Plasmoid.configuration.weatherUnit === "f"
+    // Weather and the PC's sensors can use different units; the sensors
+    // follow the weather's unit until one is picked for them.
+    readonly property bool weatherFahrenheit: Plasmoid.configuration.weatherUnit === "f"
         || (Plasmoid.configuration.weatherUnit === "auto" && Qt.locale().measurementSystem === Locale.ImperialUSSystem)
+    readonly property bool useFahrenheit: Plasmoid.configuration.sensorUnit === "f" ? true
+        : Plasmoid.configuration.sensorUnit === "c" ? false : weatherFahrenheit
     readonly property bool decimalUnits: Plasmoid.configuration.dataUnits === "decimal"
     readonly property bool networkBits: Plasmoid.configuration.networkBits
     readonly property string tempUnit: useFahrenheit ? "°F" : "°C"
@@ -522,9 +550,13 @@ PlasmoidItem {
 
     Weather {
         id: weatherModel
-        enabled: Plasmoid.configuration.weatherEnabled && root.visibleTiles.indexOf("clock") >= 0
+        // Also for the skies in the Uptime tile and the pet's window (sunrise,
+        // sunset, clouds, rain), and the pet's "Weather" walks.
+        enabled: Plasmoid.configuration.weatherEnabled && (root.visibleTiles.indexOf("clock") >= 0
+            || root.visibleTiles.indexOf("pet") >= 0
+            || (root.visibleTiles.indexOf("uptime") >= 0 && root.uptimeOptions.scene === "sky"))
         city: Plasmoid.configuration.weatherCity
-        fahrenheit: root.useFahrenheit
+        fahrenheit: root.weatherFahrenheit
     }
     readonly property alias weather: weatherModel
 
@@ -555,6 +587,113 @@ PlasmoidItem {
                 if (--pending === 0) Plasmoid.configuration.worldClocks = results.filter(Boolean).join(";");
             });
         });
+    }
+
+    // ---- Uptime tile -----------------------------------------------------------
+    // Everything the tile lets you pick, checked here: the config file may
+    // hold anything.
+    function oneOf(v, list, fallback) { return list.indexOf(v) >= 0 ? v : fallback; }
+    readonly property var uptimeScenes: ["sky", "ticks", "binary", "terminal", "pulse", "mood", "orbit", "aurora", "image", "plain"]
+    readonly property var uptimeOptions: {
+        var c = Plasmoid.configuration;
+        var font = String(c.uptimeFont || "");
+        var image = String(c.uptimeImage || "");
+        return {
+            scene: oneOf(c.uptimeScene, uptimeScenes, "binary"),
+            format: oneOf(c.uptimeFormat, ["short", "long", "clock", "days"], "short"),
+            // A font family name, "pixel" (the bundled one) or "" (the look's own).
+            font: font.length <= 64 && !/[\n;{}]/.test(font) ? font : "",
+            weight: oneOf(c.uptimeWeight, ["auto", "light", "regular", "bold"], "auto"),
+            color: oneOf(c.uptimeColor, ["auto", "light", "dark", "accent"], "auto"),
+            size: oneOf(c.uptimeSize, ["s", "m", "l", "xl"], "m"),
+            align: oneOf(c.uptimeAlign, ["bottom", "center", "top"], "bottom"),
+            label: String(c.uptimeLabel || "").slice(0, 40),
+            showBoot: c.uptimeShowBoot,
+            showRecord: c.uptimeShowRecord,
+            // Only a local picture file; never a web address.
+            image: /^file:\/\/\/[^\n]{1,1000}\.(png|jpe?g|webp|gif|bmp)$/i.test(image) ? image : "",
+            fit: oneOf(c.uptimeImageFit, ["fill", "fit"], "fill"),
+            dim: Math.max(0, Math.min(80, c.uptimeImageDim || 0))
+        };
+    }
+    function nextUptimeScene() {
+        var i = uptimeScenes.indexOf(uptimeOptions.scene);
+        var next = uptimeScenes[(i + 1) % uptimeScenes.length];
+        // Skip the picture scene until there's a picture.
+        if (next === "image" && !uptimeOptions.image) next = uptimeScenes[(i + 2) % uptimeScenes.length];
+        Plasmoid.configuration.uptimeScene = next;
+    }
+    // Longest uptime seen, checked every 10 minutes (saved rarely on purpose).
+    readonly property int uptimeRecord: Plasmoid.configuration.uptimeRecord
+    function checkUptimeRecord() {
+        if (uptime.value > uptimeRecord + 60) Plasmoid.configuration.uptimeRecord = Math.floor(uptime.value);
+    }
+
+    // ---- Desk pet ----------------------------------------------------------------
+    // Its needs live here (not in the tile) so they're kept while the tile
+    // reloads. Saved when something happens, plus a "last seen" every
+    // 10 minutes: time away from the pet doesn't count against it.
+    readonly property var petOptions: {
+        var c = Plasmoid.configuration;
+        return {
+            kind: petKind,
+            name: String(c.petName || "").replace(/[\n\r]/g, " ").slice(0, 24),
+            size: oneOf(c.petSize, ["s", "m", "l"], "s"),
+            ground: oneOf(c.petGround, ["mix", "auto", "grass", "snow", "sand"], "mix"),
+            buttons: oneOf(c.petButtons, ["always", "hover", "off"], "always"),
+            needs: c.petNeeds,
+            room: c.petRoom,
+            roomStyle: oneOf(c.petRoomStyle, ["cozy", "nerd"], "nerd")
+        };
+    }
+    readonly property bool petShown: visibleTiles.indexOf("pet") >= 0
+    property var petState: PetCare.parse("", nowSec())
+    property var petLevels: ({ food: 100, fun: 100, clean: 100, potty: 0 })
+    property string petWish: ""
+    function nowSec() { return Math.floor(Date.now() / 1000); }
+    function savePet() { Plasmoid.configuration.petCare = PetCare.serialize(petState); }
+    // Away a while (suspended, or the widget wasn't running): the gap doesn't
+    // count against the pet, like a restart.
+    function catchUpPet(now) {
+        if (now - petState.seen > 15 * 60) { petState = PetCare.resume(petState, now); savePet(); }
+    }
+    function refreshPet() {
+        var now = nowSec();
+        catchUpPet(now);
+        if (Plasmoid.configuration.petNeeds) {
+            var r = PetCare.step(petState, now);
+            if (r[1]) { petState = r[0]; savePet(); }
+            petLevels = PetCare.levels(petState, now);
+        } else {
+            petLevels = { food: 100, fun: 100, clean: 100, potty: 0 };
+        }
+        petWish = Plasmoid.configuration.petNeeds ? PetCare.wish(petLevels, petState) : "";
+    }
+    function petAct(what) {
+        catchUpPet(nowSec());
+        petState = PetCare.act(petState, what, nowSec());
+        savePet();
+        refreshPet();
+    }
+    function wakePet() {
+        petState = PetCare.resume(PetCare.parse(Plasmoid.configuration.petCare, nowSec()), nowSec());
+        savePet();
+        refreshPet();
+    }
+    onPetShownChanged: if (petShown) wakePet()
+    Connections {
+        target: Plasmoid.configuration
+        // Needs switched on: start from a happy, fed, clean pet.
+        function onPetNeedsChanged() {
+            if (Plasmoid.configuration.petNeeds) { petState = PetCare.parse("", nowSec()); savePet(); }
+            refreshPet();
+        }
+    }
+    onTickChanged: {
+        if (tick % 600 === 5) checkUptimeRecord();
+        if (!petShown) return;
+        if (tick % 60 === 0) refreshPet();
+        if (tick % 600 === 300) { catchUpPet(nowSec()); petState = PetCare.act(petState, "", nowSec()); savePet(); }
     }
 
     // ---- Focus timer -----------------------------------------------------------
@@ -643,6 +782,18 @@ PlasmoidItem {
         Layout.preferredHeight: Kirigami.Units.gridUnit * 44
 
         HoverHandler { id: hover }
+
+        // The part of the widget that's on the screen, in its own coordinates.
+        // Checked once a second while editing or in Settings (the widget can
+        // be moved or resized meanwhile).
+        function onScreen() {
+            var top = full.mapToGlobal(0, 0).y;
+            var screenTop = Screen.virtualY, screenBottom = Screen.virtualY + Screen.height;
+            return [Math.max(0, screenTop - top), Math.min(full.height, screenBottom - top)];
+        }
+        readonly property var visible_: { root.tick; root.editing; root.showSettings; full.height; return (root.editing || root.showSettings) && Screen.height > 0 ? onScreen() : [0, full.height]; }
+        readonly property real visibleTop: visible_[0]
+        readonly property real visibleBottom: Math.max(visibleTop + Kirigami.Units.gridUnit * 6, visible_[1])
 
         // Plain Flickable rather than ScrollView: ScrollView resizes its
         // content, which fights the layout engine and causes binding loops.
@@ -847,6 +998,7 @@ PlasmoidItem {
                             case "note":      return noteTile;
                             case "worldclock":return worldclockTile;
                             case "focus":     return focusTile;
+                            case "uptime":    return uptimeTile;
                             }
                             return null;
                         }
@@ -880,8 +1032,10 @@ PlasmoidItem {
             id: toolbar
             visible: root.editing && !root.showSettings
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: Kirigami.Units.largeSpacing
+            // At the top of the part of the widget that's on screen, where the
+            // Settings button is: clear of a taskbar along the bottom, and in
+            // reach even when the widget is taller than the screen.
+            y: full.visibleTop + Kirigami.Units.smallSpacing
             z: 20
             width: toolRow.implicitWidth + Kirigami.Units.largeSpacing * 2
             height: toolRow.implicitHeight + Kirigami.Units.smallSpacing * 2
@@ -947,7 +1101,8 @@ PlasmoidItem {
             app: root
             z: 30
             width: Math.min(full.width, Kirigami.Units.gridUnit * 26)
-            height: full.height
+            y: full.visibleTop
+            height: full.visibleBottom - full.visibleTop
             x: root.showSettings ? full.width - width : full.width + Kirigami.Units.gridUnit
             visible: x < full.width
             Behavior on x { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
@@ -1040,4 +1195,5 @@ PlasmoidItem {
     Component { id: worldclockTile; WorldClockTile { app: root; look: root.look } }
     Component { id: focusTile;      FocusTile      { app: root; look: root.look } }
     Component { id: batteryTile;   BatteryTile   { app: root; look: root.look } }
+    Component { id: uptimeTile;     UptimeTile     { app: root; look: root.look } }
 }

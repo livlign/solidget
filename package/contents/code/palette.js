@@ -22,7 +22,8 @@ var ACCENTS = {
     quote:     ["#c4b5fd", "#f0abfc"],
     note:      ["#fde047", "#fb923c"],
     worldclock:["#38bdf8", "#818cf8"],
-    focus:     ["#f43f5e", "#fb923c"]
+    focus:     ["#f43f5e", "#fb923c"],
+    uptime:    ["#38bdf8", "#a78bfa"]
 };
 
 var VENDOR = { amd: "#ef4444", intel: "#3b82f6", nvidia: "#84cc16", apple: "#a3a3a3" };
@@ -87,6 +88,9 @@ var STYLE_ORDER = ["plasma", "glass", "flat", "clear", "pixel"];
 // body/text null = follow Plasma. palette = six hues the tiles draw from;
 // null = the hand-tuned Aurora pairs above ("plasma" builds one from the
 // system accent instead, see plasmaPalette). heat = [cool, hot] override.
+// opaque = solid tiles in every style (crisp, nothing shows through);
+// rgb = a rainbow rim that sweeps across the board; edge = a hairline
+// around each tile, so solid tiles stay apart on any wallpaper.
 var THEMES = {
     plasma:    { name: "Follow Plasma", dark: null,  body: null,      text: null,      palette: null },
     aurora:    { name: "Aurora",        dark: true,  body: "#11141f", text: "#e8ecf8", palette: null },
@@ -105,14 +109,20 @@ var THEMES = {
     ink:       { name: "Ink & Paper",   dark: false, body: "#f7f7f2", text: "#141414",
                  palette: ["#141414", "#5c5c5c", "#2e2e2e", "#7a7a7a", "#404040", "#9a9a9a"], heat: ["#c8c8c8", "#141414"], mono: true },
     lotus:     { name: "Lotus Pond",    dark: false, body: "#fcf1f4", text: "#3b1d2a",
-                 palette: ["#db2777", "#16a34a", "#be185d", "#15803d", "#e11d48", "#22c55e"] }
+                 palette: ["#db2777", "#16a34a", "#be185d", "#15803d", "#e11d48", "#22c55e"] },
+    snow:      { name: "Snow",          dark: false, body: "#ffffff", text: "#0b1220", opaque: true, edge: "#dfe4ec",
+                 palette: ["#2563eb", "#16a34a", "#db2777", "#ea580c", "#7c3aed", "#0891b2"] },
+    midnight:  { name: "Midnight",      dark: true,  body: "#0d1117", text: "#e6edf3", opaque: true, edge: "#262d38",
+                 palette: ["#60a5fa", "#34d399", "#f472b6", "#fbbf24", "#a78bfa", "#22d3ee"] },
+    rgb:       { name: "RGB",           dark: true,  body: "#07070b", text: "#f5f7fa", opaque: true, rgb: true,
+                 palette: ["#00e5ff", "#22ff88", "#ff2d95", "#ffcc00", "#a855f7", "#ff7a00"] }
 };
-var THEME_ORDER = ["plasma", "aurora", "glacier", "sandstone", "ember", "lagoon", "plum", "moss", "ink", "lotus"];
+var THEME_ORDER = ["plasma", "aurora", "glacier", "sandstone", "ember", "lagoon", "plum", "moss", "ink", "lotus", "snow", "midnight", "rgb"];
 
 // Which palette hue each tile uses (its second color is two steps along).
 var TILE_HUE = { cpu: 0, gpu: 1, memory: 2, network: 0, disk: 3, battery: 1, clock: 5,
                  specs: 2, processes: 3, power: 4, cores: 0, temps: 4,
-                 pet: 4, photo: 5, media: 3, calendar: 1, quote: 2, note: 5, worldclock: 0, focus: 4 };
+                 pet: 4, photo: 5, media: 3, calendar: 1, quote: 2, note: 5, worldclock: 0, focus: 4, uptime: 5 };
 
 // Follow Plasma: six hues spread around the system accent color, made
 // lighter on dark backgrounds and deeper on light ones so they stay readable.
@@ -172,7 +182,10 @@ var LOOKS = [
     { name: "Paper",          style: "flat",  theme: "ink" },
     { name: "Frost",          style: "clear", theme: "glacier" },
     { name: "Campfire",       style: "glass", theme: "ember" },
-    { name: "Reef",           style: "flat",  theme: "lagoon" }
+    { name: "Reef",           style: "flat",  theme: "lagoon" },
+    { name: "Daylight",       style: "flat",  theme: "snow" },
+    { name: "Midnight",       style: "flat",  theme: "midnight" },
+    { name: "RGB Rig",        style: "glass", theme: "rgb" }
 ];
 
 // ---- Native (Plasma style) colors ---------------------------------------------
