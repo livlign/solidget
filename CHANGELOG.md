@@ -1,5 +1,26 @@
 # What's new
 
+## 0.8.0
+
+- **System health tile.** One score out of 100 for how your PC is doing,
+  with the reasons: drive self-checks and wear, free space, heat, memory,
+  services that failed, pending updates and a restart waiting for a new
+  kernel. Nothing goes online: updates come from PackageKit's own list.
+- **Bluetooth tile.** Your connected devices with their battery levels,
+  turning red when one runs low. With personal info hidden it says
+  "Headphones" or "Mouse" instead of the device's name.
+- **Wi-Fi signal.** The Network tile shows signal bars under "Wi-Fi".
+- **12- or 24-hour clocks** (#1). Settings → General → Units → Clocks:
+  Auto follows your region. Also fixes 12-hour regions showing "23:11 PM":
+  the clock, world clocks, sunrise and sunset and the Uptime tile now all
+  show proper 12-hour time.
+- **Hide the Settings button.** Settings → General → Settings button turns
+  off the button that appears on hover; right-click opens Settings.
+- **One Configure entry.** The right-click menu listed "Configure Solidget…"
+  twice; now there's one, and it opens Solidget's Settings.
+- **Calmer temperatures.** The Temperatures tile shows a running average,
+  so the numbers and bars stop twitching every second.
+
 ## 0.7.3
 
 - **Smoother temperatures.** The Temperatures tile's bars now ease to each
