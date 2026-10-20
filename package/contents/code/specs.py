@@ -6,6 +6,7 @@ install.sh caches it once in ~/.local/share/solidget/memory.json.
 
 Usage: specs.py            -> full specs
        specs.py battery    -> live battery state only
+       specs.py health     -> drive health, free space, updates, failed services
 """
 import glob
 import json
@@ -416,6 +417,122 @@ def battery():
     return {"present": False}
 
 
+# ---- Health (the Health tile) ------------------------------------------------
+# All of it readable without root: drive self-checks via UDisks2, updates via
+# PackageKit's local cache (nothing goes online), failed services via systemd.
+
+def dbus_value(v):
+    return v.get("data") if isinstance(v, dict) else v
+
+
+def parse_drive_health(objects):
+    """UDisks2 GetManagedObjects data -> [{name, ok, wear}] for fixed drives."""
+    out = []
+    for path, ifaces in sorted(objects.items()):
+        drive = ifaces.get("org.freedesktop.UDisks2.Drive")
+        if "/drives/" not in path or not drive or dbus_value(drive.get("Removable", False)):
+            continue
+        ata = ifaces.get("org.freedesktop.UDisks2.Drive.Ata") or {}
+        nvme = ifaces.get("org.freedesktop.UDisks2.NVMe.Controller") or {}
+        if not ata and not nvme:
+            continue
+        failing = bool(dbus_value(ata.get("SmartFailing", False))) or bool(dbus_value(nvme.get("SmartCriticalWarning", [])))
+        bad_sectors = dbus_value(ata.get("SmartNumBadSectors", 0)) or 0
+        out.append({"name": dbus_value(drive.get("Model", "")) or "Drive", "path": path,
+                    "ok": not failing and bad_sectors <= 0, "wear": None, "nvme": bool(nvme)})
+    return out
+
+
+def drive_health():
+    raw = run(["busctl", "--system", "--json=short", "call", "org.freedesktop.UDisks2", "/org/freedesktop/UDisks2",
+               "org.freedesktop.DBus.ObjectManager", "GetManagedObjects"], timeout=5)
+    try:
+        drives = parse_drive_health(json.loads(raw)["data"][0])
+    except (ValueError, KeyError, IndexError, TypeError):
+        return []
+    for d in drives:
+        # NVMe wear: how much of its rated life the drive has used.
+        if d.pop("nvme"):
+            raw = run(["busctl", "--system", "--json=short", "call", "org.freedesktop.UDisks2", d["path"],
+                       "org.freedesktop.UDisks2.NVMe.Controller", "SmartGetAttributes", "a{sv}", "0"], timeout=5)
+            try:
+                d["wear"] = dbus_value(json.loads(raw)["data"][0].get("percent_used"))
+            except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+                pass
+        del d["path"]
+    return drives
+
+
+def free_space():
+    """Free space on / and on /home when it's a separate filesystem."""
+    out, seen = [], set()
+    for mount in ("/", "/home"):
+        try:
+            vfs = os.statvfs(ROOT + mount)
+        except OSError:
+            continue
+        # Btrfs subvolumes look like separate devices but share one pool:
+        # the same block count means the same filesystem.
+        key = (vfs.f_blocks, vfs.f_frsize)
+        if key in seen or not vfs.f_blocks:
+            continue
+        seen.add(key)
+        out.append({"mount": mount, "free": vfs.f_bavail * vfs.f_frsize, "total": vfs.f_blocks * vfs.f_frsize})
+    return out
+
+
+def parse_updates(text):
+    """`pkcon get-updates --plain` output -> {count, security}."""
+    count = security = 0
+    results = False
+    for line in text.splitlines():
+        if line.startswith("Results:"):
+            results = True
+        elif results and re.match(r"^\S.*\S\s{2,}\S+", line):
+            count += 1
+            security += line.startswith("Security")
+    return {"count": count, "security": security}
+
+
+def updates():
+    if not have("pkcon"):
+        return None
+    try:
+        out = subprocess.run(["pkcon", "get-updates", "--plain"], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    # 5 = "nothing to do": no updates.
+    return parse_updates(out.stdout) if out.returncode in (0, 5) else None
+
+
+def failed_services():
+    names = []
+    for scope in (["--system"], ["--user"]):
+        for line in run(["systemctl"] + scope + ["--failed", "--no-legend", "--plain"]).splitlines():
+            if line.split():
+                names.append(line.split()[0])
+    return names
+
+
+def version_key(v):
+    return [int(x) for x in re.findall(r"\d+", v)]
+
+
+def restart_needed():
+    """A newer kernel is installed than the one running (or Debian says so)."""
+    if os.path.exists(ROOT + "/run/reboot-required"):
+        return True
+    running = platform.release()
+    installed = [os.path.basename(p) for p in sysglob("/lib/modules/*") if os.path.exists(ROOT + p + "/modules.dep")]
+    newest = max(installed, key=version_key, default=running)
+    return version_key(newest) > version_key(running)
+
+
+def health():
+    return {"drives": drive_health(), "space": free_space(), "updates": updates(),
+            "failed": failed_services(), "restart": restart_needed()}
+
+
 def tz_offsets(zones):
     """Current UTC offset in minutes for each IANA zone (DST-aware)."""
     from datetime import datetime
@@ -439,6 +556,8 @@ def tz_offsets(zones):
 if __name__ == "__main__":
     if sys.argv[1:] == ["battery"]:
         print(json.dumps(battery()))
+    elif sys.argv[1:] == ["health"]:
+        print(json.dumps(health()))
     elif sys.argv[1:2] == ["tz"]:
         print(json.dumps(tz_offsets(sys.argv[2:])))
     elif sys.argv[1:2] == ["notify"] and len(sys.argv) == 4:
@@ -448,4 +567,5 @@ if __name__ == "__main__":
             "cpu": cpu(), "gpus": gpus(), "memory": memory(), "board": board(),
             "drives": drives(), "displays": displays(), "system": system(),
             "battery": battery(), "sensors": live_sensors(), "check": check(),
+            "bluetooth": bool(sysglob("/sys/class/bluetooth/hci*")),
         }))

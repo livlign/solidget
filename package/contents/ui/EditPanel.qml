@@ -1199,6 +1199,14 @@ GlassTile {
                 Section {
                     title: i18n("Units")
                     SettingRow {
+                        label: i18n("Clocks")
+                        Segmented {
+                            options: [{ value: "auto", text: i18n("Auto") }, { value: "12", text: i18n("12-hour") }, { value: "24", text: i18n("24-hour") }]
+                            current: panel.app.clockFormat
+                            onPicked: (v) => Plasmoid.configuration.clockFormat = v === "auto" ? "" : v
+                        }
+                    }
+                    SettingRow {
                         label: i18n("Weather")
                         Segmented {
                             options: [{ value: false, text: "°C" }, { value: true, text: "°F" }]
@@ -1283,10 +1291,22 @@ GlassTile {
                 }
 
                 Section {
+                    title: i18n("Settings button")
+                    SettingRow {
+                        label: i18n("Show when hovering")
+                        hint: i18n("Off: right-click the widget and pick Configure Solidget to open Settings.")
+                        SToggle {
+                            checked: Plasmoid.configuration.settingsButton
+                            onToggled: Plasmoid.configuration.settingsButton = checked
+                        }
+                    }
+                }
+
+                Section {
                     title: i18n("Privacy")
                     SettingRow {
                         label: i18n("Hide personal info")
-                        hint: i18n("Computer name, network name, IP address and weather location. Keep on to share screenshots safely.")
+                        hint: i18n("Computer name, network name, IP address, Bluetooth device names and weather location. Keep on to share screenshots safely.")
                         SToggle {
                             checked: Plasmoid.configuration.maskSensitive
                             onToggled: Plasmoid.configuration.maskSensitive = checked

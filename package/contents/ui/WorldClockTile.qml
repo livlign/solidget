@@ -11,7 +11,7 @@ GlassTile {
     property date now: new Date()
     // Redraw only when the minute turns.
     Connections { target: app; function onTickChanged() { var d = new Date(); if (d.getMinutes() !== tile.now.getMinutes()) tile.now = d; } }
-    readonly property bool twelveHour: Qt.locale().timeFormat(Locale.ShortFormat).toLowerCase().indexOf("ap") >= 0
+    readonly property bool twelveHour: app.twelveHour
     readonly property int localOffset: -now.getTimezoneOffset()
 
     title: i18n("World clocks")
@@ -79,7 +79,7 @@ GlassTile {
                 BigNumber {
                     family: tile.numberFamily
                     plain: tile.nativeOn
-                    text: cityRow.known ? Qt.formatTime(cityRow.t, tile.twelveHour ? "h:mm" : "HH:mm") : "–"
+                    text: cityRow.known ? tile.app.hoursMinutes(cityRow.t) : "–"
                     unit: cityRow.known && tile.twelveHour ? Qt.formatTime(cityRow.t, "AP") : ""
                     size: Math.min(tile.u * 2, tile.height / Math.max(3, app.worldClocks.length * 1.8))
                 }

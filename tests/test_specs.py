@@ -111,6 +111,36 @@ class OtherMachines(unittest.TestCase):
         self.assertEqual(missing["lspci"], "sudo apt install pciutils")
         self.assertEqual(machine("tumbleweed")["check"]["family"], "suse")
 
+    def test_health_mode(self):
+        d = run("health")
+        for key in ("drives", "space", "updates", "failed", "restart"):
+            self.assertIn(key, d)
+        self.assertIsInstance(d["failed"], list)
+
+    def test_health_parsers(self):
+        sys.path.insert(0, os.path.dirname(SPECS))
+        import specs
+        v = lambda t, x: {"type": t, "data": x}
+        objects = {
+            "/org/freedesktop/UDisks2/drives/ssd": {
+                "org.freedesktop.UDisks2.Drive": {"Model": v("s", "Fast SSD"), "Removable": v("b", False)},
+                "org.freedesktop.UDisks2.NVMe.Controller": {"SmartCriticalWarning": v("as", [])}},
+            "/org/freedesktop/UDisks2/drives/hdd": {
+                "org.freedesktop.UDisks2.Drive": {"Model": v("s", "Old HDD"), "Removable": v("b", False)},
+                "org.freedesktop.UDisks2.Drive.Ata": {"SmartFailing": v("b", False), "SmartNumBadSectors": v("x", 12)}},
+            "/org/freedesktop/UDisks2/drives/stick": {
+                "org.freedesktop.UDisks2.Drive": {"Model": v("s", "USB stick"), "Removable": v("b", True)}},
+            "/org/freedesktop/UDisks2/block_devices/sda": {},
+        }
+        got = {d["name"]: d["ok"] for d in specs.parse_drive_health(objects)}
+        self.assertEqual(got, {"Fast SSD": True, "Old HDD": False})
+        pk = ("Transaction:\tGetting updates\nStatus:\tFinished\nResults:\n"
+              "Security     kernel-7.2.10-200.fc44.x86_64 (updates)\n"
+              "Bug fix      vim-minimal-2:9.2-1.fc44.x86_64 (updates)\n")
+        self.assertEqual(specs.parse_updates(pk), {"count": 2, "security": 1})
+        self.assertEqual(specs.parse_updates("There are no updates available at this time.\n"), {"count": 0, "security": 0})
+        self.assertGreater(specs.version_key("7.2.10-200.fc44"), specs.version_key("7.2.9-201.fc44"))
+
     def test_no_crash_on_an_empty_system(self):
         d = machine("does-not-exist")
         self.assertEqual(d["gpus"], [])

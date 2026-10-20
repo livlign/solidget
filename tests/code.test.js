@@ -116,6 +116,41 @@ test("main.qml builds commands only with Shell.command", () => {
     assert.ok(!/connectedSources:\s*(?:[^\n]*\?\s*)?\[\s*"/.test(main), "connectedSources with a raw string");
 });
 
+// ---- health.js -------------------------------------------------------------
+const Hl = load("health.js", ["checks", "score", "grade"]);
+const calm = { cpuTemp: 50, gpuTemp: 45, ssdTemp: 40, memPct: 40, swapPct: 0,
+               helper: { drives: [{ name: "SSD", ok: true, wear: 3 }], space: [{ mount: "/", free: 400, total: 500 }],
+                         updates: { count: 3, security: 0 }, failed: [], restart: false } };
+test("health: a calm PC scores 100 and lists what's fine", () => {
+    const list = Hl.checks(calm);
+    assert.strictEqual(Hl.score(list), 100);
+    assert.strictEqual(Hl.grade(100), "great");
+    assert.ok(list.every((c) => c.ok));
+    assert.deepStrictEqual(list.map((c) => c.id).sort(),
+        ["coolOk", "drivesOk", "memoryOk", "servicesOk", "spaceOk", "updatesOk"]);
+});
+test("health: problems cost points, worst first", () => {
+    const s = JSON.parse(JSON.stringify(calm));
+    s.cpuTemp = 97;
+    s.helper.drives[0].ok = false;
+    s.helper.space[0].free = 20;                 // 4% free
+    s.helper.failed = ["a.service", "b.service"];
+    s.helper.updates = { count: 40, security: 5 };
+    s.helper.restart = true;
+    const list = Hl.checks(s);
+    assert.strictEqual(list[0].id, "driveFailing");
+    assert.strictEqual(Hl.score(list), 0);        // 40 + 25 + 20 + 16 + 8 + 5, floored at 0
+    assert.strictEqual(Hl.grade(Hl.score(list)), "trouble");
+    assert.ok(list.findIndex((c) => c.ok) === -1 || list.findIndex((c) => c.ok) > list.findIndex((c) => !c.ok));
+    assert.strictEqual(Hl.grade(80), "good");
+    assert.strictEqual(Hl.grade(60), "care");
+});
+test("health: works before the helper has answered", () => {
+    const list = Hl.checks({ cpuTemp: 0, gpuTemp: 0, ssdTemp: 0, memPct: 0, swapPct: 0, helper: null });
+    assert.deepStrictEqual(list, []);
+    assert.strictEqual(Hl.score(list), 100);
+});
+
 // ---- quotes.js -------------------------------------------------------------
 const Q = load("quotes.js", ["QUOTES", "forDate"]);
 test("quotes: one per day, always text + author", () => {

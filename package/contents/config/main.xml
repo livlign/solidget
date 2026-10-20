@@ -130,6 +130,14 @@
     <entry name="sensorUnit" type="String">
       <default></default>
     </entry>
+    <!-- Show the Settings button when hovering the widget (off: right-click menu only) -->
+    <entry name="settingsButton" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Clock format: 12 or 24; empty = follow the region setting -->
+    <entry name="clockFormat" type="String">
+      <default></default>
+    </entry>
     <!-- Temperature unit for the weather: c or f -->
     <entry name="weatherUnit" type="String">
       <default>c</default>

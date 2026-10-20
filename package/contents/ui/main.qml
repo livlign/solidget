@@ -22,7 +22,8 @@ PlasmoidItem {
 
     readonly property var allTiles: ["clock", "specs", "cpu", "gpu", "memory", "temps", "network",
                                      "cores", "processes", "power", "disk", "battery",
-                                     "pet", "photo", "media", "calendar", "quote", "note", "worldclock", "focus", "uptime"]
+                                     "pet", "photo", "media", "calendar", "quote", "note", "worldclock", "focus", "uptime",
+                                     "bluetooth", "health"]
     readonly property var tileInfo: ({
         clock:     { name: i18n("Clock & date"),  icon: "clock" },
         specs:     { name: i18n("PC specs"),      icon: "computer" },
@@ -44,7 +45,9 @@ PlasmoidItem {
         note:      { name: i18n("Sticky note"),   icon: "knotes" },
         worldclock:{ name: i18n("World clocks"),  icon: "preferences-system-time" },
         focus:     { name: i18n("Focus timer"),   icon: "chronometer" },
-        uptime:    { name: i18n("Uptime"),        icon: "clock" }
+        uptime:    { name: i18n("Uptime"),        icon: "clock" },
+        bluetooth: { name: i18n("Bluetooth"),     icon: "preferences-system-bluetooth" },
+        health:    { name: i18n("System health"), icon: "security-high" }
     })
 
     readonly property var presetIds: ["essentials", "daily", "everything", "showcase", "performance", "everyday", "minimal"]
@@ -56,8 +59,8 @@ PlasmoidItem {
                        tiles: ["clock", "photo", "calendar", "media", "pet", "uptime", "worldclock", "quote", "focus", "note"],
                        portrait: ["clock", "photo", "media", "calendar", "pet", "uptime", "worldclock", "quote", "focus", "note"] },
         everything:  { name: i18n("Everything"),  hint: i18n("Every tile your PC supports — great full screen"),
-                       tiles: ["clock", "photo", "specs", "cpu", "gpu", "pet", "cores", "processes", "memory", "temps", "network", "media", "calendar", "power", "disk", "battery", "uptime", "worldclock", "focus", "quote", "note"],
-                       portrait: ["clock", "photo", "specs", "cpu", "gpu", "temps", "memory", "pet", "cores", "network", "media", "calendar", "processes", "power", "disk", "battery", "uptime", "worldclock", "focus", "quote", "note"] },
+                       tiles: ["clock", "photo", "specs", "cpu", "gpu", "pet", "cores", "processes", "memory", "temps", "network", "media", "calendar", "power", "disk", "battery", "health", "bluetooth", "uptime", "worldclock", "focus", "quote", "note"],
+                       portrait: ["clock", "photo", "specs", "cpu", "gpu", "temps", "memory", "pet", "cores", "network", "media", "calendar", "processes", "power", "disk", "battery", "health", "bluetooth", "uptime", "worldclock", "focus", "quote", "note"] },
         showcase:    { name: i18n("Showcase"),    hint: i18n("Your build front and center"),
                        tiles: ["specs", "cpu", "gpu", "temps", "power"] },
         performance: { name: i18n("Performance"), hint: i18n("For gaming and heavy work"),
@@ -128,6 +131,7 @@ PlasmoidItem {
         switch (id) {
         case "gpu":     return !!(specs.gpus && specs.gpus.length > 0) || gpuVramTotal.value > 0;
         case "battery": return !!batteryState.present;
+        case "bluetooth": return !!specs.bluetooth;
         case "temps":   return cpuTempValue > 0 || gpuTemp.value > 0;
         case "power":   return gpuWatts > 0 || !!batteryState.present || !!(specs.sensors && (specs.sensors.fans.length > 0 || specs.sensors.gpuPowerFile));
         default:        return true;
@@ -298,6 +302,9 @@ PlasmoidItem {
     onScreenSizeChanged: fitTimer.restart()
     Timer { id: fitTimer; interval: 2500; running: true; onTriggered: root.fitToScreen() }
     Component.onCompleted: {
+        // Plasma's own "Configure…" (right-click menu, edit-mode wrench) opens
+        // our Settings panel, so the menu has one Configure entry, not two.
+        Plasmoid.setInternalAction("configure", configureAction);
         Qt.callLater(handlePlaceRequest);
         wakePet();
     }
@@ -320,10 +327,14 @@ PlasmoidItem {
     Sensors.Sensor { id: gpuPower2S;    sensorId: root.gpuIds.length > 1 ? "gpu/" + root.gpuIds[1] + "/power" : "";       updateRateLimit: 1000 }
     Sensors.Sensor { id: memUsedS;      sensorId: "memory/physical/used";        updateRateLimit: 2000 }
     Sensors.Sensor { id: memTotalS;     sensorId: "memory/physical/total";       updateRateLimit: 10000 }
+    Sensors.Sensor { id: swapUsedS;     sensorId: "memory/swap/used";            updateRateLimit: 5000 }
+    Sensors.Sensor { id: swapTotalS;    sensorId: "memory/swap/total";           updateRateLimit: 10000 }
     Sensors.Sensor { id: memCacheS;     sensorId: "memory/physical/cache";       updateRateLimit: 5000 }
     Sensors.Sensor { id: netDownS;      sensorId: "network/all/download";        updateRateLimit: 1000 }
     Sensors.Sensor { id: netUpS;        sensorId: "network/all/upload";          updateRateLimit: 1000 }
     Sensors.Sensor { id: netNameS;      sensorId: specs.sensors && specs.sensors.netIface ? "network/" + specs.sensors.netIface + "/network" : "";     updateRateLimit: 30000 }
+    // Wi-Fi only: 0-100 %, from NetworkManager.
+    Sensors.Sensor { id: netSignalS;    sensorId: root.onWifi ? "network/" + specs.sensors.netIface + "/signal" : ""; updateRateLimit: 5000 }
     Sensors.Sensor { id: netIpS;        sensorId: specs.sensors && specs.sensors.netIface ? "network/" + specs.sensors.netIface + "/ipv4address" : ""; updateRateLimit: 30000 }
     Sensors.Sensor { id: diskUsedS;     sensorId: "disk/all/used";               updateRateLimit: 10000 }
     Sensors.Sensor { id: diskTotalS;    sensorId: "disk/all/total";              updateRateLimit: 10000 }
@@ -363,12 +374,15 @@ PlasmoidItem {
     property var gpuTemp: ({ value: 0 })
     property var gpuPower: ({ value: 0 })
     property var memUsed: ({ value: 0 })
+    property var swapUsed: ({ value: 0 })
+    property var swapTotal: ({ value: 0 })
     property var memTotal: ({ value: 0 })
     property var memCache: ({ value: 0 })
     property var netDown: ({ value: 0 })
     property var netUp: ({ value: 0 })
     property var netName: ({ value: 0 })
     property var netIp: ({ value: 0 })
+    property var netSignal: ({ value: 0 })
     property var diskUsed: ({ value: 0 })
     property var diskTotal: ({ value: 0 })
     property var diskRead: ({ value: 0 })
@@ -386,12 +400,15 @@ PlasmoidItem {
         gpuTemp = { value: Math.max(gpuTempS.value || 0, gpuTemp2S.value || 0) };
         gpuPower = { value: (gpuPowerS.value || 0) + (gpuPower2S.value || 0) };
         memUsed = { value: memUsedS.value };
+        swapUsed = { value: swapUsedS.value };
+        swapTotal = { value: swapTotalS.value };
         memTotal = { value: memTotalS.value };
         memCache = { value: memCacheS.value };
         netDown = { value: netDownS.value };
         netUp = { value: netUpS.value };
         netName = { value: netNameS.value };
         netIp = { value: netIpS.value };
+        netSignal = { value: netSignalS.value };
         diskUsed = { value: diskUsedS.value };
         diskTotal = { value: diskTotalS.value };
         diskRead = { value: diskReadS.value };
@@ -450,6 +467,19 @@ PlasmoidItem {
         connectedSources: root.batteryState.present ? [root.helper(["battery"])] : []
         onNewData: (source, data) => {
             try { root.batteryState = JSON.parse(data["stdout"]); } catch (e) {}
+        }
+    }
+
+    // Health tile: drive self-checks, free space, updates, failed services.
+    // Every 30 minutes while it's shown (the update check reads PackageKit's
+    // local cache, so nothing goes online).
+    property var healthState: null
+    P5Support.DataSource {
+        engine: "executable"
+        interval: 30 * 60 * 1000
+        connectedSources: root.visibleTiles.indexOf("health") >= 0 ? [root.helper(["health"])] : []
+        onNewData: (source, data) => {
+            try { root.healthState = JSON.parse(data["stdout"]); } catch (e) {}
         }
     }
 
@@ -543,6 +573,17 @@ PlasmoidItem {
     // follow the weather's unit until one is picked for them.
     readonly property bool weatherFahrenheit: Plasmoid.configuration.weatherUnit === "f"
         || (Plasmoid.configuration.weatherUnit === "auto" && Qt.locale().measurementSystem === Locale.ImperialUSSystem)
+    // 12- or 24-hour clocks: the setting, or else the region's time format.
+    readonly property string clockFormat: Plasmoid.configuration.clockFormat || "auto"
+    readonly property bool twelveHour: clockFormat === "12" ? true : clockFormat === "24" ? false
+        : Qt.locale().timeFormat(Locale.ShortFormat).toLowerCase().indexOf("ap") >= 0
+    function timeText(d) { return Qt.formatTime(d, twelveHour ? "h:mm AP" : "HH:mm"); }
+    // Hours and minutes alone (the AM/PM shown apart). Qt's "h" only counts
+    // to 12 when "AP" is in the same format, so do the 12-hour math here.
+    function hoursMinutes(d) {
+        if (!twelveHour) return Qt.formatTime(d, "HH:mm");
+        return (d.getHours() % 12 || 12) + Qt.formatTime(d, ":mm");
+    }
     readonly property bool useFahrenheit: Plasmoid.configuration.sensorUnit === "f" ? true
         : Plasmoid.configuration.sensorUnit === "c" ? false : weatherFahrenheit
     readonly property bool decimalUnits: Plasmoid.configuration.dataUnits === "decimal"
@@ -559,9 +600,10 @@ PlasmoidItem {
     readonly property bool masked: Plasmoid.configuration.maskSensitive
     readonly property string hostname: specs.system ? specs.system.hostname : ""
     readonly property string shownHostname: masked || !hostname ? i18n("This PC") : hostname
+    readonly property bool onWifi: !!(specs.sensors && /^wl/.test(specs.sensors.netIface || ""))
     readonly property string shownNetwork: {
         var iface = specs.sensors ? specs.sensors.netIface || "" : "";
-        var kind = iface.indexOf("wl") === 0 ? i18n("Wi-Fi") : iface ? i18n("Ethernet") : "";
+        var kind = onWifi ? i18n("Wi-Fi") : iface ? i18n("Ethernet") : "";
         if (masked) return kind;
         return [netName.value || kind, netIp.value || ""].filter(Boolean).join(" · ");
     }
@@ -773,12 +815,13 @@ PlasmoidItem {
 
     // The glass tiles are the design; no Plasma frame behind them.
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
+    PlasmaCore.Action {
+        id: configureAction
+        text: i18n("Configure Solidget…")
+        icon.name: "configure"
+        onTriggered: root.showSettings = true
+    }
     Plasmoid.contextualActions: [
-        PlasmaCore.Action {
-            text: i18n("Configure Solidget…")
-            icon.name: "configure"
-            onTriggered: root.showSettings = true
-        },
         PlasmaCore.Action {
             text: i18n("Edit Layout")
             icon.name: "transform-move"
@@ -1020,6 +1063,8 @@ PlasmoidItem {
                             case "worldclock":return worldclockTile;
                             case "focus":     return focusTile;
                             case "uptime":    return uptimeTile;
+                            case "bluetooth": return bluetoothTile;
+                            case "health":    return healthTile;
                             }
                             return null;
                         }
@@ -1141,7 +1186,7 @@ PlasmoidItem {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.topMargin: Kirigami.Units.smallSpacing
             z: 20
-            visible: root.nativeStyle && !root.editing && !root.showSettings && opacity > 0
+            visible: root.nativeStyle && Plasmoid.configuration.settingsButton && !root.editing && !root.showSettings && opacity > 0
             opacity: hover.hovered || full.introHint ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration } }
             icon.name: "configure"
@@ -1155,7 +1200,7 @@ PlasmoidItem {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.topMargin: Kirigami.Units.smallSpacing
             z: 20
-            visible: !root.nativeStyle && !root.editing && !root.showSettings && opacity > 0
+            visible: !root.nativeStyle && Plasmoid.configuration.settingsButton && !root.editing && !root.showSettings && opacity > 0
             opacity: hover.hovered || full.introHint ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration } }
             hoverEnabled: true
@@ -1217,4 +1262,6 @@ PlasmoidItem {
     Component { id: focusTile;      FocusTile      { app: root; look: root.look } }
     Component { id: batteryTile;   BatteryTile   { app: root; look: root.look } }
     Component { id: uptimeTile;     UptimeTile     { app: root; look: root.look } }
+    Component { id: bluetoothTile;  BluetoothTile  { app: root; look: root.look } }
+    Component { id: healthTile;     HealthTile     { app: root; look: root.look } }
 }

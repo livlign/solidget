@@ -19,6 +19,9 @@ GlassTile {
     // Glow follows how busy the link is, on a log scale up to ~100 MB/s.
     level: Math.min(1, Math.log(1 + (app.netDown.value + app.netUp.value) / 1024) / Math.log(1 + 100 * 1024))
 
+    // Wi-Fi signal strength, 0-100 (0 on Ethernet).
+    readonly property real signal: app.onWifi ? app.netSignal.value || 0 : 0
+
     function split(rate) {
         var s = app.netRateText(rate);
         var i = s.indexOf(" ");
@@ -77,6 +80,71 @@ GlassTile {
             color: tile.downColor
             colorEnd: tile.downColor
             color2: tile.upColor
+        }
+    }
+
+    // Wi-Fi signal right under "Wi-Fi" in the header: the familiar rising
+    // bars, lit on NetworkManager's own steps, colored from the download
+    // color to the upload color.
+    Row {
+        id: signalBars
+        visible: tile.signal > 0 && tile.width > tile.u * 9
+        anchors.right: parent.right
+        anchors.top: parent.top
+        spacing: Math.max(2, tile.u * 0.16)
+
+        readonly property int lit: tile.signal > 80 ? 4 : tile.signal > 55 ? 3 : tile.signal > 30 ? 2 : tile.signal > 5 ? 1 : 0
+        readonly property bool blocks: tile.look ? tile.look.meter === "blocks" : false
+        readonly property bool round: tile.look ? tile.look.roundCaps : true
+        readonly property real barW: Math.max(3, tile.u * 0.3)
+        readonly property real fullH: Math.max(10, tile.u * 1.1)
+        readonly property color track: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.13)
+
+        Repeater {
+            model: 4
+            Item {
+                id: bar
+                required property int index
+                readonly property bool on: index < signalBars.lit
+                readonly property color color: Qt.tint(tile.downColor, Qt.rgba(tile.upColor.r, tile.upColor.g, tile.upColor.b, index / 3))
+                readonly property real h: signalBars.fullH * (index + 1) / 4
+                width: signalBars.barW
+                height: signalBars.fullH
+
+                // Soft glow behind a lit bar.
+                Rectangle {
+                    visible: bar.on && tile.glowOn && !signalBars.blocks
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: -width * 0.3
+                    width: parent.width * 2.2
+                    height: bar.h + width * 0.6
+                    radius: width / 2
+                    color: Qt.rgba(bar.color.r, bar.color.g, bar.color.b, 0.16)
+                }
+                Rectangle {
+                    visible: !signalBars.blocks
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    height: bar.h
+                    radius: signalBars.round ? width / 2 : 0
+                    color: bar.on ? bar.color : signalBars.track
+                }
+                // Pixel: each bar is a stack of square blocks.
+                Column {
+                    visible: signalBars.blocks
+                    anchors.bottom: parent.bottom
+                    spacing: Math.max(1, signalBars.barW * 0.25)
+                    Repeater {
+                        model: signalBars.blocks ? bar.index + 1 : 0
+                        Rectangle {
+                            width: signalBars.barW
+                            height: width
+                            color: bar.on ? bar.color : signalBars.track
+                        }
+                    }
+                }
+            }
         }
     }
 }

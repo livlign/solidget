@@ -18,8 +18,8 @@ GlassTile {
     readonly property var mood: hasWeather && skyMood ? w.mood(w.code, w.isDay) : [app.accent("clock"), app.accent2("clock")]
 
     property date now: new Date()
-    readonly property bool twelveHour: Qt.locale().timeFormat(Locale.ShortFormat).toLowerCase().indexOf("ap") >= 0
-    readonly property string hhmm: Qt.formatTime(now, twelveHour ? "h:mm" : "HH:mm")
+    readonly property bool twelveHour: app.twelveHour
+    readonly property string hhmm: app.hoursMinutes(now)
     readonly property string ampm: twelveHour ? Qt.formatTime(now, "AP") : ""
     readonly property int hour: now.getHours()
 

@@ -38,7 +38,7 @@ GlassTile {
         return { name: names[i], glyph: glyphs[i] };
     }
     readonly property var todayWeather: app.weather.daily.length ? app.weather.daily[0] : null
-    function hm(iso) { return iso ? Qt.formatTime(new Date(iso), Qt.locale().timeFormat(Locale.ShortFormat)) : "–"; }
+    function hm(iso) { return iso ? app.timeText(new Date(iso)) : "–"; }
 
     title: Qt.locale().standaloneMonthName(today.getMonth()) + " " + today.getFullYear()
     accent: app.accent("calendar")

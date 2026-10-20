@@ -9,7 +9,7 @@ and the little everyday things, all in one good-looking board.
 
 ## What you get
 
-- **Lots of tiles.** CPU, GPU, memory, temperatures, network, storage, power and fans, top apps,
+- **Lots of tiles.** CPU, GPU, memory, temperatures, network, storage, power and fans, top apps, system health, Bluetooth,
   clock and weather, calendar, music controls, photo of the day, world clocks,
   focus timer, sticky note, quote of the day, and uptime over a scene you pick
   (the real sky, a heartbeat, a sleepy face, planets or your own picture).
@@ -20,7 +20,7 @@ and the little everyday things, all in one good-looking board.
 - **Fits any space.** A corner card, a sidebar, or a whole spare monitor,
   landscape or portrait. Tiles arrange themselves.
 - **Arrange it your way.** Drag tiles, resize them, hide the ones you don't need.
-- **Private by default.** Your computer name, Wi-Fi name, IP and location are
+- **Private by default.** Your computer name, Wi-Fi name, IP, Bluetooth devices and location are
   hidden, so screenshots are safe to share.
 - **Light on your PC.** About 5% of one CPU core with all tiles on (a little more when your PC is busy).
 

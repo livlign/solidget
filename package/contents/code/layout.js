@@ -30,13 +30,15 @@ var SPANS = {
     note:      [[1, 1], [2, 1], [2, 2]],
     worldclock:[[2, 1], [2, 2]],
     focus:     [[1, 1], [2, 1], [2, 2]],
-    uptime:    [[2, 1], [2, 2], [3, 2]]
+    uptime:    [[2, 1], [2, 2], [3, 2]],
+    bluetooth: [[1, 1], [2, 1], [2, 2]],
+    health:    [[1, 1], [2, 1], [2, 2]]
 };
 
 // Who gets extra space first.
 var GROW_PRIORITY = ["clock", "photo", "cpu", "specs", "gpu", "network", "media", "calendar", "pet", "cores", "processes",
                      "worldclock", "focus", "uptime", "quote", "note",
-                     "memory", "temps", "power", "disk", "battery"];
+                     "memory", "temps", "power", "disk", "battery", "health", "bluetooth"];
 
 // Target cell edge in grid units for each density setting.
 var DENSITY = { compact: 8, comfortable: 10, large: 13, huge: 17 };

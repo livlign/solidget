@@ -56,7 +56,7 @@ GlassTile {
     readonly property string unitText: opt.format === "days" ? i18n("days") : ""
     readonly property string labelText: opt.label !== "" ? opt.label : i18n("Up for")
     readonly property string sinceText: bootAt > 0
-        ? i18n("since %1", Qt.formatDateTime(new Date(bootAt * 1000), seconds > 86400 * 6 ? "d MMM, hh:mm" : "ddd hh:mm")) : ""
+        ? i18n("since %1", Qt.formatDateTime(new Date(bootAt * 1000), seconds > 86400 * 6 ? "d MMM, " : "ddd ") + app.timeText(new Date(bootAt * 1000))) : ""
     readonly property string recordText: app.uptimeRecord > seconds + 60 ? i18n("Record %1", Fmt.uptime(app.uptimeRecord)) : app.uptimeRecord > 3600 ? i18n("New record!") : ""
 
     // Scenes that cover the card get light text with a shadow.
