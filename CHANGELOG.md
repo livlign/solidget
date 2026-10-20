@@ -1,5 +1,10 @@
 # What's new
 
+## 0.7.3
+
+- **Smoother temperatures.** The Temperatures tile's bars now ease to each
+  new reading, colour and all, instead of jumping every second.
+
 ## 0.7.2
 
 - **Fetch, for real.** The pet's toy now moves on its own: it flies,

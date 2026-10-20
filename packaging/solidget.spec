@@ -4,7 +4,7 @@
 %global plugin_id io.github.solidget
 
 Name:           solidget
-Version:        0.7.2
+Version:        0.7.3
 Release:        1%{?dist}
 Summary:        Live stats, PC specs and your day in one Plasma desktop widget
 
@@ -56,6 +56,9 @@ python3 -c 'import json, sys; v = json.load(open("package/metadata.json"))["KPlu
 %{_datadir}/plasma/plasmoids/%{plugin_id}/
 
 %changelog
+* Tue Oct 20 2026 Solidget contributors - 0.7.3-1
+- Smoother temperature bars; see CHANGELOG.md for what's in 0.7.3
+
 * Sat Oct 17 2026 Solidget contributors - 0.7.2-1
 - A livelier desk pet: real fetch, new poses and routines, naps when tired,
   its own bed, treats; see CHANGELOG.md for what's in 0.7.2
