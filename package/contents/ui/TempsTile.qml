@@ -51,15 +51,19 @@ GlassTile {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignBottom
             spacing: tile.barU * 0.5
+            // A count, not the array: `sources` is rebuilt every sensor tick,
+            // and an array model would recreate the bars each time, so they'd
+            // jump instead of easing to the new reading.
             Repeater {
-                model: tile.sources
+                model: tile.sources.length
                 HeatBar {
-                    required property var modelData
+                    required property int index
+                    readonly property var source: tile.sources[index] || { label: "", value: 0 }
                     u: tile.barU
-                    label: modelData.label
-                    celsius: modelData.value
-                    valueText: app.tempText(modelData.value)
-                    hotColor: app.tempColor(modelData.value)
+                    label: source.label
+                    celsius: source.value
+                    valueText: app.tempText(source.value)
+                    hotColor: app.tempColor(source.value)
                     coolColor: app.heat(0)
                     square: tile.radius === 0
                 }

@@ -13,6 +13,7 @@ ColumnLayout {
     property real celsius: 0              // drives the color ramp
     property string valueText: Fmt.temp(celsius)   // shown text, in the user's unit
     property color hotColor: Palette.heat(Palette.tempLevel(celsius))
+    Behavior on hotColor { ColorAnimation { duration: Kirigami.Units.longDuration } }
     property color coolColor: Palette.heat(0)
     property bool square: false
     property real u: Kirigami.Units.gridUnit
