@@ -22,7 +22,7 @@ and the little everyday things, all in one good-looking board.
 - **Arrange it your way.** Drag tiles, resize them, hide the ones you don't need.
 - **Private by default.** Your computer name, Wi-Fi name, IP, Bluetooth devices and location are
   hidden, so screenshots are safe to share.
-- **Light on your PC.** About 5% of one CPU core with all tiles on (a little more when your PC is busy).
+- **Light on your PC.** A few percent of one CPU core, and no background services.
 
 ## Install
 
