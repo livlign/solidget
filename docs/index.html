@@ -112,6 +112,10 @@
     background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); color: var(--text); white-space: nowrap;
   }
   .note { text-align: center; color: var(--dim); font-size: 15px; margin-top: 22px; }
+  .note code {
+    font-family: ui-monospace, "JetBrains Mono", monospace; font-size: 0.9em; padding: 1px 7px; border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); color: var(--text); overflow-wrap: anywhere;
+  }
 
   .online { max-width: 760px; margin: 0 auto; }
   .row { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
@@ -264,6 +268,7 @@
       </div>
     </div>
     <p class="note">Or see it on the <a href="https://store.kde.org/p/2378131/">KDE Store</a>. Prefer a file? Download it from the <a href="https://github.com/livlign/solidget/releases/latest">latest release</a> and choose <kbd>Install Widget From Local File</kbd>.</p>
+    <p class="note">On Fedora? Install it for everyone on the PC from Copr, and it updates with your system: <code>sudo dnf copr enable livlign/solidget &amp;&amp; sudo dnf install solidget</code></p>
   </section>
 
   <section id="online">
