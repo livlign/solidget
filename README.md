@@ -9,7 +9,7 @@ and the little everyday things, all in one good-looking board.
 
 ## What you get
 
-- **21 tiles.** CPU, GPU, memory, temperatures, network, storage, power and fans, top apps,
+- **Lots of tiles.** CPU, GPU, memory, temperatures, network, storage, power and fans, top apps,
   clock and weather, calendar, music controls, photo of the day, world clocks,
   focus timer, sticky note, quote of the day, and uptime over a scene you pick
   (the real sky, a heartbeat, a sleepy face, planets or your own picture).
