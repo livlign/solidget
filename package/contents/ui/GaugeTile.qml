@@ -17,23 +17,23 @@ GlassTile {
     property var history2: []            // optional second line (e.g. writes)
     property bool historySqrt: false     // squash big spikes (rates)
     property real historyMinMax: 1       // auto scale never goes below this
-    property bool preferChart: false     // small tiles: shrink the ring to fit the chart
 
     level: value / 100
 
     readonly property bool sideBySide: width >= height * 1.5
     readonly property real rowH: u * 1.45
+    readonly property real gap: u * 0.3
+    // Square / tall: the ring leaves room for two details below it.
     readonly property real ringSize: sideBySide
         ? Math.min(body.height, body.width * 0.42)
-        : preferChart ? Math.max(u * 3, Math.min(body.width * 0.9, body.height - rowH * Math.min(2, details.length) - u * 3.4))
-        : Math.min(body.width * 0.9, body.height - (details.length ? rowH * Math.min(2, details.length) : 0))
+        : Math.min(body.width * 0.9, body.height - (details.length ? rowH * Math.min(2, details.length) + gap : 0))
 
     // Space left for details + chart, in the column beside or below the ring.
-    readonly property real restH: sideBySide ? body.height : body.height - ringSize - u * 0.5
+    readonly property real restH: sideBySide ? body.height : body.height - ringSize - gap
     readonly property real restW: sideBySide ? body.width - ringSize - u * 1.2 : body.width
     readonly property bool showChart: history !== null && restH - rowH * Math.min(details.length, 2) > u * 2.5
     readonly property int detailRows: Math.max(0, Math.min(details.length,
-        Math.floor((restH - (showChart ? u * 2.5 : 0)) / rowH)))
+        Math.floor((restH - (showChart ? u * 2.5 : 0)) / rowH + 0.01)))
 
     Item {
         id: body
@@ -66,7 +66,7 @@ GlassTile {
 
         ColumnLayout {
             x: tile.sideBySide ? ring.width + tile.u * 1.2 : 0
-            y: tile.sideBySide ? 0 : ring.height + tile.u * 0.5
+            y: tile.sideBySide ? 0 : ring.height + tile.gap
             width: tile.restW
             height: tile.restH
             spacing: 0

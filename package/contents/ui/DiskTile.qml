@@ -21,5 +21,4 @@ GaugeTile {
     historyMax: 0
     historyMinMax: 256 * 1024
     historySqrt: true
-    preferChart: true
 }

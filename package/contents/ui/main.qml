@@ -517,7 +517,7 @@ PlasmoidItem {
                      : st.bodyAlpha === null ? (dark ? 0.66 : 0.72)
                      : typeof st.bodyAlpha === "object" ? (dark ? st.bodyAlpha.dark : st.bodyAlpha.light)
                      : st.bodyAlpha,
-            radius: st.radius, glow: st.glow, shadow: st.shadow, border: st.border,
+            radius: st.radius, glow: Palette.glowFor(styleId, themeId), shadow: st.shadow, border: st.border,
             highlight: st.highlight, roundCaps: st.roundCaps,
             // Opaque themes keep their exact white or black: no tint toward the tile color.
             tint: th.opaque ? 0 : st.tint, bevel: st.bevel, hardShadow: st.hardShadow,

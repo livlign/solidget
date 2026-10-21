@@ -73,8 +73,8 @@ Item {
         // Glow under the value arc
         ShapePath {
             fillColor: "transparent"
-            strokeColor: Qt.rgba(gauge.accent2.r, gauge.accent2.g, gauge.accent2.b, gauge.glow && gauge.frac > 0.002 ? 0.18 : 0)
-            strokeWidth: gauge.thickness * 2.6
+            strokeColor: Qt.rgba(gauge.accent2.r, gauge.accent2.g, gauge.accent2.b, gauge.glow && gauge.frac > 0.002 ? 0.10 : 0)
+            strokeWidth: gauge.thickness * 1.8
             capStyle: ShapePath.RoundCap
             PathAngleArc {
                 centerX: gauge.cx; centerY: gauge.cy
@@ -129,8 +129,8 @@ Item {
         // Bright tip
         Rectangle {
             anchors.centerIn: parent
-            width: parent.width * 0.45; height: width; radius: width / 2
-            color: Qt.rgba(1, 1, 1, 0.85)
+            width: parent.width * 0.3; height: width; radius: width / 2
+            color: Qt.rgba(1, 1, 1, 0.55)
         }
     }
 

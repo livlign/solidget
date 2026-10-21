@@ -177,6 +177,13 @@ function vendorColor(themeId, vendor) {
     return VENDOR[vendor] || "";
 }
 
+// Solid themes (Snow, Midnight) keep their card color clean: no color glows,
+// in any style. RGB keeps them under its rainbow rim.
+function glowFor(styleId, themeId) {
+    var st = STYLES[styleId], th = THEMES[themeId];
+    return !!(st && st.glow) && !(th && th.opaque && !th.rgb);
+}
+
 // ---- Looks: one click sets a style and a theme --------------------------------
 var LOOKS = [
     { name: "Plasma",         style: "plasma", theme: "plasma" },

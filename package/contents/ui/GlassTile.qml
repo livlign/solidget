@@ -209,12 +209,13 @@ Item {
             }
             PathRectangle { width: card.width; height: card.height; radius: tile.radius }
         }
-        // Border: a hairline for Glass/Clear, a solid frame for Pixel, or the
-        // theme's own hairline (Snow, Midnight) when the style has none.
+        // Border: a hairline for Glass/Clear, a solid frame for Pixel. A theme
+        // with its own hairline (Snow, Midnight) uses it in place of the
+        // style's, or adds it when the style has none.
         ShapePath {
             fillColor: "transparent"
             strokeWidth: tile.borderWidth === 0 && tile.edgeColor !== "" ? 1 : tile.borderWidth
-            strokeColor: tile.borderWidth === 0 && tile.edgeColor !== "" ? tile.edgeColor
+            strokeColor: tile.borderWidth <= 1 && tile.edgeColor !== "" ? tile.edgeColor
                 : tile.borderWidth === 0 ? "transparent"
                 : tile.borderWidth > 1 ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.45)
                 : tile.dark ? Qt.rgba(1, 1, 1, 0.07 + tile.shownLevel * 0.05)

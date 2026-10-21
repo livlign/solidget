@@ -421,7 +421,7 @@ GlassTile {
             opacity: pv.styleKey === "clear" ? 0.75 : 1
             border.width: pv.st.border
             border.color: Qt.rgba(1, 1, 1, 0.18)
-            gradient: pv.st.glow ? glowGrad : null
+            gradient: Palette.glowFor(pv.styleKey, pv.themeKey) ? glowGrad : null
             Gradient {
                 id: glowGrad
                 GradientStop { position: 0; color: Qt.tint(pv.body, Qt.rgba(pv.acc.r, pv.acc.g, pv.acc.b, 0.45)) }
