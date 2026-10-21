@@ -4,7 +4,7 @@
 %global plugin_id io.github.solidget
 
 Name:           solidget
-Version:        0.8.0
+Version:        0.8.1
 Release:        1%{?dist}
 Summary:        Live stats, PC specs and your day in one Plasma desktop widget
 
@@ -56,6 +56,10 @@ python3 -c 'import json, sys; v = json.load(open("package/metadata.json"))["KPlu
 %{_datadir}/plasma/plasmoids/%{plugin_id}/
 
 %changelog
+* Wed Oct 21 2026 Solidget contributors - 0.8.1-1
+- Crisp Snow and Midnight in Glass, lighter ring glow, two details on small
+  gauge tiles; see CHANGELOG.md for what's in 0.8.1
+
 * Tue Oct 20 2026 Solidget contributors - 0.8.0-1
 - System health and Bluetooth tiles, Wi-Fi signal bars, 12/24-hour clock
   setting; see CHANGELOG.md for what's in 0.8.0

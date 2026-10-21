@@ -1,5 +1,15 @@
 # What's new
 
+## 0.8.1
+
+- **Midnight and Snow in Glass.** Solid themes now keep their own clean
+  card color in every style: no color glows, and their own edge line in
+  Glass and Clear. Before, Glass + Midnight looked much like Aurora.
+- **Lighter ring glow.** The halo and bright tip on the gauges are softer.
+- **Two details on small gauges.** In a small square, CPU, GPU, Memory and
+  Storage show a second line under the ring (temperature, available
+  memory, writes) instead of empty space.
+
 ## 0.8.0
 
 - **System health tile.** One score out of 100 for how your PC is doing,
