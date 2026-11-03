@@ -15,8 +15,9 @@ and the little everyday things, all in one good-looking board.
   (the real sky, a heartbeat, a sleepy face, planets or your own picture).
 - **A pixel pet** (a poodle or a cat) with its own room and bed. Pet it, give it treats,
   play fetch, bath it, walk it to the park, the snow or the beach, and clean up if you forget.
-- **Your look.** 7 styles (Plasma, Glass, Flat, Clear, Pixel, Instrument, Bento) × 15 color
-  themes, or pick a ready-made look like *Retro Terminal*, *Instrument Panel* or *Soft Bento*.
+- **Your look.** 10 styles (Plasma, Glass, Flat, Clear, Pixel, Instrument, Bento, Neon, Soft,
+  Brutal) × 23 color themes, each style laying the tiles out its own way. Or pick a ready-made
+  look like *Soft Bento*, *Neon Nights* or *Retro Terminal*, and fine-tune any of them.
 - **Fits any space.** A corner card, a sidebar, or a whole spare monitor,
   landscape or portrait. Tiles arrange themselves.
 - **Arrange it your way.** Drag tiles, resize them, hide the ones you don't need.

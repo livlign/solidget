@@ -1,5 +1,12 @@
 # What's new
 
+## 0.10.1
+
+- **No more cut-off readouts.** In Instrument Panel, long values such as
+  the GPU's memory ("707 MiB / 8 GiB") showed as "… MiB / 8 GiB". The
+  dotted leader now gives way first, then the label.
+- **New screenshots** of the redesigned looks on the website and store page.
+
 ## 0.10.0
 
 - **Three new styles.** *Neon* (dark panes outlined in glowing light),

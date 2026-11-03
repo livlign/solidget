@@ -47,6 +47,7 @@ Item {
             color: row.dot
         }
         PlasmaComponents.Label {
+            id: labelText
             textFormat: Text.PlainText
             text: row.label
             opacity: row.readout ? 0.55 : 0.6
@@ -63,6 +64,7 @@ Item {
             visible: row.readout
             Layout.fillWidth: true
             Layout.preferredWidth: 0      // not its path's width, or the row loops
+            Layout.minimumWidth: 0        // gives way first when the value is long
             Layout.preferredHeight: 1
             Layout.alignment: Qt.AlignVCenter
             Layout.topMargin: row.u * 0.3
@@ -83,7 +85,13 @@ Item {
             font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, row.u * 0.85)
             font.weight: Font.Medium
             font.features: { "tnum": 1 }
-            Layout.maximumWidth: row.maxValueWidth
+            // Whatever the label doesn't need: a long value ("707 MiB / 8 GiB"
+            // in a fixed-width font) shouldn't be cut while there's room.
+            // A readout's value takes what it needs: the dotted leader gives
+            // way first, then the label.
+            Layout.maximumWidth: row.readout ? Number.POSITIVE_INFINITY
+                : Math.max(row.maxValueWidth, row.width - labelText.implicitWidth - row.u * 1.5)
+            Layout.minimumWidth: row.readout ? Math.min(implicitWidth, row.width * 0.8) : 0
             elide: Text.ElideLeft
         }
     }
