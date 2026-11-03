@@ -34,8 +34,10 @@ GlassTile {
     readonly property bool sideBySide: width >= height * 1.5
     readonly property real rowH: u * (chips ? 1.75 : 1.45)
     readonly property real gap: u * 0.3
-    // Chips sit in one row (as many as fit), rows stack.
-    readonly property int detailSlots: chips ? Math.min(1, details.length) : details.length
+    // Rows stack; chips flow, onto as many lines as they need at this width.
+    readonly property int chipLines: chips && details.length ? Math.max(1, Math.round((chipFlow.implicitHeight + chipFlow.spacing) / (chipH + chipFlow.spacing))) : 0
+    readonly property real chipH: Math.max(Kirigami.Units.gridUnit * 1.2, u * 1.45)
+    readonly property int detailSlots: chips ? chipLines : details.length
     // Square / tall: the ring leaves room for two details below it.
     readonly property real ringSize: sideBySide
         ? Math.min(body.height, body.width * 0.42)
@@ -178,6 +180,7 @@ GlassTile {
             // "26 GiB" says nothing). Fewer chips on a narrow tile; they
             // wrap onto a second line rather than drop their labels.
             Flow {
+                id: chipFlow
                 visible: tile.chips && tile.detailRows > 0
                 Layout.fillWidth: true
                 Layout.preferredHeight: implicitHeight

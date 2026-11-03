@@ -1,5 +1,11 @@
 # What's new
 
+## 0.10.2
+
+- **Chips fit their tile.** In Soft Bento, a narrow Storage (or CPU, GPU,
+  Memory) tile wraps its chips onto two lines; the dial now makes room
+  for them instead of pushing the last chip past the card's edge.
+
 ## 0.10.1
 
 - **No more cut-off readouts.** In Instrument Panel, long values such as

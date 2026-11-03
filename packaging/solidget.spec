@@ -4,7 +4,7 @@
 %global plugin_id io.github.solidget
 
 Name:           solidget
-Version:        0.10.1
+Version:        0.10.2
 Release:        1%{?dist}
 Summary:        Live stats, PC specs and your day in one Plasma desktop widget
 
@@ -56,6 +56,10 @@ python3 -c 'import json, sys; v = json.load(open("package/metadata.json"))["KPlu
 %{_datadir}/plasma/plasmoids/%{plugin_id}/
 
 %changelog
+* Tue Nov 03 2026 Solidget contributors - 0.10.2-1
+- Detail chips that wrap onto two lines no longer push past the bottom of
+  a tile; see CHANGELOG.md for what's in 0.10.2
+
 * Tue Nov 03 2026 Solidget contributors - 0.10.1-1
 - Long readout values (like GPU memory in Instrument Panel) are no longer
   cut off; see CHANGELOG.md for what's in 0.10.1
