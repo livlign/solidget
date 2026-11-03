@@ -174,22 +174,23 @@ GlassTile {
                     family: tile.figureFamily
                 }
             }
-            // Bento: the details as a row of chips, as many as fit.
+            // Bento: the details as chips, each with its label (a bare
+            // "26 GiB" says nothing). Fewer chips on a narrow tile; they
+            // wrap onto a second line rather than drop their labels.
             Flow {
                 visible: tile.chips && tile.detailRows > 0
                 Layout.fillWidth: true
-                Layout.preferredHeight: tile.rowH
+                Layout.preferredHeight: implicitHeight
                 spacing: tile.u * 0.3
-                clip: true
                 Repeater {
-                    model: tile.chips ? tile.details : []
+                    model: tile.chips ? tile.details.slice(0, tile.restW > tile.u * 20 ? 3 : 2) : []
                     DetailChip {
                         required property var modelData
                         u: tile.u
                         label: modelData.label
                         value: modelData.value
                         dot: modelData.dot || "transparent"
-                        full: tile.restW > tile.u * 16
+                        square: tile.radius === 0
                     }
                 }
             }

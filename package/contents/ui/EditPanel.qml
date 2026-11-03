@@ -431,10 +431,22 @@ GlassTile {
             id: pvCard
             anchors.fill: parent
             anchors.margins: pv.s * 0.11
-            Rectangle {   // hard shadow (Pixel)
+            Rectangle {   // hard shadow (Pixel; Brutal in ink)
                 visible: pv.st.hardShadow
                 x: 3; y: 3; width: parent.width; height: parent.height
-                color: Qt.rgba(0, 0, 0, 0.5)
+                color: pv.st.inkBorder ? pv.ink : Qt.rgba(0, 0, 0, 0.5)
+            }
+            Rectangle {   // Soft: light above, shade below
+                visible: pv.st.raised === true
+                x: -2; y: -2; width: parent.width; height: parent.height
+                radius: pv.cardR
+                color: Qt.rgba(1, 1, 1, pv.dark ? 0.08 : 0.9)
+            }
+            Rectangle {
+                visible: pv.st.raised === true
+                x: 3; y: 3; width: parent.width; height: parent.height
+                radius: pv.cardR
+                color: Qt.rgba(0, 0, 0, pv.dark ? 0.5 : 0.18)
             }
             Rectangle {   // soft shadow (Glass, Bento)
                 visible: pv.st.shadow && !pv.st.hardShadow
@@ -449,8 +461,10 @@ GlassTile {
                     var c = pv.st.tint > 0 && !pv.th.opaque ? Qt.tint(pv.body, Qt.rgba(pv.acc.r, pv.acc.g, pv.acc.b, pv.st.tint)) : pv.body;
                     return Qt.rgba(c.r, c.g, c.b, pv.alpha);
                 }
-                border.width: pv.st.bevel ? 2 : (pv.st.border > 0 || pv.th.edge) && !pv.plasmaFrame ? 1 : 0
-                border.color: pv.th.edge ? pv.th.edge : pv.st.bevel ? Qt.rgba(1, 1, 1, 0.3)
+                border.width: pv.st.inkBorder ? 2 : pv.st.edge === "neon" ? 1.5
+                    : pv.st.bevel ? 2 : (pv.st.border > 0 || pv.th.edge) && !pv.plasmaFrame ? 1 : 0
+                border.color: pv.st.inkBorder ? pv.ink : pv.st.edge === "neon" ? pv.acc
+                    : pv.th.edge ? pv.th.edge : pv.st.bevel ? Qt.rgba(1, 1, 1, 0.3)
                     : Qt.rgba(pv.ink.r, pv.ink.g, pv.ink.b, 0.14)
             }
             // Flat: the thick rule on top.
@@ -499,7 +513,7 @@ GlassTile {
                            : pv.st.figures === "mono" ? "JetBrains Mono" : pv.st.figures === "round" ? "Manrope" : Kirigami.Theme.defaultFont.family
                 font.pixelSize: pv.s * (pv.st.font === "pixel" ? 0.26 : 0.34)
                 font.weight: pv.st.font === "pixel" || pv.plasmaFrame ? Font.Normal
-                           : ({ hairline: Font.Thin, thin: Font.ExtraLight, bold: Font.Bold, heavy: Font.ExtraBold })[pv.st.figureWeight] || Font.Light
+                           : ({ hairline: Font.Thin, thin: Font.ExtraLight, regular: Font.Normal, semi: Font.DemiBold, bold: Font.Bold, heavy: Font.ExtraBold })[pv.st.figureWeight] || Font.Light
             }
             // Bar styles (Plasma, Flat, Pixel): a bar under the number.
             Row {
@@ -574,7 +588,7 @@ GlassTile {
         hoverEnabled: true
         Layout.fillWidth: true
         Layout.preferredWidth: 1     // equal columns, whatever the names
-        implicitHeight: Kirigami.Units.gridUnit * 4.4
+        implicitHeight: Kirigami.Units.gridUnit * 3.7
         padding: Kirigami.Units.smallSpacing
         Accessible.name: thumb.text
         QQC2.ToolTip.text: thumb.tip
@@ -717,13 +731,19 @@ GlassTile {
                 id: lookPage
                 // The ready-made look being worn, or null for a mix.
                 readonly property var currentLook: {
+                    if (panel.app.lookTweaked) return null;   // fine-tuned: a mix of its own
                     for (var i = 0; i < Palette.LOOKS.length; i++)
                         if (Palette.LOOKS[i].style === panel.app.styleId && Palette.LOOKS[i].theme === panel.app.themeId)
                             return Palette.LOOKS[i];
                     return null;
                 }
                 // Grid columns for the thumbnails: as many as fit.
-                readonly property int thumbColumns: Math.max(2, Math.min(6, Math.floor(width / (Kirigami.Units.gridUnit * 7))))
+                readonly property int thumbColumns: Math.max(3, Math.min(6, Math.floor(width / (Kirigami.Units.gridUnit * 5.4))))
+                // Light or dark only: shared by the looks and the colors.
+                function shown(themeKey) {
+                    var d = Palette.THEMES[themeKey].dark;
+                    return themeFilter === "all" || d === null || d === (themeFilter === "dark");
+                }
                 property bool mixOpen: currentLook === null
                 property string themeFilter: "all"
 
@@ -771,15 +791,40 @@ GlassTile {
                 }
 
                 Section {
-                    title: i18n("Ready-made looks")
-                    hint: i18n("One click sets a style and colors that go together.")
+                    // Title and the light/dark filter on one line, so the
+                    // grid starts right away.
+                    RowLayout {
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            PlasmaComponents.Label {
+                                textFormat: Text.PlainText
+                                text: i18n("Ready-made looks")
+                                color: panel.pText
+                                font.family: panel.pFont || Kirigami.Theme.defaultFont.family
+                                font.weight: Font.DemiBold
+                            }
+                            Hint { text: i18n("A style and colors that go together.") }
+                        }
+                        Segmented {
+                            options: [
+                                { value: "all", text: i18n("All") },
+                                { value: "light", text: i18n("Light") },
+                                { value: "dark", text: i18n("Dark") }
+                            ]
+                            current: lookPage.themeFilter
+                            onPicked: (v) => lookPage.themeFilter = v
+                        }
+                    }
                     GridLayout {
                         Layout.fillWidth: true
                         columns: lookPage.thumbColumns
                         columnSpacing: Kirigami.Units.smallSpacing
                         rowSpacing: Kirigami.Units.smallSpacing
                         Repeater {
-                            model: Palette.LOOKS
+                            model: Palette.byLightness(Palette.LOOKS, panel.app.plasmaBody.toString())
+                                .filter(function (l) { return lookPage.shown(l.theme); })
                             LookThumb {
                                 required property var modelData
                                 text: modelData.name
@@ -855,8 +900,8 @@ GlassTile {
                                 visible: !panel.app.nativeStyle
                                 options: [
                                     { value: "all", text: i18n("All") },
-                                    { value: "dark", text: i18n("Dark") },
-                                    { value: "light", text: i18n("Light") }
+                                    { value: "light", text: i18n("Light") },
+                                    { value: "dark", text: i18n("Dark") }
                                 ]
                                 current: lookPage.themeFilter
                                 onPicked: (v) => lookPage.themeFilter = v
@@ -870,16 +915,13 @@ GlassTile {
                             Layout.fillWidth: true
                             enabled: !panel.app.nativeStyle
                             opacity: enabled ? 1 : 0.5
-                            columns: Math.max(2, lookPage.thumbColumns - 1)
+                            columns: Math.max(2, lookPage.thumbColumns - 2)
                             columnSpacing: Kirigami.Units.smallSpacing
                             rowSpacing: Kirigami.Units.smallSpacing
                             Repeater {
                                 // Follow Plasma fits both lists: it's light or dark with the system.
-                                model: Palette.THEME_ORDER.filter(function (k) {
-                                    var d = Palette.THEMES[k].dark;
-                                    return lookPage.themeFilter === "all" || d === null
-                                        || d === (lookPage.themeFilter === "dark");
-                                })
+                                model: Palette.byLightness(Palette.THEME_ORDER, panel.app.plasmaBody.toString())
+                                    .filter(lookPage.shown)
                                 QQC2.AbstractButton {
                                     id: swatch
                                     required property string modelData
@@ -887,7 +929,7 @@ GlassTile {
                                     readonly property bool current: panel.app.themeSetting === modelData
                                     Layout.fillWidth: true
                                     Layout.preferredWidth: 1     // equal columns, whatever the names
-                                    implicitHeight: Kirigami.Units.gridUnit * 2.2
+                                    implicitHeight: Kirigami.Units.gridUnit * 1.9
                                     hoverEnabled: true
                                     Accessible.name: swatch.th.name
                                     onClicked: Plasmoid.configuration.theme = modelData
@@ -932,6 +974,75 @@ GlassTile {
                                             Layout.rightMargin: Kirigami.Units.smallSpacing
                                         }
                                     }
+                                }
+                            }
+                        }
+
+                        // Fine-tune the card under any style (Bento with
+                        // square, solid cards, Glass without shadows…).
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.topMargin: panel.gap
+                            PlasmaComponents.Label {
+                                textFormat: Text.PlainText
+                                text: i18n("Fine-tune")
+                                color: panel.pText
+                                font.family: panel.pFont || Kirigami.Theme.defaultFont.family
+                                font.weight: Font.DemiBold
+                                Layout.fillWidth: true
+                            }
+                            SButton {
+                                visible: panel.app.lookTweaked
+                                text: i18n("Reset")
+                                tip: i18n("Back to the style's own corners, card, shadow and numbers")
+                                onClicked: panel.app.resetLookTweaks()
+                            }
+                        }
+                        Hint {
+                            text: panel.app.nativeStyle
+                                ? i18n("The Plasma style draws Plasma's own cards. Pick another style to fine-tune it.")
+                                : i18n("Change the cards under any style. \"Style\" keeps what the style has.")
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            enabled: !panel.app.nativeStyle
+                            opacity: enabled ? 1 : 0.5
+                            spacing: Kirigami.Units.smallSpacing
+                            SettingRow {
+                                label: i18n("Corners")
+                                Segmented {
+                                    options: [{ value: "", text: i18n("Style") }, { value: "square", text: i18n("Square") },
+                                              { value: "small", text: i18n("Small") }, { value: "round", text: i18n("Round") }]
+                                    current: panel.app.lookTweaks.corners
+                                    onPicked: (v) => Plasmoid.configuration.lookCorners = v
+                                }
+                            }
+                            SettingRow {
+                                label: i18n("Card")
+                                Segmented {
+                                    options: [{ value: "", text: i18n("Style") }, { value: "solid", text: i18n("Solid") },
+                                              { value: "frosted", text: i18n("Frosted") }, { value: "clear", text: i18n("See-through") }]
+                                    current: panel.app.lookTweaks.surface
+                                    onPicked: (v) => Plasmoid.configuration.lookSurface = v
+                                }
+                            }
+                            SettingRow {
+                                label: i18n("Shadow")
+                                Segmented {
+                                    options: [{ value: "", text: i18n("Style") }, { value: "none", text: i18n("None") },
+                                              { value: "soft", text: i18n("Soft") }]
+                                    current: panel.app.lookTweaks.shadow
+                                    onPicked: (v) => Plasmoid.configuration.lookShadow = v
+                                }
+                            }
+                            SettingRow {
+                                label: i18n("Numbers")
+                                Segmented {
+                                    options: [{ value: "", text: i18n("Style") }, { value: "light", text: i18n("Light") },
+                                              { value: "regular", text: i18n("Regular") }, { value: "semi", text: i18n("Semibold") },
+                                              { value: "bold", text: i18n("Bold") }]
+                                    current: panel.app.lookTweaks.weight
+                                    onPicked: (v) => Plasmoid.configuration.lookWeight = v
                                 }
                             }
                         }

@@ -21,6 +21,13 @@ Item {
     // ("art", "pixelart"); "" = an ordinary card.
     readonly property string spot: look && look.spotlight && tileId !== "" ? (look.spotlight[tileId] || "") : ""
     readonly property bool inked: spot === "ink" || spot === "fill"
+    // Card treatments some styles add (see palette.js): a glowing outline
+    // (Neon), raised clay (Soft), a thick ink border (Brutal).
+    readonly property bool neonOn: !cardless && look ? look.neonEdge === true : false
+    readonly property bool raisedOn: !cardless && look ? look.raised === true : false
+    readonly property bool inkBorderOn: !cardless && look ? look.inkBorder === true : false
+    // The board's text color, even on an inverted card.
+    readonly property color outerInk: look && look.text ? look.text : (dark ? "#f2f2f2" : "#1d1d1d")
     readonly property bool cardless: spot === "bare"
     readonly property bool nativeOn: look ? look.plasmaFrame === true : false
     // Defaults reproduce Glass on the Plasma colors when no look is given.
@@ -109,12 +116,30 @@ Item {
     // but any endless animation keeps the whole desktop redrawing.)
     readonly property real breath: glowOn && level > 0.85 ? 1 : 0
 
-    // Pixel: a hard, offset block shadow.
+    // Pixel: a hard, offset block shadow (Brutal: in solid ink).
     Rectangle {
-        visible: tile.hardShadowOn
-        x: tile.bevelW * 1.5; y: tile.bevelW * 1.5
+        visible: tile.hardShadowOn && !tile.cardless
+        x: tile.bevelW * (tile.inkBorderOn ? 2 : 1.5); y: x
         width: parent.width; height: parent.height
-        color: Qt.rgba(0, 0, 0, tile.dark ? 0.55 : 0.28)
+        color: tile.inkBorderOn ? tile.outerInk : Qt.rgba(0, 0, 0, tile.dark ? 0.55 : 0.28)
+    }
+
+    // Soft: lit from the top left, a light edge above and a shade below.
+    RectangularShadow {
+        visible: tile.raisedOn
+        anchors.fill: parent
+        offset: Qt.vector2d(Kirigami.Units.smallSpacing * 1.5, Kirigami.Units.smallSpacing * 1.5)
+        radius: tile.radius
+        blur: Kirigami.Units.gridUnit * 1.2
+        color: Qt.rgba(0, 0, 0, tile.dark ? 0.55 : 0.2)
+    }
+    RectangularShadow {
+        visible: tile.raisedOn
+        anchors.fill: parent
+        offset: Qt.vector2d(-Kirigami.Units.smallSpacing * 1.2, -Kirigami.Units.smallSpacing * 1.2)
+        radius: tile.radius
+        blur: Kirigami.Units.gridUnit * 1.0
+        color: Qt.rgba(1, 1, 1, tile.dark ? 0.07 : 0.85)
     }
 
     // Plasma: the Plasma Style's own background, so tiles match the
@@ -195,6 +220,19 @@ Item {
         }
     }
 
+    // Neon: the outline in the tile's color, blurred into a glow under it.
+    Rectangle {
+        visible: tile.neonOn
+        anchors.fill: parent
+        anchors.margins: -2
+        radius: tile.radius + 2
+        color: "transparent"
+        border.width: 4
+        border.color: Qt.rgba(tile.accent.r, tile.accent.g, tile.accent.b, 0.8)
+        layer.enabled: visible
+        layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 24; autoPaddingEnabled: true }
+    }
+
     RectangularShadow {
         visible: tile.shadowOn && !tile.rgbOn
         anchors.fill: card
@@ -252,8 +290,10 @@ Item {
         // style's, or adds it when the style has none.
         ShapePath {
             fillColor: "transparent"
-            strokeWidth: tile.borderWidth === 0 && tile.edgeColor !== "" ? 1 : tile.borderWidth
-            strokeColor: tile.borderWidth <= 1 && tile.edgeColor !== "" ? tile.edgeColor
+            strokeWidth: tile.neonOn ? 1.5 : tile.borderWidth === 0 && tile.edgeColor !== "" ? 1 : tile.borderWidth
+            strokeColor: tile.neonOn ? Qt.lighter(tile.accent, 1.25)
+                : tile.inkBorderOn ? tile.outerInk
+                : tile.borderWidth <= 1 && tile.edgeColor !== "" ? tile.edgeColor
                 : tile.borderWidth === 0 ? "transparent"
                 : tile.borderWidth > 1 ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.45)
                 : tile.dark ? Qt.rgba(1, 1, 1, 0.07 + tile.shownLevel * 0.05)
@@ -374,7 +414,8 @@ Item {
                               : tile.headerStyle === "rule" ? Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.68)
                               : tile.headerStyle === "quiet" ? Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.75)
                               : Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.78))
-                font.weight: tile.headerStyle === "plain" || tile.headerStyle === "bar" ? Font.Bold
+                font.weight: tile.headerStyle === "bar" ? Font.Bold
+                           : tile.headerStyle === "plain" ? Font.DemiBold
                            : tile.headerStyle === "rule" || tile.headerStyle === "quiet" ? Font.Medium : Font.DemiBold
                 font.capitalization: tile.mixedCaseTitle ? Font.MixedCase : Font.AllUppercase
                 font.letterSpacing: tile.mixedCaseTitle ? 0

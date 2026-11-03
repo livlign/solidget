@@ -1,5 +1,24 @@
 # What's new
 
+## 0.10.0
+
+- **Three new styles.** *Neon* (dark panes outlined in glowing light),
+  *Soft* (raised cards lit from the top left, like clay) and *Brutal*
+  (thick ink borders, hard shadows, loud color blocks).
+- **Eight new colors.** Light: Peach Sorbet, Sky Paper, Matcha, Lavender
+  Mist. Dark: Nightfall, Espresso, Sakura Night, Neon Arcade.
+- **Six new looks.** Neon Nights, Clay, Poster Pop, Night Owl, Café and Hanami.
+- **Fine-tune any style.** Settings → Look → Mix your own → Fine-tune: the
+  corners, the card (solid, frosted, see-through), the shadow and how bold
+  the numbers are. Bento with square, solid cards is now one click away.
+- **Sorted light to dark.** Colors and looks go from the lightest to the
+  darkest, Follow Plasma placed by your own system colors, with an All /
+  Light / Dark filter. The looks fit on one screen again.
+- **Calmer Soft Bento.** Lighter numbers and titles; every detail chip
+  keeps its label ("In use 5.3 GiB", not a bare "5.3 GiB").
+- **Bento's weather card** stacks its icon, temperature and words, so
+  "Partly cloudy" fits, and picks readable text on any color.
+
 ## 0.9.0
 
 - **Every look redesigned, tile by tile.** Each style now lays its tiles

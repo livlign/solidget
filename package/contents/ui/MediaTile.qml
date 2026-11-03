@@ -106,7 +106,7 @@ GlassTile {
         background: Rectangle {
             radius: tile.nativeOn ? Kirigami.Units.cornerRadius
                   : cb.keys ? (tile.radius > 0 ? Kirigami.Units.cornerRadius * 0.6 : 0)
-                  : cb.squircle ? height * 0.32
+                  : cb.squircle ? (tile.radius > 0 ? height * 0.32 : 0)
                   : tile.radius > 0 ? Math.min(width, height) / 2 : 0
             color: cb.filled ? cb.fillColor
                  : tile.nativeOn ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, cb.hovered ? 0.2 : 0)

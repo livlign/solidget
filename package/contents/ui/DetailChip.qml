@@ -13,11 +13,12 @@ Rectangle {
     property color dot: "transparent"
     property real u: Kirigami.Units.gridUnit
     property bool full: true
+    property bool square: false     // square cards: square chips
 
     readonly property color ink: Kirigami.Theme.textColor
     implicitWidth: chipRow.implicitWidth + u * 0.9
     implicitHeight: Math.max(Kirigami.Units.gridUnit * 1.2, u * 1.45)
-    radius: height / 2
+    radius: square ? 0 : height / 2
     // A light wash on any card: white on pastel, ink on dark.
     color: Kirigami.Theme.backgroundColor.hslLightness > 0.5 ? Qt.rgba(1, 1, 1, 0.7) : Qt.rgba(ink.r, ink.g, ink.b, 0.1)
 
@@ -38,13 +39,12 @@ Rectangle {
             text: chip.label
             opacity: 0.6
             font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, chip.u * 0.72)
-            font.weight: Font.DemiBold
         }
         PlasmaComponents.Label {
             textFormat: Text.PlainText
             text: chip.value
             font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, chip.u * 0.75)
-            font.weight: Font.Bold
+            font.weight: Font.Medium
             font.features: { "tnum": 1 }
         }
     }

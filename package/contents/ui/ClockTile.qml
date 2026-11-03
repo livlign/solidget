@@ -50,6 +50,9 @@ GlassTile {
 
     // Bento: the weather sits in its own colored card inside the ink clock.
     readonly property bool weatherInset: spot === "ink" && side
+    // Text on that card: near-black on a bright color, white otherwise
+    // (by how bright the color looks, not its lightness: purple is dark).
+    readonly property color insetText: 0.2126 * accent.r + 0.7152 * accent.g + 0.0722 * accent.b > 0.55 ? "#1d1a17" : "#ffffff"
     // Instrument: the seconds, small, in the tile's color.
     readonly property bool showSeconds: monoFigures && !nativeOn
     // Glass: gradient digits.
@@ -168,6 +171,8 @@ GlassTile {
         }
 
         // ---- Current weather: beside the clock -----------------------------
+        // Bento: its own card, stacked: icon, big temperature, then the words
+        // with room for two lines.
         Rectangle {
             visible: tile.weatherInset
             anchors.right: parent.right
@@ -176,9 +181,52 @@ GlassTile {
             width: tile.weatherW
             radius: tile.radius * 0.75
             color: tile.accent
+            Kirigami.Theme.inherit: false
+            Kirigami.Theme.textColor: tile.insetText
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: tile.u * 0.8
+                spacing: 0
+                Kirigami.Icon {
+                    source: tile.w.icon
+                    Layout.preferredWidth: Math.min(tile.u * 2.6, parent.height * 0.32)
+                    Layout.preferredHeight: Layout.preferredWidth
+                }
+                Item { Layout.fillHeight: true }
+                BigNumber {
+                    family: tile.numberFamily
+                    figures: tile.figureFamily
+                    weight: tile.figureWeight
+                    plain: tile.nativeOn
+                    color: Kirigami.Theme.textColor
+                    text: tile.temp(tile.w.temp)
+                    unit: tile.w.fahrenheit ? "F" : "C"
+                    size: Math.min(tile.u * 3.4, parent.height * 0.36, parent.width * 0.4)
+                }
+                PlasmaComponents.Label {
+                    textFormat: Text.PlainText
+                    text: tile.w.summary
+                    font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.8)
+                    font.weight: Font.DemiBold
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
+                }
+                PlasmaComponents.Label {
+                    textFormat: Text.PlainText
+                    visible: tile.topH > tile.u * 9
+                    text: i18n("Feels %1 · %2%", tile.temp(tile.w.feelsLike), tile.w.humidity)
+                    opacity: 0.75
+                    font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.7)
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+            }
         }
         RowLayout {
-            visible: tile.side
+            visible: tile.side && !tile.weatherInset
             anchors.right: parent.right
             anchors.rightMargin: tile.weatherInset ? tile.u * 0.8 : 0
             y: 0
@@ -187,7 +235,7 @@ GlassTile {
             spacing: tile.u * 0.6
             // On the colored inset card, text in near-black or white.
             Kirigami.Theme.inherit: !tile.weatherInset
-            Kirigami.Theme.textColor: tile.accent.hslLightness > 0.55 ? "#1d1a17" : "#ffffff"
+            Kirigami.Theme.textColor: tile.insetText
 
             Kirigami.Icon {
                 source: tile.w.icon

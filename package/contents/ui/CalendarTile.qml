@@ -102,7 +102,7 @@ GlassTile {
                         width: Math.min(parent.width, parent.height) * 0.9
                         height: width
                         radius: tile.todayStyle === "circle" || tile.todayStyle === "outline" ? (tile.radius > 0 ? width / 2 : 0)
-                              : tile.todayStyle === "rounded" ? width * 0.3
+                              : tile.todayStyle === "rounded" ? (tile.radius > 0 ? width * 0.3 : 0)
                               : tile.todayStyle === "frame" ? Kirigami.Units.cornerRadius : 0
                         color: tile.todayStyle === "outline" ? "transparent"
                              : tile.todayStyle === "frame" ? Qt.rgba(tile.accent.r, tile.accent.g, tile.accent.b, 0.25)

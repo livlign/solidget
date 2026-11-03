@@ -64,7 +64,8 @@ function tempLevel(c) {
 // font: "" = system, "pixel" = bundled Silkscreen (numbers and titles).
 // figures: a bundled font for numbers and titles: "mono" (JetBrains Mono)
 // or "round" (Manrope).
-// figureWeight: big numbers "hairline", "thin", "light", "bold" or "heavy".
+// figureWeight: big numbers "hairline", "thin", "light", "regular", "semi",
+// "bold" or "heavy".
 //
 // Each style is also a recipe for how tiles lay themselves out:
 //   header:  "native" (Plasma), "caps" (spaced capitals), "rule" (capitals over
@@ -120,11 +121,30 @@ var STYLES = {
              controls: "keys", today: "block", spotlight: {} },
     bento: { name: "Bento", hint: "Soft, rounded pastel cards with big bold numbers",
              radius: 1.9, bodyAlpha: 1.0, tint: 0.16, glow: false, shadow: true, hardShadow: false, bevel: false,
-             border: 0, highlight: false, roundCaps: true, font: "", figures: "round", figureWeight: "heavy",
+             border: 0, highlight: false, roundCaps: true, font: "", figures: "round", figureWeight: "semi",
              header: "plain", gauge: "bar", ringTiles: ["gpu", "disk"], meter: "thick", chart: "rounded", details: "chips", heatBar: "pill",
-             controls: "squircle", today: "rounded", spotlight: { clock: "ink", power: "fill" } }
+             controls: "squircle", today: "rounded", spotlight: { clock: "ink", power: "fill" } },
+    // edge: "neon" = a glowing outline in the tile's own color.
+    neon:  { name: "Neon", hint: "Dark panes outlined in glowing light, like signs at night",
+             radius: 0.8, bodyAlpha: { dark: 0.5, light: 0.75 }, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
+             border: 0, highlight: false, roundCaps: true, font: "", figureWeight: "thin", edge: "neon",
+             header: "caps", gauge: "ring", meter: "ring", chart: "area", details: "rows", heatBar: "glow",
+             controls: "outline", today: "outline", spotlight: {} },
+    // raised: lit from the top left, a light edge above and a shade below,
+    // as if pressed up out of the board.
+    soft:  { name: "Soft", hint: "Raised cards lit from the top left, like soft clay",
+             radius: 1.4, bodyAlpha: 1.0, tint: 0.05, glow: false, shadow: false, hardShadow: false, bevel: false,
+             border: 0, highlight: false, roundCaps: true, font: "", figureWeight: "light", raised: true,
+             header: "quiet", gauge: "ring", meter: "thick", chart: "area", details: "rows", heatBar: "pill",
+             controls: "squircle", today: "rounded", spotlight: {} },
+    // inkBorder: a thick border in the text color.
+    brutal: { name: "Brutal", hint: "Thick ink borders, hard shadows and loud color blocks",
+             radius: 0, bodyAlpha: 1.0, tint: 0.4, glow: false, shadow: false, hardShadow: true, bevel: false,
+             border: 3, inkBorder: true, highlight: false, roundCaps: false, font: "", figureWeight: "bold",
+             header: "plain", gauge: "bar", meter: "ring", chart: "columns", details: "ruled", heatBar: "square",
+             controls: "keys", today: "block", spotlight: { clock: "fill" } }
 };
-var STYLE_ORDER = ["plasma", "glass", "flat", "clear", "pixel", "instrument", "bento"];
+var STYLE_ORDER = ["plasma", "glass", "flat", "clear", "pixel", "instrument", "bento", "neon", "soft", "brutal"];
 
 // ---- Themes: colors only ------------------------------------------------------
 // body/text null = follow Plasma. palette = six hues the tiles draw from;
@@ -160,13 +180,40 @@ var THEMES = {
                  palette: ["#00e5ff", "#22ff88", "#ff2d95", "#ffcc00", "#a855f7", "#ff7a00"] },
     // Amber readouts on graphite, like a lab meter; cool blue only for a
     // second trace (upload, a tile's second color).
+    peach:     { name: "Peach Sorbet",  dark: false, body: "#fff3eb", text: "#3d2418",
+                 palette: ["#ea580c", "#db2777", "#d97706", "#e11d48", "#65a30d", "#c2410c"] },
+    sky:       { name: "Sky Paper",     dark: false, body: "#f1f6ff", text: "#13233d",
+                 palette: ["#2563eb", "#0891b2", "#4f46e5", "#0284c7", "#059669", "#7c3aed"] },
+    matcha:    { name: "Matcha",        dark: false, body: "#f1f5e9", text: "#1f2d16",
+                 palette: ["#4d7c0f", "#0f766e", "#65a30d", "#a16207", "#15803d", "#3f6212"] },
+    lavender:  { name: "Lavender Mist", dark: false, body: "#f5f1fc", text: "#2a1f45",
+                 palette: ["#7c3aed", "#c026d3", "#6366f1", "#db2777", "#0891b2", "#9333ea"] },
+    nightfall: { name: "Nightfall",     dark: true,  body: "#111a2e", text: "#e3ebfa",
+                 palette: ["#7dd3fc", "#a5b4fc", "#60a5fa", "#93c5fd", "#c4b5fd", "#67e8f9"] },
+    espresso:  { name: "Espresso",      dark: true,  body: "#1c1512", text: "#f3e6da",
+                 palette: ["#d6a77a", "#f0c48b", "#c08457", "#e9b384", "#a3b18a", "#f5d6b4"] },
+    sakura:    { name: "Sakura Night",  dark: true,  body: "#1e1219", text: "#fbe7ef",
+                 palette: ["#f9a8d4", "#fda4af", "#f472b6", "#c4b5fd", "#fbcfe8", "#f0abfc"] },
+    arcade:    { name: "Neon Arcade",   dark: true,  body: "#0b0820", text: "#eef0ff",
+                 palette: ["#22e5ff", "#ff3df2", "#7cff6b", "#ffe14d", "#a06bff", "#ff8a3d"] },
     graphite:  { name: "Graphite Amber", dark: true, body: "#111418", text: "#e6e9ed", opaque: true, edge: "#262b33",
                  palette: ["#ffb547", "#e9c891", "#ffa05c", "#7dd3fc", "#f2d39b", "#c9d1db"] },
     // Clear inks on white; the Bento style tints each card to a pastel.
     oat:       { name: "Oat Milk",      dark: false, body: "#fffdf9", text: "#2b2622",
                  palette: ["#3b5bdb", "#0c8599", "#7048e8", "#d6336c", "#e8590c", "#b08900"] }
 };
-var THEME_ORDER = ["plasma", "aurora", "glacier", "sandstone", "ember", "lagoon", "plum", "moss", "ink", "lotus", "snow", "midnight", "rgb", "graphite", "oat"];
+// Themes and looks go from the lightest card to the darkest. Follow Plasma
+// has no color of its own: it sorts by the system's (see byLightness), and
+// comes first where that isn't known.
+function luminance(hex) {
+    var c = hexToRgb(hex).map(function (v) {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+var THEME_ORDER = ["plasma"].concat(Object.keys(THEMES).filter(function (k) { return k !== "plasma"; })
+    .sort(function (a, b) { return luminance(THEMES[b].body) - luminance(THEMES[a].body); }));
 
 // Which palette hue each tile uses (its second color is two steps along).
 var TILE_HUE = { cpu: 0, gpu: 1, memory: 2, network: 0, disk: 3, battery: 1, clock: 5,
@@ -244,8 +291,30 @@ var LOOKS = [
     { name: "Midnight",       style: "flat",  theme: "midnight" },
     { name: "RGB Rig",        style: "glass", theme: "rgb" },
     { name: "Instrument Panel", style: "instrument", theme: "graphite" },
-    { name: "Soft Bento",     style: "bento", theme: "oat" }
+    { name: "Soft Bento",     style: "bento", theme: "oat" },
+    { name: "Neon Nights",    style: "neon",  theme: "arcade" },
+    { name: "Clay",           style: "soft",  theme: "peach" },
+    { name: "Poster Pop",     style: "brutal", theme: "sky" },
+    { name: "Night Owl",      style: "glass", theme: "nightfall" },
+    { name: "Café",           style: "bento", theme: "espresso" },
+    { name: "Hanami",         style: "clear", theme: "sakura" }
 ];
+// Like the colors: Plasma first, then from the lightest to the darkest.
+LOOKS.sort(function (a, b) {
+    if (a.theme === "plasma" || b.theme === "plasma") return a.theme === "plasma" ? -1 : 1;
+    return luminance(THEMES[b.theme].body) - luminance(THEMES[a.theme].body);
+});
+
+// `items` (theme ids, or looks with a .theme) from light to dark, with
+// Follow Plasma placed by the system's own background color.
+function byLightness(items, plasmaBody) {
+    var key = function (it) { return typeof it === "string" ? it : it.theme; };
+    var lum = function (it) {
+        var k = key(it);
+        return luminance(k === "plasma" ? (/^#[0-9a-f]{6}$/i.test(plasmaBody || "") ? plasmaBody : "#ffffff") : THEMES[k].body);
+    };
+    return items.slice().sort(function (a, b) { return lum(b) - lum(a); });
+}
 
 // ---- Native (Plasma style) colors ---------------------------------------------
 // Every tile wears the system accent; network (down/up) and disk

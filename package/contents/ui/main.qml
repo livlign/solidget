@@ -505,32 +505,56 @@ PlasmoidItem {
     readonly property string themeSetting: Palette.THEMES[Plasmoid.configuration.theme] ? Plasmoid.configuration.theme : "plasma"
     readonly property string themeId: nativeStyle ? "plasma" : themeSetting
     // Everything a tile needs to draw itself, in one object.
+    // Fine-tune: the card's corners, surface, shadow and number weight,
+    // over the style's own ("" = as the style has it). Not for the Plasma
+    // style, which draws Plasma's own cards.
+    readonly property var lookTweaks: {
+        var c = Plasmoid.configuration;
+        return {
+            corners: oneOf(c.lookCorners, ["", "square", "small", "round"], ""),
+            surface: oneOf(c.lookSurface, ["", "solid", "frosted", "clear"], ""),
+            shadow: oneOf(c.lookShadow, ["", "none", "soft"], ""),
+            weight: oneOf(c.lookWeight, ["", "light", "regular", "semi", "bold"], "")
+        };
+    }
+    readonly property bool lookTweaked: !nativeStyle && (lookTweaks.corners !== "" || lookTweaks.surface !== ""
+        || lookTweaks.shadow !== "" || lookTweaks.weight !== "")
     readonly property var look: {
         var st = Palette.STYLES[styleId];
         var th = Palette.THEMES[themeId];
         var dark = th.dark === null ? plasmaDark : th.dark;
+        var tw = nativeStyle ? ({ corners: "", surface: "", shadow: "", weight: "" }) : lookTweaks;
+        var surface = tw.surface === "solid" ? 1.0 : tw.surface === "frosted" ? null
+                    : tw.surface === "clear" ? ({ dark: 0.32, light: 0.62 }) : st.bodyAlpha;
         return {
             style: styleId, theme: themeId, dark: dark, plasmaFrame: nativeStyle,
             body: th.body || plasmaBody,
             text: th.text || "",
             // Opaque themes (Snow, Midnight, RGB) are solid in every style but Plasma's.
             bodyAlpha: th.opaque && !nativeStyle ? 1
-                     : st.bodyAlpha === null ? (dark ? 0.66 : 0.72)
-                     : typeof st.bodyAlpha === "object" ? (dark ? st.bodyAlpha.dark : st.bodyAlpha.light)
-                     : st.bodyAlpha,
-            radius: st.radius, glow: Palette.glowFor(styleId, themeId), shadow: st.shadow, border: st.border,
-            highlight: st.highlight, roundCaps: st.roundCaps,
+                     : surface === null ? (dark ? 0.66 : 0.72)
+                     : typeof surface === "object" ? (dark ? surface.dark : surface.light)
+                     : surface,
+            radius: ({ square: 0, small: 0.4, round: 1.8 })[tw.corners] !== undefined ? ({ square: 0, small: 0.4, round: 1.8 })[tw.corners] : st.radius,
+            // A solid card has no glow; frosted ones catch light on the top edge.
+            glow: Palette.glowFor(styleId, themeId) && tw.surface !== "solid",
+            shadow: tw.shadow === "none" ? false : tw.shadow === "soft" ? true : st.shadow,
+            border: st.border,
+            highlight: tw.surface === "solid" ? false : tw.surface === "frosted" || tw.surface === "clear" ? true : st.highlight,
+            roundCaps: tw.corners === "square" ? false : tw.corners === "round" ? true : st.roundCaps,
             // Opaque themes keep their exact white or black: no tint toward the tile color.
-            tint: th.opaque ? 0 : st.tint, bevel: st.bevel, hardShadow: st.hardShadow,
+            tint: th.opaque ? 0 : st.tint, bevel: st.bevel, hardShadow: st.hardShadow && tw.shadow !== "none" && tw.shadow !== "soft",
             fontFamily: st.font === "pixel" && pixelFont.status === FontLoader.Ready ? pixelFont.name : "",
             meter: st.meter, chart: st.chart,
-            // Numbers in the system's fixed-width font (Instrument), and how
-            // heavy the big numbers are (Bento: bold).
+            // Numbers in a bundled font (Instrument: mono, Bento: round), and
+            // how heavy the big numbers are.
             figureFamily: st.figures === "mono" ? (monoFont.status === FontLoader.Ready ? monoFont.name : Kirigami.Theme.fixedWidthFont.family)
                         : st.figures === "round" && roundFont.status === FontLoader.Ready ? roundFont.name : "",
-            figureWeight: ({ hairline: Font.Thin, thin: Font.ExtraLight, light: Font.Light, bold: Font.Bold, heavy: Font.ExtraBold })[st.figureWeight] || Font.Light,
+            figureWeight: ({ hairline: Font.Thin, thin: Font.ExtraLight, light: Font.Light, regular: Font.Normal,
+                             semi: Font.DemiBold, bold: Font.Bold, heavy: Font.ExtraBold })[tw.weight || st.figureWeight] || Font.Light,
             // The style's recipe for laying tiles out (see palette.js).
             figures: st.figures || "", ringTiles: st.ringTiles || [],
+            neonEdge: st.edge === "neon", raised: st.raised === true && tw.shadow !== "none", inkBorder: st.inkBorder === true,
             header: st.header || "caps", gauge: st.gauge || "ring", details: st.details || "rows",
             heatBar: st.heatBar || "thin", controls: st.controls || "round", today: st.today || "circle",
             spotlight: st.spotlight || ({}),
@@ -578,9 +602,17 @@ PlasmoidItem {
     }
     function tempColor(c) { return heat(Palette.tempLevel(c)); }
     function vendorColor(v) { return nativeStyle ? "" : Palette.vendorColor(themeId, v); }
+    // A ready-made look comes as it's drawn: without fine-tuning.
     function applyLook(styleKey, themeKey) {
         Plasmoid.configuration.style = styleKey;
         Plasmoid.configuration.theme = themeKey;
+        resetLookTweaks();
+    }
+    function resetLookTweaks() {
+        Plasmoid.configuration.lookCorners = "";
+        Plasmoid.configuration.lookSurface = "";
+        Plasmoid.configuration.lookShadow = "";
+        Plasmoid.configuration.lookWeight = "";
     }
 
     // ---- Units & privacy --------------------------------------------------

@@ -40,6 +40,11 @@
     <entry name="style" type="String">
       <default>plasma</default>
     </entry>
+    <!-- Fine-tune over the style: "" = as the style has it -->
+    <entry name="lookCorners" type="String"><default></default></entry>   <!-- square, small, round -->
+    <entry name="lookSurface" type="String"><default></default></entry>   <!-- solid, frosted, clear -->
+    <entry name="lookShadow" type="String"><default></default></entry>    <!-- none, soft -->
+    <entry name="lookWeight" type="String"><default></default></entry>    <!-- light, regular, semi, bold -->
     <!-- Colors: plasma (follow the system) or a theme id from palette.js -->
     <entry name="theme" type="String">
       <default>plasma</default>
