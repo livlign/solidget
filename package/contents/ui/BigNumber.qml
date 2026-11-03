@@ -14,6 +14,8 @@ Row {
     property color color: Kirigami.Theme.textColor
     property bool animated: true
     property string family: ""      // the Pixel style's pixel font
+    property string figures: ""     // another font for the digits (Instrument: fixed-width)
+    property int weight: Font.Light // Bento: heavy
     property bool plain: false      // Plasma style: regular weight, normal spacing
 
     property real shown: value
@@ -26,11 +28,11 @@ Row {
         textFormat: Text.PlainText
         text: big.text !== "" ? big.text : (isNaN(big.shown) ? "–" : big.shown.toFixed(big.decimals))
         color: big.color
-        font.family: big.family || Kirigami.Theme.defaultFont.family
+        font.family: big.family || big.figures || Kirigami.Theme.defaultFont.family
         // Pixel glyphs are much wider than the system font's.
         font.pixelSize: big.family ? big.size * 0.72 : big.size
-        font.weight: big.family || big.plain ? Font.Normal : Font.Light
-        font.letterSpacing: big.family || big.plain ? 0 : -big.size * 0.03
+        font.weight: big.family || big.plain ? Font.Normal : big.weight
+        font.letterSpacing: big.family || big.plain ? 0 : -big.size * (big.weight > Font.Normal ? 0.045 : 0.03)
         font.features: { "tnum": 1 }
     }
     PlasmaComponents.Label {
@@ -40,7 +42,7 @@ Row {
         color: big.color
         opacity: 0.6
         font.pixelSize: (big.family ? big.size * 0.72 : big.size) * 0.38
-        font.weight: Font.Normal
+        font.weight: big.weight > Font.Normal && !big.family ? Font.DemiBold : Font.Normal
         anchors.baseline: number.baseline
     }
 }

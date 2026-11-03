@@ -56,6 +56,8 @@ GlassTile {
                     }
                     BigNumber {
                         family: tile.numberFamily
+                        figures: tile.figureFamily
+                        weight: tile.figureWeight
                         plain: tile.nativeOn
                         text: parts.n
                         unit: parts.unit
@@ -76,7 +78,7 @@ GlassTile {
             sqrtScale: true
             glow: tile.glowOn
             liveDot: !tile.nativeOn
-            bars: tile.look ? tile.look.chart === "bars" : false
+            kind: tile.chartStyle
             color: tile.downColor
             colorEnd: tile.downColor
             color2: tile.upColor

@@ -64,9 +64,12 @@ GlassTile {
             glow: tile.glowOn
             roundCaps: tile.look ? tile.look.roundCaps : true
             blocks: tile.look ? tile.look.meter === "blocks" : false
+            ticks: tile.look ? tile.look.meter === "ticks" : false
             BigNumber {
                 anchors.centerIn: parent
                 family: tile.numberFamily
+                figures: tile.figureFamily
+                weight: tile.figureWeight
                 plain: tile.nativeOn
                 text: tile.clock
                 size: ring.width * 0.2

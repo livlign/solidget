@@ -9,6 +9,7 @@ Item {
     id: gauge
 
     property real value: 0          // 0..max
+    property real value2: 0         // a faint second reach behind it (Memory: + cache)
     property real max: 100
     property color accent: "#38bdf8"
     property color accent2: "#6366f1"
@@ -16,6 +17,7 @@ Item {
     property bool glow: true        // soft halo under the arc (Glass)
     property bool roundCaps: true   // false = square ends (Flat)
     property bool blocks: false     // Pixel: the dial is a ring of square blocks
+    property bool ticks: false      // Instrument: the dial is a ring of fine tick marks
     default property alias content: center.data
 
     property real shown: value
@@ -53,8 +55,28 @@ Item {
         }
     }
 
+    // Instrument: thin radial ticks along the arc, every tenth one longer,
+    // lit up to the value like a meter's scale.
+    Repeater {
+        model: gauge.ticks ? 41 : 0
+        Rectangle {
+            required property int index
+            readonly property real t: index / 40
+            readonly property real a: (gauge.startDeg + gauge.sweepDeg * t) * Math.PI / 180
+            readonly property bool lit: t <= gauge.frac && gauge.frac > 0.002
+            width: Math.max(1.5, gauge.thickness * 0.3)
+            height: gauge.thickness * (index % 10 === 0 ? 1.9 : 1.3)
+            x: gauge.cx + gauge.r * Math.cos(a) - width / 2
+            y: gauge.cy + gauge.r * Math.sin(a) - height / 2
+            rotation: a * 180 / Math.PI + 90
+            antialiasing: true
+            color: lit ? Qt.tint(gauge.accent, Qt.rgba(gauge.accent2.r, gauge.accent2.g, gauge.accent2.b, t))
+                       : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.16)
+        }
+    }
+
     Shape {
-        visible: !gauge.blocks
+        visible: !gauge.blocks && !gauge.ticks
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
 
@@ -68,6 +90,19 @@ Item {
                 centerX: gauge.cx; centerY: gauge.cy
                 radiusX: gauge.r; radiusY: gauge.r
                 startAngle: gauge.startDeg; sweepAngle: gauge.sweepDeg
+            }
+        }
+        // Second reach (e.g. memory used + cache), faint, behind the value
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: Qt.rgba(gauge.accent.r, gauge.accent.g, gauge.accent.b, gauge.value2 > gauge.value ? 0.28 : 0)
+            strokeWidth: gauge.thickness
+            capStyle: gauge.roundCaps ? ShapePath.RoundCap : ShapePath.FlatCap
+            PathAngleArc {
+                centerX: gauge.cx; centerY: gauge.cy
+                radiusX: gauge.r; radiusY: gauge.r
+                startAngle: gauge.startDeg
+                sweepAngle: gauge.sweepDeg * Math.max(0, Math.min(1, gauge.value2 / gauge.max))
             }
         }
         // Glow under the value arc
@@ -114,14 +149,14 @@ Item {
 
     // Rounded caps for the value band
     Rectangle {
-        visible: !gauge.blocks && gauge.roundCaps && gauge.frac > 0.002
+        visible: !gauge.blocks && !gauge.ticks && gauge.roundCaps && gauge.frac > 0.002
         width: gauge.thickness; height: width; radius: width / 2
         x: gauge.cx + gauge.r * Math.cos(gauge.startDeg * Math.PI / 180) - width / 2
         y: gauge.cy + gauge.r * Math.sin(gauge.startDeg * Math.PI / 180) - height / 2
         color: gauge.accent
     }
     Rectangle {
-        visible: !gauge.blocks && gauge.roundCaps && gauge.frac > 0.002
+        visible: !gauge.blocks && !gauge.ticks && gauge.roundCaps && gauge.frac > 0.002
         width: gauge.thickness; height: width; radius: width / 2
         x: gauge.cx + gauge.r * Math.cos(gauge.endRad) - width / 2
         y: gauge.cy + gauge.r * Math.sin(gauge.endRad) - height / 2

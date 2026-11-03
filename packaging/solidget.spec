@@ -4,11 +4,11 @@
 %global plugin_id io.github.solidget
 
 Name:           solidget
-Version:        0.8.1
+Version:        0.9.0
 Release:        1%{?dist}
 Summary:        Live stats, PC specs and your day in one Plasma desktop widget
 
-# Widget: GPL-2.0-or-later. Bundled Silkscreen font: OFL-1.1.
+# Widget: GPL-2.0-or-later. Bundled fonts (Silkscreen, Manrope, JetBrains Mono): OFL-1.1.
 License:        GPL-2.0-or-later AND OFL-1.1
 URL:            https://github.com/livlign/solidget
 Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -51,11 +51,16 @@ chmod 0644 %{buildroot}%{_datadir}/plasma/plasmoids/%{plugin_id}/contents/code/s
 python3 -c 'import json, sys; v = json.load(open("package/metadata.json"))["KPlugin"]["Version"]; sys.exit(v != "%{version}")'
 
 %files
-%license LICENSE package/contents/fonts/OFL.txt
+%license LICENSE package/contents/fonts/OFL-*.txt
 %doc README.md CHANGELOG.md
 %{_datadir}/plasma/plasmoids/%{plugin_id}/
 
 %changelog
+* Tue Nov 03 2026 Solidget contributors - 0.9.0-1
+- Every style redesigned tile by tile, new Instrument Panel and Soft Bento
+  looks, a shorter Look tab with Surprise me, the audio output on Now
+  playing and a daily update check; see CHANGELOG.md for what's in 0.9.0
+
 * Wed Oct 21 2026 Solidget contributors - 0.8.1-1
 - Crisp Snow and Midnight in Glass, lighter ring glow, two details on small
   gauge tiles; see CHANGELOG.md for what's in 0.8.1

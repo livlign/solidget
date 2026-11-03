@@ -15,8 +15,8 @@ and the little everyday things, all in one good-looking board.
   (the real sky, a heartbeat, a sleepy face, planets or your own picture).
 - **A pixel pet** (a poodle or a cat) with its own room and bed. Pet it, give it treats,
   play fetch, bath it, walk it to the park, the snow or the beach, and clean up if you forget.
-- **Your look.** 5 styles (Plasma, Glass, Flat, Clear, Pixel) × 10 color themes, or
-  pick a ready-made look like *Retro Terminal* or *Paper*.
+- **Your look.** 7 styles (Plasma, Glass, Flat, Clear, Pixel, Instrument, Bento) × 15 color
+  themes, or pick a ready-made look like *Retro Terminal*, *Instrument Panel* or *Soft Bento*.
 - **Fits any space.** A corner card, a sidebar, or a whole spare monitor,
   landscape or portrait. Tiles arrange themselves.
 - **Arrange it your way.** Drag tiles, resize them, hide the ones you don't need.
@@ -79,13 +79,14 @@ After updating, restart Plasma to load the new version:
 
 ## What goes online
 
-Everything runs on your PC. A few tiles fetch public data, and only when they're shown:
+Everything runs on your PC. A few tiles fetch public data, and only when they're shown. Solidget also checks for a new version once a day:
 
 | Tile | Talks to | Why |
 |---|---|---|
 | Clock & weather, Uptime (sky scene) | open-meteo.com, ipwho.is | Weather and sunrise/sunset, and your rough location if you didn't set a city |
 | World clocks | open-meteo.com | Find a city's time zone, once per city |
 | Photo of the day | bing.com | Today's photo, once a day |
+| Update check | api.github.com | The latest version number, once a day (Settings → General → Updates to turn off) |
 
 No accounts, no tracking, no analytics.
 
@@ -98,5 +99,5 @@ Found a security problem? See [SECURITY.md](SECURITY.md).
 
 ## License
 
-GPL-2.0-or-later. The bundled Silkscreen pixel font is under the
-SIL Open Font License (see `package/contents/fonts/OFL.txt`).
+GPL-2.0-or-later. The bundled fonts (Silkscreen, Manrope and JetBrains Mono) are
+under the SIL Open Font License (see `package/contents/fonts/OFL-*.txt`).

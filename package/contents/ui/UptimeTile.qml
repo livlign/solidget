@@ -66,10 +66,10 @@ GlassTile {
         : opt.color === "accent" ? accent
         : fullBleed ? "#ffffff" : app.boardText
     readonly property string fontFamily: opt.font === "pixel" ? app.pixelFontName
-        : opt.font !== "" ? opt.font : (numberFamily || Kirigami.Theme.defaultFont.family)
+        : opt.font !== "" ? opt.font : (numberFamily || figureFamily || Kirigami.Theme.defaultFont.family)
     readonly property int fontWeight: opt.weight === "light" ? Font.Light : opt.weight === "bold" ? Font.Bold
         : opt.weight === "regular" ? Font.Normal
-        : (numberFamily || nativeOn ? Font.Normal : Font.ExtraLight)
+        : (numberFamily || nativeOn ? Font.Normal : figureWeight > Font.Normal ? figureWeight : Font.ExtraLight)
     readonly property real sizeScale: ({ s: 0.7, m: 1, l: 1.3, xl: 1.6 })[opt.size] || 1
 
     title: labelText

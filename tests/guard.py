@@ -19,6 +19,8 @@ ALLOWED_HOSTS = {
     "ipwho.is",                      # rough location when no city is set
     "get.geojs.io",                  # fallback for the above
     "www.bing.com",                  # photo of the day
+    "api.github.com",                # latest version number, once a day
+    "github.com",                    # "What's new" opens the Releases page
 }
 
 # Programs the widget may start. Commands must be built with
@@ -31,6 +33,7 @@ ALLOWED_PROGRAMS = {
 # Links the widget may open in the browser (each is checked to be https first).
 SAFE_LINKS = {
     "tile.link",    # PhotoTile: Bing's "learn more" link, https only
+    "releasesLink", # main.qml: our fixed Releases page
 }
 
 # Patterns that are never OK in the package.

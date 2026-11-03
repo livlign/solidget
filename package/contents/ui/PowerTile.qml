@@ -51,6 +51,8 @@ GlassTile {
             }
             BigNumber {
                 family: tile.numberFamily
+                figures: tile.figureFamily
+                weight: tile.figureWeight
                 plain: tile.nativeOn
                 id: big
                 value: tile.watts

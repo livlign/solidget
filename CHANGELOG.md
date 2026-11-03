@@ -1,5 +1,30 @@
 # What's new
 
+## 0.9.0
+
+- **Every look redesigned, tile by tile.** Each style now lays its tiles
+  out its own way, not just in its own colors:
+  - *Plasma*: Breeze icons in tile titles, numbers over bars, filled charts.
+  - *Glass*: Now playing over its own blurred album art, gradient clock digits.
+  - *Flat*: a thick rule on each card, big bold numbers, square bars and
+    columns, Now playing inverted.
+  - *Clear*: the clock sits right on your wallpaper, hairline dials.
+  - *Pixel*: health bars, Memory as inventory slots, pixel thermometers,
+    pixel-art album covers.
+- **Two new looks.** *Instrument Panel* (hairline panels, JetBrains Mono
+  readouts, tick-mark dials) and *Soft Bento* (pastel cards, big Manrope
+  numbers, chips, an ink clock with its own weather card).
+- **Memory shows its cache** as a faint second part of the dial or bar.
+- **A shorter Look tab.** Ready-made looks as thumbnails that draw each
+  style for real, the style and colors under *Mix your own*, colors
+  filtered by dark or light, and a *Surprise me* button.
+- **Tile titles stay one size**, so a big tile's title no longer shouts.
+- **Audio output on Now playing.** The speakers or headphones in use and
+  their volume: scroll to change it, click the icon to mute.
+- **Update check.** Once a day Solidget asks GitHub for the latest version
+  number and tells you in Settings (and on the Settings button) when a new
+  one is out. Nothing is downloaded. Turn it off in Settings → General.
+
 ## 0.8.1
 
 - **Midnight and Snow in Glass.** Solid themes now keep their own clean

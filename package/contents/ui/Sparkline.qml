@@ -5,6 +5,9 @@ import org.kde.kirigami as Kirigami
 // Area chart with a soft glow, drawn with Shapes (GPU). `values2` draws a
 // second series (e.g. upload) without fill. `maxValue: 0` auto-scales;
 // `sqrtScale` keeps one spike from flattening everything else.
+// `kind` is the style's chart: "line", "area" (deeper fill), "grid" (a line
+// over faint gridlines, no fill), "columns" (square bars, the newest in
+// full color), "rounded" (fewer, rounded bars) or "bars" (Pixel blocks).
 Item {
     id: chart
 
@@ -20,6 +23,8 @@ Item {
     property real lineWidth: Math.max(1.5, Math.min(2.5, height / 70))
     property bool glow: true
     property bool bars: false       // Pixel: blocky columns snapped to a grid
+    property string kind: bars ? "bars" : "line"
+    readonly property bool columns: kind === "columns" || kind === "rounded"
     property bool liveDot: true     // dot on the newest sample (Plasma's charts have none)
 
     implicitHeight: Kirigami.Units.gridUnit * 2.5
@@ -47,6 +52,20 @@ Item {
         return pts;
     }
     readonly property var line1: points(values)
+    // Columns and rounded bars: the series averaged into a few wide bars.
+    readonly property int colCount: kind === "rounded" ? 16 : 24
+    readonly property var colHeights: {
+        if (!columns || !values || values.length < 2 || height <= 0) return [];
+        var per = Math.max(1, Math.floor(capacity / colCount));
+        var out = [];
+        for (var c = colCount - 1; c >= 0; c--) {
+            var end = values.length - c * per, start = end - per, sum = 0, n = 0;
+            for (var i = Math.max(0, start); i < end; i++) { sum += values[i]; n++; }
+            var r = n && scaleMax > 0 ? Math.min(sum / n / scaleMax, 1) : 0;
+            out.push(n ? (sqrtScale ? Math.sqrt(r) : r) : -1);
+        }
+        return out;
+    }
     readonly property var line2: points(values2)
 
     // Smooth SVG path through the points: each segment is a cubic whose
@@ -94,6 +113,50 @@ Item {
         }
     }
 
+    // Columns / rounded bars.
+    Row {
+        visible: chart.columns
+        anchors.bottom: parent.bottom
+        width: parent.width
+        height: parent.height
+        spacing: Math.max(1, chart.width / chart.colCount * (chart.kind === "rounded" ? 0.3 : 0.12))
+        Repeater {
+            model: chart.columns ? chart.colHeights.length : 0
+            Rectangle {
+                required property int index
+                readonly property real r: chart.colHeights[index]
+                readonly property bool newest: index === chart.colHeights.length - 1
+                anchors.bottom: parent.bottom
+                width: (chart.width - parent.spacing * (chart.colCount - 1)) / chart.colCount
+                height: r < 0 ? 0 : Math.max(2, r * chart.height)
+                radius: chart.kind === "rounded" ? Math.min(width / 2, height / 2) : 0
+                color: newest ? chart.colorEnd : Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, chart.kind === "rounded" ? 0.4 : 0.35)
+                Behavior on height { NumberAnimation { duration: Kirigami.Units.longDuration } }
+            }
+        }
+    }
+
+    // Instrument: faint gridlines behind the trace.
+    Repeater {
+        model: chart.kind === "grid" ? 3 : 0
+        Rectangle {
+            required property int index
+            width: chart.width; height: 1
+            y: Math.round(chart.height * (index + 1) / 4)
+            color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.07)
+        }
+    }
+    Repeater {
+        model: chart.kind === "grid" ? 3 : 0
+        Rectangle {
+            required property int index
+            width: 1; height: chart.height
+            x: Math.round(chart.width * (index + 1) / 4)
+            color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.07)
+        }
+    }
+
+    // Lines; with columns only the second series is drawn here, as a line.
     Shape {
         visible: !chart.bars
         anchors.fill: parent
@@ -105,10 +168,11 @@ Item {
             strokeColor: "transparent"
             fillGradient: LinearGradient {
                 x1: 0; y1: 0; x2: 0; y2: chart.height
-                GradientStop { position: 0; color: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, 0.30) }
+                GradientStop { position: 0; color: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b,
+                    chart.kind === "grid" ? 0 : chart.kind === "area" ? 0.45 : 0.30) }
                 GradientStop { position: 1; color: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, 0.0) }
             }
-            PathSvg { path: chart.area1 }
+            PathSvg { path: chart.columns ? "" : chart.area1 }
         }
         // Glow + line, main series
         ShapePath {
@@ -117,7 +181,7 @@ Item {
             strokeWidth: chart.lineWidth * 3
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
-            PathSvg { path: chart.path1 }
+            PathSvg { path: chart.columns ? "" : chart.path1 }
         }
         ShapePath {
             fillColor: "transparent"
@@ -125,7 +189,7 @@ Item {
             strokeWidth: chart.lineWidth
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
-            PathSvg { path: chart.path1 }
+            PathSvg { path: chart.columns ? "" : chart.path1 }
         }
         // Second series: plain line, so it doesn't compete with the main one
         ShapePath {
@@ -140,7 +204,7 @@ Item {
 
     // Live dot at the newest sample
     Rectangle {
-        visible: chart.liveDot && !chart.bars && chart.line1.length > 0
+        visible: chart.liveDot && !chart.bars && !chart.columns && chart.line1.length > 0
         readonly property point p: chart.line1.length ? chart.line1[chart.line1.length - 1] : Qt.point(0, 0)
         width: chart.lineWidth * 2.6; height: width; radius: width / 2
         x: p.x - width; y: p.y - height / 2

@@ -134,6 +134,21 @@
     <entry name="settingsButton" type="Bool">
       <default>true</default>
     </entry>
+    <!-- Ask GitHub once a day whether a newer version is out (notice only, never installs) -->
+    <entry name="updateCheck" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Last answer, so restarting Plasma doesn't ask again: day checked and latest version -->
+    <entry name="updateCheckedDay" type="String">
+      <default></default>
+    </entry>
+    <entry name="updateLatest" type="String">
+      <default></default>
+    </entry>
+    <!-- "Later" on this version: no button on the desktop until a newer one -->
+    <entry name="updateDismissed" type="String">
+      <default></default>
+    </entry>
     <!-- Clock format: 12 or 24; empty = follow the region setting -->
     <entry name="clockFormat" type="String">
       <default></default>

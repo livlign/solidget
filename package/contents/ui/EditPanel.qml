@@ -395,108 +395,216 @@ GlassTile {
         }
     }
 
-    // Mini tile drawn in a given style and theme: used by the look/style cards.
+    // Mini tile drawn in a given style and theme, over a bit of wallpaper:
+    // its corners, card, title mark, number and dial are the style's own.
     component Preview: Item {
         id: pv
         property string styleKey: "glass"
         property string themeKey: "plasma"
         readonly property var st: Palette.STYLES[styleKey]
         readonly property var th: Palette.THEMES[themeKey]
+        readonly property bool plasmaFrame: st.plasmaFrame === true
+        readonly property bool dark: th.dark === null ? panel.app.plasmaDark : th.dark
         readonly property color body: th.body || panel.app.plasmaBody
-        readonly property color acc: panel.app.accentPair(themeKey, "cpu", st.plasmaFrame === true)[0]
-        readonly property color acc2: panel.app.accentPair(themeKey, "cpu", st.plasmaFrame === true)[1]
-        readonly property real r: st.radius === 0 ? 0 : Math.min(width, height) * 0.22
-        implicitWidth: Kirigami.Units.gridUnit * 2.6
-        implicitHeight: implicitWidth
+        readonly property color ink: th.text || panel.app.plasmaText
+        readonly property color acc: panel.app.accentPair(themeKey, "cpu", plasmaFrame)[0]
+        readonly property color acc2: panel.app.accentPair(themeKey, "cpu", plasmaFrame)[1]
+        readonly property real s: Math.min(width, height)
+        readonly property real cardR: plasmaFrame ? s * 0.06 : Math.min(s * 0.2, st.radius * s * 0.09)
+        readonly property real alpha: th.opaque || st.bodyAlpha === 1 || st.bodyAlpha >= 0.97 ? 1
+            : st.bodyAlpha === null ? 0.72 : typeof st.bodyAlpha === "object" ? (dark ? 0.45 : 0.7) : st.bodyAlpha
+        readonly property string header: plasmaFrame ? "plain" : (st.header || "caps")
+        implicitWidth: Kirigami.Units.gridUnit * 4
+        implicitHeight: Kirigami.Units.gridUnit * 3
 
-        Rectangle {   // hard shadow (Pixel)
-            visible: pv.st.hardShadow
-            x: 3; y: 3; width: parent.width; height: parent.height
-            color: Qt.rgba(0, 0, 0, 0.5)
-        }
+        // Wallpaper, so see-through styles look see-through.
         Rectangle {
             anchors.fill: parent
-            radius: pv.r
-            color: pv.st.tint > 0 ? Qt.tint(pv.body, Qt.rgba(pv.acc.r, pv.acc.g, pv.acc.b, pv.st.tint)) : pv.body
-            opacity: pv.styleKey === "clear" ? 0.75 : 1
-            border.width: pv.st.border
-            border.color: Qt.rgba(1, 1, 1, 0.18)
-            gradient: Palette.glowFor(pv.styleKey, pv.themeKey) ? glowGrad : null
-            Gradient {
-                id: glowGrad
-                GradientStop { position: 0; color: Qt.tint(pv.body, Qt.rgba(pv.acc.r, pv.acc.g, pv.acc.b, 0.45)) }
-                GradientStop { position: 1; color: pv.body }
+            radius: panel.pSharp ? 0 : Kirigami.Units.cornerRadius
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: pv.dark ? Qt.darker(pv.acc, 2.6) : Qt.lighter(pv.acc, 1.7) }
+                GradientStop { position: 1; color: pv.dark ? "#141726" : "#d8d2c8" }
             }
         }
-        Rectangle {   // bevel (Pixel)
-            visible: pv.st.bevel
+        Item {
+            id: pvCard
             anchors.fill: parent
-            color: "transparent"
-            border.width: 2
-            border.color: Qt.rgba(1, 1, 1, 0.25)
-        }
-        // A tiny gauge: ring, or blocks for Pixel
-        Rectangle {
-            visible: pv.st.meter !== "blocks"
-            anchors.centerIn: parent
-            width: parent.width * 0.5; height: width; radius: width / 2
-            color: "transparent"
-            border.width: Math.max(2, width * 0.14)
-            border.color: pv.acc
-        }
-        Grid {
-            visible: pv.st.meter === "blocks"
-            anchors.centerIn: parent
-            columns: 3; spacing: 2
-            Repeater {
-                model: 9
+            anchors.margins: pv.s * 0.11
+            Rectangle {   // hard shadow (Pixel)
+                visible: pv.st.hardShadow
+                x: 3; y: 3; width: parent.width; height: parent.height
+                color: Qt.rgba(0, 0, 0, 0.5)
+            }
+            Rectangle {   // soft shadow (Glass, Bento)
+                visible: pv.st.shadow && !pv.st.hardShadow
+                x: 0; y: pv.s * 0.03; width: parent.width; height: parent.height
+                radius: pv.cardR
+                color: Qt.rgba(0, 0, 0, pv.dark ? 0.35 : 0.12)
+            }
+            Rectangle {
+                anchors.fill: parent
+                radius: pv.cardR
+                color: {
+                    var c = pv.st.tint > 0 && !pv.th.opaque ? Qt.tint(pv.body, Qt.rgba(pv.acc.r, pv.acc.g, pv.acc.b, pv.st.tint)) : pv.body;
+                    return Qt.rgba(c.r, c.g, c.b, pv.alpha);
+                }
+                border.width: pv.st.bevel ? 2 : (pv.st.border > 0 || pv.th.edge) && !pv.plasmaFrame ? 1 : 0
+                border.color: pv.th.edge ? pv.th.edge : pv.st.bevel ? Qt.rgba(1, 1, 1, 0.3)
+                    : Qt.rgba(pv.ink.r, pv.ink.g, pv.ink.b, 0.14)
+            }
+            // Flat: the thick rule on top.
+            Rectangle {
+                visible: pv.header === "bar"
+                width: parent.width; height: Math.max(2, pv.s * 0.035)
+                color: pv.ink
+            }
+            // Title row: the color mark and a stand-in title.
+            Row {
+                x: pvCard.width * 0.12; y: pvCard.height * 0.14
+                spacing: pv.s * 0.04
                 Rectangle {
-                    required property int index
-                    width: pv.width * 0.14; height: width
-                    color: index < 6 ? (index % 2 ? pv.acc2 : pv.acc) : Qt.rgba(1, 1, 1, 0.15)
+                    visible: pv.header !== "bar" && pv.header !== "quiet"
+                    width: pv.s * (pv.header === "plain" ? 0.1 : 0.065); height: width
+                    anchors.verticalCenter: parent.verticalCenter
+                    radius: pv.header === "plain" ? width * 0.3 : pv.header === "rule" || pv.st.radius === 0 ? 0 : width / 2
+                    color: pv.acc
+                }
+                Rectangle {
+                    width: pvCard.width * (pv.header === "caps" ? 0.34 : 0.26)
+                    height: Math.max(2, pv.s * (pv.header === "plain" ? 0.06 : 0.04))
+                    anchors.verticalCenter: parent.verticalCenter
+                    radius: pv.st.radius === 0 || pv.header === "rule" ? 0 : height / 2
+                    color: Qt.rgba(pv.ink.r, pv.ink.g, pv.ink.b, pv.header === "plain" ? 0.8 : 0.45)
+                }
+            }
+            Row {   // Instrument: the dashed line under the title
+                visible: pv.header === "rule"
+                x: pvCard.width * 0.12; y: pvCard.height * 0.32
+                spacing: 2
+                Repeater {
+                    model: 9
+                    Rectangle { width: 3; height: 1; color: Qt.rgba(pv.ink.r, pv.ink.g, pv.ink.b, 0.3) }
+                }
+            }
+            // A big number in the style's own figures.
+            PlasmaComponents.Label {
+                textFormat: Text.PlainText
+                x: pvCard.width * 0.12
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: pvCard.height * 0.08
+                text: "23"
+                color: pv.ink
+                font.family: pv.st.font === "pixel" ? panel.app.pixelFontName
+                           : pv.st.figures === "mono" ? "JetBrains Mono" : pv.st.figures === "round" ? "Manrope" : Kirigami.Theme.defaultFont.family
+                font.pixelSize: pv.s * (pv.st.font === "pixel" ? 0.26 : 0.34)
+                font.weight: pv.st.font === "pixel" || pv.plasmaFrame ? Font.Normal
+                           : ({ hairline: Font.Thin, thin: Font.ExtraLight, bold: Font.Bold, heavy: Font.ExtraBold })[pv.st.figureWeight] || Font.Light
+            }
+            // Bar styles (Plasma, Flat, Pixel): a bar under the number.
+            Row {
+                visible: pv.st.gauge === "bar" || pv.st.gauge === "hp"
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: pvCard.width * 0.1
+                spacing: pv.st.gauge === "hp" ? 1 : 0
+                Repeater {
+                    model: pv.st.gauge === "hp" ? 5 : 1
+                    Rectangle {
+                        required property int index
+                        width: pv.st.gauge === "hp" ? pv.s * 0.07 : pv.s * 0.38
+                        height: Math.max(2, pv.s * 0.06)
+                        radius: pv.st.roundCaps ? height / 2 : 0
+                        color: pv.st.gauge === "hp" && index > 2 ? Qt.rgba(pv.ink.r, pv.ink.g, pv.ink.b, 0.15) : pv.acc
+                    }
+                }
+            }
+            // The dial: ring, blocks or ticks.
+            Item {
+                id: dial
+                visible: pv.st.gauge !== "bar" && pv.st.gauge !== "hp"
+                width: pv.s * 0.36; height: width
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: pvCard.width * 0.1
+                Rectangle {
+                    visible: pv.st.meter === "ring" || pv.st.meter === "thick" || pv.st.meter === "hairline"
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: "transparent"
+                    border.width: pv.st.meter === "hairline" ? 1 : Math.max(2, width * (pv.st.meter === "thick" ? 0.18 : 0.12))
+                    border.color: pv.acc
+                }
+                Grid {
+                    visible: pv.st.meter === "blocks"
+                    anchors.centerIn: parent
+                    columns: 3; spacing: 1
+                    Repeater {
+                        model: 9
+                        Rectangle {
+                            required property int index
+                            width: dial.width * 0.28; height: width
+                            color: index < 6 ? (index % 2 ? pv.acc2 : pv.acc) : Qt.rgba(pv.ink.r, pv.ink.g, pv.ink.b, 0.15)
+                        }
+                    }
+                }
+                Repeater {
+                    model: pv.st.meter === "ticks" ? 11 : 0
+                    Rectangle {
+                        required property int index
+                        readonly property real a: (135 + 27 * index) * Math.PI / 180
+                        width: 1.5; height: dial.width * 0.22
+                        x: dial.width / 2 + dial.width * 0.4 * Math.cos(a) - width / 2
+                        y: dial.height / 2 + dial.width * 0.4 * Math.sin(a) - height / 2
+                        rotation: a * 180 / Math.PI + 90
+                        antialiasing: true
+                        color: index < 5 ? pv.acc : Qt.rgba(pv.ink.r, pv.ink.g, pv.ink.b, 0.25)
+                    }
                 }
             }
         }
     }
 
-    // Selectable card with a preview, a title and a line of text.
-    component PreviewCard: QQC2.AbstractButton {
-        id: card
+    // A picture of a look with its name under it; picks it when clicked.
+    component LookThumb: QQC2.AbstractButton {
+        id: thumb
         property string styleKey
         property string themeKey
-        property string subtitle
+        property string tip
         hoverEnabled: true
         Layout.fillWidth: true
-        Layout.preferredWidth: 1
-        implicitHeight: Kirigami.Units.gridUnit * 3.6
-        padding: Kirigami.Units.smallSpacing * 1.5
+        Layout.preferredWidth: 1     // equal columns, whatever the names
+        implicitHeight: Kirigami.Units.gridUnit * 4.4
+        padding: Kirigami.Units.smallSpacing
+        Accessible.name: thumb.text
+        QQC2.ToolTip.text: thumb.tip
+        QQC2.ToolTip.visible: thumb.tip !== "" && hovered
+        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
         background: Rectangle {
             radius: panel.pRadius
-            color: card.checked ? Qt.rgba(panel.pAccent.r, panel.pAccent.g, panel.pAccent.b, 0.16) : panel.tint(card.hovered ? 0.1 : 0.05)
-            border.width: card.checked ? 2 : panel.pBorder
-            border.color: card.checked ? panel.pAccent : panel.tint(0.12)
+            color: thumb.checked ? Qt.rgba(panel.pAccent.r, panel.pAccent.g, panel.pAccent.b, 0.16)
+                 : panel.tint(thumb.hovered ? 0.08 : 0)
+            border.width: thumb.checked ? 2 : 0
+            border.color: panel.pAccent
         }
-        contentItem: RowLayout {
-            spacing: Kirigami.Units.largeSpacing
+        contentItem: ColumnLayout {
+            spacing: Kirigami.Units.smallSpacing
             Preview {
-                styleKey: card.styleKey
-                themeKey: card.themeKey
-                Layout.preferredWidth: card.availableHeight
-                Layout.preferredHeight: card.availableHeight
-            }
-            ColumnLayout {
+                styleKey: thumb.styleKey
+                themeKey: thumb.themeKey
                 Layout.fillWidth: true
-                spacing: 0
-                PlasmaComponents.Label {
-                    textFormat: Text.PlainText
-                    text: card.text
-                    color: panel.pText
-                    font.family: panel.pFont || Kirigami.Theme.defaultFont.family
-                    font.weight: Font.DemiBold
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                }
-                Hint { text: card.subtitle; maximumLineCount: 2; elide: Text.ElideRight }
+                Layout.fillHeight: true
+            }
+            PlasmaComponents.Label {
+                textFormat: Text.PlainText
+                text: thumb.text
+                color: panel.pText
+                font.family: panel.pFont || Kirigami.Theme.defaultFont.family
+                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                font.weight: thumb.checked ? Font.DemiBold : Font.Normal
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                Layout.fillWidth: true
             }
         }
     }
@@ -550,6 +658,41 @@ GlassTile {
             }
         }
 
+        // A new version is out: say so on every tab.
+        Section {
+            id: updateBanner
+            visible: panel.app.updateAvailable
+            border.width: 1
+            border.color: panel.pAccent
+            readonly property string upgradeCommand: "sudo dnf upgrade solidget"   // guard: text only
+            SettingRow {
+                label: i18n("Solidget %1 is out", panel.app.latestVersion)
+                hint: panel.app.systemInstall
+                    ? i18n("You have %1. Your package manager updates it: %2", panel.app.version, updateBanner.upgradeCommand)
+                    : i18n("You have %1. Update it in Discover, or get it from the Releases page. Installed with install.sh? Run git pull, then ./install.sh.", panel.app.version)
+                RowLayout {
+                    spacing: Kirigami.Units.smallSpacing
+                    SButton {
+                        visible: panel.app.updateNotice
+                        text: i18n("Later")
+                        tip: i18n("Hide the desktop button until the next version")
+                        onClicked: Plasmoid.configuration.updateDismissed = panel.app.latestVersion
+                    }
+                    SButton {
+                        visible: panel.app.systemInstall
+                        text: i18n("Copy")
+                        tip: i18n("Copy the update command")
+                        onClicked: panel.app.copyToClipboard(updateBanner.upgradeCommand)
+                    }
+                    SButton {
+                        text: i18n("What's new")
+                        primary: true
+                        onClicked: panel.app.openReleases()
+                    }
+                }
+            }
+        }
+
         // Tabs
         Segmented {
             Layout.fillWidth: true
@@ -571,20 +714,76 @@ GlassTile {
 
             // ================= Look =================
             Page {
+                id: lookPage
+                // The ready-made look being worn, or null for a mix.
+                readonly property var currentLook: {
+                    for (var i = 0; i < Palette.LOOKS.length; i++)
+                        if (Palette.LOOKS[i].style === panel.app.styleId && Palette.LOOKS[i].theme === panel.app.themeId)
+                            return Palette.LOOKS[i];
+                    return null;
+                }
+                // Grid columns for the thumbnails: as many as fit.
+                readonly property int thumbColumns: Math.max(2, Math.min(6, Math.floor(width / (Kirigami.Units.gridUnit * 7))))
+                property bool mixOpen: currentLook === null
+                property string themeFilter: "all"
+
+                // What's on now, big, with a way to try something new.
+                Section {
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: panel.gap
+                        Preview {
+                            styleKey: panel.app.styleId
+                            themeKey: panel.app.themeId
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 6
+                            Layout.preferredHeight: Kirigami.Units.gridUnit * 4.5
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: Kirigami.Units.smallSpacing
+                            PlasmaComponents.Label {
+                                textFormat: Text.PlainText
+                                text: lookPage.currentLook ? lookPage.currentLook.name : i18n("Your own mix")
+                                color: panel.pText
+                                font.family: panel.pFont || Kirigami.Theme.defaultFont.family
+                                font.pixelSize: Kirigami.Theme.defaultFont.pixelSize * 1.3
+                                font.weight: Font.DemiBold
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+                            Hint {
+                                text: panel.app.nativeStyle ? Palette.STYLES.plasma.hint
+                                    : i18n("%1 style, %2 colors", Palette.STYLES[panel.app.styleId].name, Palette.THEMES[panel.app.themeId].name)
+                            }
+                            SButton {
+                                iconName: "roll"
+                                text: i18n("Surprise me")
+                                tip: i18n("Wear a random style with random colors")
+                                onClicked: {
+                                    var styles = Palette.STYLE_ORDER.filter(function (k) { return k !== "plasma" && k !== panel.app.styleId; });
+                                    var themes = Palette.THEME_ORDER.filter(function (k) { return k !== "plasma" && k !== panel.app.themeId; });
+                                    panel.app.applyLook(styles[Math.floor(Math.random() * styles.length)],
+                                                        themes[Math.floor(Math.random() * themes.length)]);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Section {
                     title: i18n("Ready-made looks")
-                    hint: i18n("One click sets a style and a theme together.")
+                    hint: i18n("One click sets a style and colors that go together.")
                     GridLayout {
                         Layout.fillWidth: true
-                        columns: 2
+                        columns: lookPage.thumbColumns
                         columnSpacing: Kirigami.Units.smallSpacing
                         rowSpacing: Kirigami.Units.smallSpacing
                         Repeater {
                             model: Palette.LOOKS
-                            PreviewCard {
+                            LookThumb {
                                 required property var modelData
                                 text: modelData.name
-                                subtitle: Palette.STYLES[modelData.style].name + " · " + Palette.THEMES[modelData.theme].name
+                                tip: i18n("%1 style, %2 colors", Palette.STYLES[modelData.style].name, Palette.THEMES[modelData.theme].name)
                                 styleKey: modelData.style
                                 themeKey: modelData.theme
                                 checked: panel.app.styleId === modelData.style && panel.app.themeId === modelData.theme
@@ -594,91 +793,144 @@ GlassTile {
                     }
                 }
 
+                // Style and colors picked apart. Folded away while a
+                // ready-made look is on, so the page stays short.
                 Section {
-                    title: i18n("Style")
-                    hint: i18n("Shape and material of the tiles. Works with any theme.")
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 2
-                        columnSpacing: Kirigami.Units.smallSpacing
-                        rowSpacing: Kirigami.Units.smallSpacing
-                        Repeater {
-                            model: Palette.STYLE_ORDER
-                            PreviewCard {
-                                required property string modelData
-                                text: Palette.STYLES[modelData].name
-                                subtitle: Palette.STYLES[modelData].hint
-                                styleKey: modelData
-                                // Each style shown in the colors it would get.
-                                themeKey: Palette.STYLES[modelData].plasmaFrame ? "plasma" : panel.app.themeSetting
-                                checked: panel.app.styleId === modelData
-                                onClicked: Plasmoid.configuration.style = modelData
-                            }
+                    SettingRow {
+                        label: i18n("Mix your own")
+                        hint: i18n("Any style with any colors.")
+                        SButton {
+                            text: lookPage.mixOpen ? i18n("Hide") : i18n("Show")
+                            iconName: lookPage.mixOpen ? "go-up" : "go-down"
+                            onClicked: lookPage.mixOpen = !lookPage.mixOpen
                         }
                     }
-                }
 
-                Section {
-                    title: i18n("Theme")
-                    hint: panel.app.nativeStyle
-                        ? i18n("The Plasma style always uses your system's colors and accent. Pick another style to use a theme.")
-                        : i18n("Colors only. Follow Plasma uses your system's colors and accent.")
-                    GridLayout {
+                    ColumnLayout {
+                        visible: lookPage.mixOpen
                         Layout.fillWidth: true
-                        enabled: !panel.app.nativeStyle
-                        opacity: enabled ? 1 : 0.5
-                        columns: 2
-                        columnSpacing: Kirigami.Units.smallSpacing
-                        rowSpacing: Kirigami.Units.smallSpacing
-                        Repeater {
-                            model: Palette.THEME_ORDER
-                            QQC2.AbstractButton {
-                                id: swatch
-                                required property string modelData
-                                readonly property var th: Palette.THEMES[modelData]
-                                readonly property bool current: panel.app.themeSetting === modelData
-                                Layout.fillWidth: true
-                                Layout.preferredWidth: 1     // equal columns, whatever the names
-                                implicitHeight: Kirigami.Units.gridUnit * 2.2
-                                hoverEnabled: true
-                                onClicked: Plasmoid.configuration.theme = modelData
-                                background: Rectangle {
-                                    radius: panel.pRadius
-                                    color: swatch.th.body || panel.app.plasmaBody
-                                    border.width: swatch.current ? 2 : panel.pBorder
-                                    border.color: swatch.current ? panel.pAccent : panel.tint(swatch.hovered ? 0.45 : 0.15)
+                        Layout.topMargin: Kirigami.Units.smallSpacing
+                        spacing: Kirigami.Units.smallSpacing
+
+                        PlasmaComponents.Label {
+                            textFormat: Text.PlainText
+                            text: i18n("Style")
+                            color: panel.pText
+                            font.family: panel.pFont || Kirigami.Theme.defaultFont.family
+                            font.weight: Font.DemiBold
+                        }
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: lookPage.thumbColumns
+                            columnSpacing: Kirigami.Units.smallSpacing
+                            rowSpacing: Kirigami.Units.smallSpacing
+                            Repeater {
+                                model: Palette.STYLE_ORDER
+                                LookThumb {
+                                    required property string modelData
+                                    text: Palette.STYLES[modelData].name
+                                    tip: Palette.STYLES[modelData].hint
+                                    styleKey: modelData
+                                    // Each style shown in the colors it would get.
+                                    themeKey: Palette.STYLES[modelData].plasmaFrame ? "plasma" : panel.app.themeSetting
+                                    checked: panel.app.styleId === modelData
+                                    onClicked: Plasmoid.configuration.style = modelData
                                 }
-                                contentItem: RowLayout {
-                                    spacing: Kirigami.Units.smallSpacing
-                                    Row {
-                                        Layout.leftMargin: Kirigami.Units.smallSpacing
-                                        spacing: 2
-                                        Repeater {
-                                            model: ["cpu", "gpu", "memory", "processes"]
-                                            Rectangle {
-                                                required property string modelData
-                                                width: Kirigami.Units.gridUnit * 0.55; height: width
-                                                radius: panel.pSharp ? 0 : width / 2
-                                                color: panel.app.accentPair(swatch.modelData, modelData)[0]
+                            }
+                        }
+                        Hint { text: Palette.STYLES[panel.app.styleId].hint }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.topMargin: panel.gap
+                            PlasmaComponents.Label {
+                                textFormat: Text.PlainText
+                                text: i18n("Colors")
+                                color: panel.pText
+                                font.family: panel.pFont || Kirigami.Theme.defaultFont.family
+                                font.weight: Font.DemiBold
+                                Layout.fillWidth: true
+                            }
+                            Segmented {
+                                visible: !panel.app.nativeStyle
+                                options: [
+                                    { value: "all", text: i18n("All") },
+                                    { value: "dark", text: i18n("Dark") },
+                                    { value: "light", text: i18n("Light") }
+                                ]
+                                current: lookPage.themeFilter
+                                onPicked: (v) => lookPage.themeFilter = v
+                            }
+                        }
+                        Hint {
+                            visible: panel.app.nativeStyle
+                            text: i18n("The Plasma style always uses your system's colors and accent. Pick another style to use these.")
+                        }
+                        GridLayout {
+                            Layout.fillWidth: true
+                            enabled: !panel.app.nativeStyle
+                            opacity: enabled ? 1 : 0.5
+                            columns: Math.max(2, lookPage.thumbColumns - 1)
+                            columnSpacing: Kirigami.Units.smallSpacing
+                            rowSpacing: Kirigami.Units.smallSpacing
+                            Repeater {
+                                // Follow Plasma fits both lists: it's light or dark with the system.
+                                model: Palette.THEME_ORDER.filter(function (k) {
+                                    var d = Palette.THEMES[k].dark;
+                                    return lookPage.themeFilter === "all" || d === null
+                                        || d === (lookPage.themeFilter === "dark");
+                                })
+                                QQC2.AbstractButton {
+                                    id: swatch
+                                    required property string modelData
+                                    readonly property var th: Palette.THEMES[modelData]
+                                    readonly property bool current: panel.app.themeSetting === modelData
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 1     // equal columns, whatever the names
+                                    implicitHeight: Kirigami.Units.gridUnit * 2.2
+                                    hoverEnabled: true
+                                    Accessible.name: swatch.th.name
+                                    onClicked: Plasmoid.configuration.theme = modelData
+                                    background: Rectangle {
+                                        radius: panel.pRadius
+                                        color: swatch.th.body || panel.app.plasmaBody
+                                        border.width: swatch.current ? 2 : panel.pBorder
+                                        border.color: swatch.current ? panel.pAccent : panel.tint(swatch.hovered ? 0.45 : 0.15)
+                                    }
+                                    contentItem: RowLayout {
+                                        spacing: Kirigami.Units.smallSpacing
+                                        Row {
+                                            Layout.leftMargin: Kirigami.Units.smallSpacing
+                                            spacing: -Kirigami.Units.gridUnit * 0.15   // overlapping dots, like paint drops
+                                            Repeater {
+                                                model: ["cpu", "gpu", "memory", "processes"]
+                                                Rectangle {
+                                                    required property string modelData
+                                                    width: Kirigami.Units.gridUnit * 0.6; height: width
+                                                    radius: panel.pSharp ? 0 : width / 2
+                                                    color: panel.app.accentPair(swatch.modelData, modelData)[0]
+                                                    border.width: 1
+                                                    border.color: swatch.th.body || panel.app.plasmaBody
+                                                }
                                             }
                                         }
-                                    }
-                                    PlasmaComponents.Label {
-                                        textFormat: Text.PlainText
-                                        text: swatch.th.name
-                                        color: swatch.th.text || panel.app.plasmaText
-                                        font.pointSize: Kirigami.Theme.smallFont.pointSize
-                                        Layout.fillWidth: true
-                                        elide: Text.ElideRight
-                                    }
-                                    Kirigami.Icon {
-                                        opacity: swatch.current ? 1 : 0   // keeps its space, so cards never resize
-                                        source: "checkmark"
-                                        color: swatch.th.text || panel.app.plasmaText
-                                        isMask: true
-                                        Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                                        Layout.preferredHeight: Kirigami.Units.iconSizes.small
-                                        Layout.rightMargin: Kirigami.Units.smallSpacing
+                                        PlasmaComponents.Label {
+                                            textFormat: Text.PlainText
+                                            text: swatch.th.name
+                                            color: swatch.th.text || panel.app.plasmaText
+                                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                        }
+                                        Kirigami.Icon {
+                                            opacity: swatch.current ? 1 : 0   // keeps its space, so cards never resize
+                                            source: "checkmark"
+                                            color: swatch.th.text || panel.app.plasmaText
+                                            isMask: true
+                                            Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                                            Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                            Layout.rightMargin: Kirigami.Units.smallSpacing
+                                        }
                                     }
                                 }
                             }
@@ -1286,6 +1538,23 @@ GlassTile {
                                 tip: i18n("Copy the install command")
                                 onClicked: panel.app.copyToClipboard(modelData.install)
                             }
+                        }
+                    }
+                }
+
+                Section {
+                    title: i18n("Updates")
+                    SettingRow {
+                        label: i18n("Solidget %1", panel.app.version)
+                        hint: panel.app.updateAvailable ? i18n("Version %1 is out: see the top of Settings.", panel.app.latestVersion)
+                            : Plasmoid.configuration.updateCheck ? i18n("You have the latest version.") : ""
+                    }
+                    SettingRow {
+                        label: i18n("Check for new versions")
+                        hint: i18n("Once a day, asks GitHub for the latest version number. Nothing is installed by itself.")
+                        SToggle {
+                            checked: Plasmoid.configuration.updateCheck
+                            onToggled: Plasmoid.configuration.updateCheck = checked
                         }
                     }
                 }

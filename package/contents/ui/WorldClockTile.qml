@@ -78,6 +78,8 @@ GlassTile {
                 }
                 BigNumber {
                     family: tile.numberFamily
+                    figures: tile.figureFamily
+                    weight: tile.figureWeight
                     plain: tile.nativeOn
                     text: cityRow.known ? tile.app.hoursMinutes(cityRow.t) : "–"
                     unit: cityRow.known && tile.twelveHour ? Qt.formatTime(cityRow.t, "AP") : ""

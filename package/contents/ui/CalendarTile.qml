@@ -40,6 +40,11 @@ GlassTile {
     readonly property var todayWeather: app.weather.daily.length ? app.weather.daily[0] : null
     function hm(iso) { return iso ? app.timeText(new Date(iso)) : "–"; }
 
+    // Today's mark, the style's way: "circle", "block", "rounded" (in the
+    // theme's ink, Bento), "outline" (Clear) or "frame" (Plasma).
+    readonly property string todayStyle: look && look.today ? look.today : "circle"
+    readonly property color todayFill: todayStyle === "rounded" || headerStyle === "bar" ? inkColor : accent
+
     title: Qt.locale().standaloneMonthName(today.getMonth()) + " " + today.getFullYear()
     accent: app.accent("calendar")
     accent2: app.accent2("calendar")
@@ -83,20 +88,35 @@ GlassTile {
                     x: (index % 7) * grid.cw
                     y: (Math.floor(index / 7) + 1) * grid.ch
                     width: grid.cw; height: grid.ch
+                    // Pixel: a hard shadow under today's block.
                     Rectangle {
+                        visible: parent.isToday && tile.hardShadowOn
+                        x: todayMark.x + 3; y: todayMark.y + 3
+                        width: todayMark.width; height: todayMark.height
+                        color: Qt.rgba(0, 0, 0, 0.45)
+                    }
+                    Rectangle {
+                        id: todayMark
                         anchors.centerIn: parent
                         visible: parent.isToday
                         width: Math.min(parent.width, parent.height) * 0.9
                         height: width
-                        radius: tile.radius > 0 ? width / 2 : 0
-                        color: tile.accent
+                        radius: tile.todayStyle === "circle" || tile.todayStyle === "outline" ? (tile.radius > 0 ? width / 2 : 0)
+                              : tile.todayStyle === "rounded" ? width * 0.3
+                              : tile.todayStyle === "frame" ? Kirigami.Units.cornerRadius : 0
+                        color: tile.todayStyle === "outline" ? "transparent"
+                             : tile.todayStyle === "frame" ? Qt.rgba(tile.accent.r, tile.accent.g, tile.accent.b, 0.25)
+                             : tile.todayFill
+                        border.width: tile.todayStyle === "outline" ? Math.max(1, width * 0.06) : tile.todayStyle === "frame" ? 1 : 0
+                        border.color: tile.todayStyle === "outline" ? Kirigami.Theme.textColor : tile.accent
                     }
                     PlasmaComponents.Label {
                         textFormat: Text.PlainText
                         anchors.centerIn: parent
                         visible: parent.modelData > 0
                         text: parent.modelData
-                        color: parent.isToday ? (tile.accent.hslLightness > 0.6 ? "#111111" : "#ffffff") : Kirigami.Theme.textColor
+                        color: !parent.isToday || tile.todayStyle === "outline" || tile.todayStyle === "frame" ? Kirigami.Theme.textColor
+                             : tile.todayFill.hslLightness > 0.6 ? "#111111" : "#ffffff"
                         font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
                         font.weight: parent.isToday ? Font.Bold : Font.Normal
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, Math.min(tile.u * 0.95, parent.height * 0.5, parent.width * 0.42))

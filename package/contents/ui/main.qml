@@ -431,6 +431,7 @@ PlasmoidItem {
             writeHistory.push(diskWrite.value);
             root.focusTick();
             root.tick++;
+            if (root.tick >= root.updateDelay && root.tick % 3600 === root.updateDelay % 3600) root.checkForUpdate();
         }
     }
 
@@ -523,6 +524,16 @@ PlasmoidItem {
             tint: th.opaque ? 0 : st.tint, bevel: st.bevel, hardShadow: st.hardShadow,
             fontFamily: st.font === "pixel" && pixelFont.status === FontLoader.Ready ? pixelFont.name : "",
             meter: st.meter, chart: st.chart,
+            // Numbers in the system's fixed-width font (Instrument), and how
+            // heavy the big numbers are (Bento: bold).
+            figureFamily: st.figures === "mono" ? (monoFont.status === FontLoader.Ready ? monoFont.name : Kirigami.Theme.fixedWidthFont.family)
+                        : st.figures === "round" && roundFont.status === FontLoader.Ready ? roundFont.name : "",
+            figureWeight: ({ hairline: Font.Thin, thin: Font.ExtraLight, light: Font.Light, bold: Font.Bold, heavy: Font.ExtraBold })[st.figureWeight] || Font.Light,
+            // The style's recipe for laying tiles out (see palette.js).
+            figures: st.figures || "", ringTiles: st.ringTiles || [],
+            header: st.header || "caps", gauge: st.gauge || "ring", details: st.details || "rows",
+            heatBar: st.heatBar || "thin", controls: st.controls || "round", today: st.today || "circle",
+            spotlight: st.spotlight || ({}),
             // RGB: every tile reads the moving phase from here.
             rgb: th.rgb === true && !nativeStyle, rgbClock: rgbClock,
             edge: !nativeStyle && th.edge ? th.edge : ""
@@ -533,8 +544,15 @@ PlasmoidItem {
     // small to see, so it looks smooth without redrawing more than once a
     // second.
     QtObject { id: rgbClock; property real phase: (root.tick % 120) / 120 }
-    // Bundled pixel font (Silkscreen, SIL OFL; see fonts/OFL.txt).
+    // Bundled fonts (SIL OFL; see fonts/OFL-*.txt): Silkscreen for Pixel,
+    // JetBrains Mono for Instrument's readouts, Manrope for Bento's numbers.
     FontLoader { id: pixelFont; source: "../fonts/Silkscreen-Regular.ttf" }
+    FontLoader { id: monoFont; source: "../fonts/JetBrainsMono-Light.ttf" }
+    FontLoader { source: "../fonts/JetBrainsMono-Regular.ttf" }
+    FontLoader { source: "../fonts/JetBrainsMono-Medium.ttf" }
+    FontLoader { id: roundFont; source: "../fonts/Manrope-ExtraBold.ttf" }
+    FontLoader { source: "../fonts/Manrope-Bold.ttf" }
+    FontLoader { source: "../fonts/Manrope-SemiBold.ttf" }
     readonly property string pixelFontName: pixelFont.status === FontLoader.Ready ? pixelFont.name : ""
     // Plasma's own colors, read here where nothing overrides them.
     readonly property color plasmaText: Kirigami.Theme.textColor
@@ -691,6 +709,39 @@ PlasmoidItem {
     function checkUptimeRecord() {
         if (uptime.value > uptimeRecord + 60) Plasmoid.configuration.uptimeRecord = Math.floor(uptime.value);
     }
+
+    // ---- New versions ------------------------------------------------------------
+    // Once a day, ask GitHub for the latest release's version number. Only a
+    // notice in Settings; nothing is downloaded or installed. Published
+    // releases only, so nobody hears of a version they can't get yet.
+    readonly property string version: Plasmoid.metaData.version || ""
+    readonly property string latestVersion: Plasmoid.configuration.updateLatest
+    readonly property bool updateAvailable: Plasmoid.configuration.updateCheck
+        && Fmt.versionNewer(latestVersion, version)
+    // The desktop shows it until "Later" is picked for this version.
+    readonly property bool updateNotice: updateAvailable && Plasmoid.configuration.updateDismissed !== latestVersion
+    // Installed for everyone (a package, e.g. Copr): the package manager updates it.
+    readonly property bool systemInstall: Qt.resolvedUrl(".").toString().indexOf("file:///usr/") === 0
+    // Wait a random few minutes after start, so PCs don't all ask at once.
+    readonly property int updateDelay: 120 + Math.floor(Math.random() * 480)
+    function checkForUpdate() {
+        var day = Qt.formatDate(new Date(), "yyyy-MM-dd");
+        if (!Plasmoid.configuration.updateCheck || Plasmoid.configuration.updateCheckedDay === day) return;
+        Plasmoid.configuration.updateCheckedDay = day;   // one try a day, even if it fails
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== XMLHttpRequest.DONE || xhr.status !== 200) return;
+            try {
+                var m = /^v?(\d{1,4}\.\d{1,4}\.\d{1,4})$/.exec(String(JSON.parse(xhr.responseText).tag_name || ""));
+                if (m) Plasmoid.configuration.updateLatest = m[1];
+            } catch (e) {}
+        };
+        xhr.open("GET", "https://api.github.com/repos/livlign/solidget/releases/latest");
+        xhr.setRequestHeader("Accept", "application/vnd.github+json");
+        xhr.send();
+    }
+    readonly property string releasesLink: "https://github.com/livlign/solidget/releases/latest"
+    function openReleases() { Qt.openUrlExternally(releasesLink); }
 
     // ---- Desk pet ----------------------------------------------------------------
     // Its needs live here (not in the tile) so they're kept while the tile
@@ -1176,7 +1227,8 @@ PlasmoidItem {
 
         // "Settings" pill, top center: shown on hover, and for a few seconds
         // after loading so it's discoverable. Hidden otherwise to keep the
-        // dashboard clean.
+        // dashboard clean. While a new version waits it says "Update
+        // available", until "Later". Turned off, the news stays in Settings.
         property bool introHint: true
         Timer { interval: 5000; running: true; onTriggered: full.introHint = false }
 
@@ -1189,8 +1241,8 @@ PlasmoidItem {
             visible: root.nativeStyle && Plasmoid.configuration.settingsButton && !root.editing && !root.showSettings && opacity > 0
             opacity: hover.hovered || full.introHint ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration } }
-            icon.name: "configure"
-            text: i18n("Configure…")
+            icon.name: root.updateNotice ? "update-low" : "configure"
+            text: root.updateNotice ? i18n("Update available") : i18n("Configure…")
             onClicked: root.showSettings = true
         }
 
@@ -1232,36 +1284,44 @@ PlasmoidItem {
                 }
                 PlasmaComponents.Label {
                     textFormat: Text.PlainText
-                    text: i18n("Settings")
+                    text: root.updateNotice ? i18n("Update available") : i18n("Settings")
                     color: settingsPill.fg
                     font.family: root.look.fontFamily || Kirigami.Theme.defaultFont.family
                     font.weight: Font.DemiBold
+                }
+                // A new version is out (see the banner in Settings).
+                Rectangle {
+                    visible: root.updateNotice
+                    Layout.preferredWidth: Kirigami.Units.smallSpacing * 2
+                    Layout.preferredHeight: Layout.preferredWidth
+                    radius: root.look.radius === 0 ? 0 : width / 2
+                    color: settingsPill.hovered ? settingsPill.fg : settingsPill.accentColor
                 }
             }
         }
     }
 
-    Component { id: clockTile;     ClockTile     { app: root; look: root.look } }
-    Component { id: specsTile;     SpecsTile     { app: root; look: root.look } }
-    Component { id: cpuTile;       CpuTile       { app: root; look: root.look } }
-    Component { id: gpuTile;       GpuTile       { app: root; look: root.look } }
-    Component { id: memoryTile;    MemoryTile    { app: root; look: root.look } }
-    Component { id: tempsTile;     TempsTile     { app: root; look: root.look } }
-    Component { id: networkTile;   NetworkTile   { app: root; look: root.look } }
-    Component { id: coresTile;     CoresTile     { app: root; look: root.look } }
-    Component { id: processesTile; ProcessesTile { app: root; look: root.look } }
-    Component { id: powerTile;     PowerTile     { app: root; look: root.look } }
-    Component { id: diskTile;      DiskTile      { app: root; look: root.look } }
-    Component { id: petTile;        PetTile        { app: root; look: root.look } }
-    Component { id: photoTile;      PhotoTile      { app: root; look: root.look } }
-    Component { id: mediaTile;      MediaTile      { app: root; look: root.look } }
-    Component { id: calendarTile;   CalendarTile   { app: root; look: root.look } }
-    Component { id: quoteTile;      QuoteTile      { app: root; look: root.look } }
-    Component { id: noteTile;       NoteTile       { app: root; look: root.look } }
-    Component { id: worldclockTile; WorldClockTile { app: root; look: root.look } }
-    Component { id: focusTile;      FocusTile      { app: root; look: root.look } }
-    Component { id: batteryTile;   BatteryTile   { app: root; look: root.look } }
-    Component { id: uptimeTile;     UptimeTile     { app: root; look: root.look } }
-    Component { id: bluetoothTile;  BluetoothTile  { app: root; look: root.look } }
-    Component { id: healthTile;     HealthTile     { app: root; look: root.look } }
+    Component { id: clockTile;     ClockTile     { tileId: "clock"; app: root; look: root.look } }
+    Component { id: specsTile;     SpecsTile     { tileId: "specs"; app: root; look: root.look } }
+    Component { id: cpuTile;       CpuTile       { tileId: "cpu"; app: root; look: root.look } }
+    Component { id: gpuTile;       GpuTile       { tileId: "gpu"; app: root; look: root.look } }
+    Component { id: memoryTile;    MemoryTile    { tileId: "memory"; app: root; look: root.look } }
+    Component { id: tempsTile;     TempsTile     { tileId: "temps"; app: root; look: root.look } }
+    Component { id: networkTile;   NetworkTile   { tileId: "network"; app: root; look: root.look } }
+    Component { id: coresTile;     CoresTile     { tileId: "cores"; app: root; look: root.look } }
+    Component { id: processesTile; ProcessesTile { tileId: "processes"; app: root; look: root.look } }
+    Component { id: powerTile;     PowerTile     { tileId: "power"; app: root; look: root.look } }
+    Component { id: diskTile;      DiskTile      { tileId: "disk"; app: root; look: root.look } }
+    Component { id: petTile;        PetTile        { tileId: "pet"; app: root; look: root.look } }
+    Component { id: photoTile;      PhotoTile      { tileId: "photo"; app: root; look: root.look } }
+    Component { id: mediaTile;      MediaTile      { tileId: "media"; app: root; look: root.look } }
+    Component { id: calendarTile;   CalendarTile   { tileId: "calendar"; app: root; look: root.look } }
+    Component { id: quoteTile;      QuoteTile      { tileId: "quote"; app: root; look: root.look } }
+    Component { id: noteTile;       NoteTile       { tileId: "note"; app: root; look: root.look } }
+    Component { id: worldclockTile; WorldClockTile { tileId: "worldclock"; app: root; look: root.look } }
+    Component { id: focusTile;      FocusTile      { tileId: "focus"; app: root; look: root.look } }
+    Component { id: batteryTile;   BatteryTile   { tileId: "battery"; app: root; look: root.look } }
+    Component { id: uptimeTile;     UptimeTile     { tileId: "uptime"; app: root; look: root.look } }
+    Component { id: bluetoothTile;  BluetoothTile  { tileId: "bluetooth"; app: root; look: root.look } }
+    Component { id: healthTile;     HealthTile     { tileId: "health"; app: root; look: root.look } }
 }

@@ -71,3 +71,14 @@ function uptimeParts(seconds) {
     return { d: Math.floor(seconds / 86400), h: Math.floor(seconds % 86400 / 3600),
              m: Math.floor(seconds % 3600 / 60), s: seconds % 60 };
 }
+
+// Is version a ("1.2.10") newer than b ("1.2.9")? Anything malformed: no.
+function versionNewer(a, b) {
+    var re = /^\d+\.\d+\.\d+$/;
+    if (!re.test(a || "") || !re.test(b || "")) return false;
+    var x = a.split("."), y = b.split(".");
+    for (var i = 0; i < 3; i++) {
+        if (+x[i] !== +y[i]) return +x[i] > +y[i];
+    }
+    return false;
+}

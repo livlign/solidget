@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 import "../code/palette.js" as Palette
 
@@ -44,8 +45,84 @@ GlassTile {
     // 1.7 units tall (label, gap, bar) with 0.5 between rows.
     readonly property real barU: Math.min(u, (grid.height + 1) / Math.max(1, sources.length * 2.2 - 0.5))
 
+    // Pixel: a row of little thermometers instead of bars.
+    readonly property bool thermometers: look && look.heatBar === "segments"
+
+    Row {
+        visible: tile.thermometers
+        anchors.fill: parent
+        readonly property int count: Math.max(1, tile.sources.length)
+        readonly property real colW: width / count
+        Repeater {
+            model: tile.thermometers ? tile.sources.length : 0
+            Item {
+                id: thermo
+                required property int index
+                readonly property var source: tile.sources[index] || { label: "", value: 0 }
+                readonly property real frac: Math.max(0, Math.min(1, source.value / 100))
+                readonly property color hot: app.tempColor(source.value)
+                readonly property real cell: Math.max(3, Math.min(tile.u * 0.55, (height - tile.u * 4.2) / 13))
+                width: parent.colW
+                height: parent.height
+                Column {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    spacing: Math.max(2, tile.u * 0.2)
+                    PlasmaComponents.Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        textFormat: Text.PlainText
+                        text: app.tempText(thermo.source.value)
+                        color: thermo.hot
+                        font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
+                        font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.75)
+                    }
+                    // The tube: ten cells, lit from the bottom.
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: thermo.cell + 6
+                        height: thermo.cell * 10 + 2 * 9 + 6
+                        color: Qt.rgba(0, 0, 0, 0.35)
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 2
+                            Repeater {
+                                model: 10
+                                Rectangle {
+                                    required property int index
+                                    readonly property int level: 9 - index
+                                    width: thermo.cell; height: thermo.cell
+                                    color: level < Math.round(thermo.frac * 10)
+                                        ? Qt.tint(app.heat(0), Qt.rgba(thermo.hot.r, thermo.hot.g, thermo.hot.b, level / 9))
+                                        : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.08)
+                                }
+                            }
+                        }
+                    }
+                    // The bulb.
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: thermo.cell * 2.2; height: width
+                        color: thermo.hot
+                        border.width: 3
+                        border.color: Qt.rgba(0, 0, 0, 0.35)
+                    }
+                    PlasmaComponents.Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: Math.min(implicitWidth, thermo.width)
+                        textFormat: Text.PlainText
+                        text: thermo.source.label
+                        opacity: 0.6
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.7)
+                    }
+                }
+            }
+        }
+    }
+
     GridLayout {
         id: grid
+        visible: !tile.thermometers
         anchors.fill: parent
         columns: tile.wide ? 2 : 1
         columnSpacing: tile.u
@@ -53,6 +130,8 @@ GlassTile {
 
         BigNumber {
                 family: tile.numberFamily
+                figures: tile.figureFamily
+                weight: tile.figureWeight
                 plain: tile.nativeOn
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
             value: app.tempValue(tile.hottest)
@@ -85,6 +164,7 @@ GlassTile {
                     hotColor: app.tempColor(source.value)
                     coolColor: app.heat(0)
                     square: tile.radius === 0
+                    kind: tile.look && tile.look.heatBar ? tile.look.heatBar : "thin"
                 }
             }
         }

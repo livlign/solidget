@@ -20,7 +20,7 @@ function test(name, fn) {
 }
 
 // ---- format.js -------------------------------------------------------------
-const F = load("format.js", ["bytes", "rate", "temp", "toFahrenheit", "driveSize", "percent", "ghz", "uptime", "uptimeClock", "uptimeParts"]);
+const F = load("format.js", ["bytes", "rate", "temp", "toFahrenheit", "driveSize", "percent", "ghz", "uptime", "uptimeClock", "uptimeParts", "versionNewer"]);
 
 test("bytes: binary and decimal units", () => {
     assert.strictEqual(F.bytes(0), "0 B");
@@ -35,6 +35,16 @@ test("rate: bytes per second or bits", () => {
     assert.strictEqual(F.rate(2048), "2.0 KiB/s");
     assert.strictEqual(F.rate(125000, true, true), "1.0 Mbps");
     assert.strictEqual(F.rate(100, false, true), "800 bps");
+});
+test("versionNewer: compares numbers, not text; malformed is never newer", () => {
+    assert.strictEqual(F.versionNewer("0.8.2", "0.8.1"), true);
+    assert.strictEqual(F.versionNewer("0.8.10", "0.8.9"), true);
+    assert.strictEqual(F.versionNewer("1.0.0", "0.9.9"), true);
+    assert.strictEqual(F.versionNewer("0.8.1", "0.8.1"), false);
+    assert.strictEqual(F.versionNewer("0.8.0", "0.8.1"), false);
+    assert.strictEqual(F.versionNewer("", "0.8.1"), false);
+    assert.strictEqual(F.versionNewer("0.9.0", ""), false);
+    assert.strictEqual(F.versionNewer("v0.9.0", "0.8.1"), false);
 });
 test("temp: Celsius and Fahrenheit, empty when unknown", () => {
     assert.strictEqual(F.temp(63.4), "63°C");

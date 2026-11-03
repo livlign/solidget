@@ -60,31 +60,71 @@ function tempLevel(c) {
 
 // ---- Styles: shape and material (no colors) --------------------------------
 // radius is in grid units; bodyAlpha null = the theme's default opacity.
+// tint: how much of the tile's own color tints its card (0..1).
+// font: "" = system, "pixel" = bundled Silkscreen (numbers and titles).
+// figures: a bundled font for numbers and titles: "mono" (JetBrains Mono)
+// or "round" (Manrope).
+// figureWeight: big numbers "hairline", "thin", "light", "bold" or "heavy".
+//
+// Each style is also a recipe for how tiles lay themselves out:
+//   header:  "native" (Plasma), "caps" (spaced capitals), "rule" (capitals over
+//            a dashed line), "plain" (bold beside a color chip), "bar" (a thick
+//            ink rule on top of the card), "quiet" (small, no mark)
+//   gauge:   CPU/GPU/Memory/Disk: "ring" (a dial) or "bar" / "hp" (a big
+//            number over a bar; "hp" = segmented like a game's health bar)
+//   meter:   the dial: "ring", "thick", "hairline", "ticks" or "blocks"
+//   chart:   "line", "area", "grid", "columns", "rounded" or "bars" (Pixel)
+//   details: label/value rows: "rows", "ruled", "readout" (dotted leader),
+//            "chips" (rounded tags) or "caps"
+//   heatBar: temperature bars: "thin", "glow", "square", "hairline",
+//            "needle", "pill" or "segments"
+//   controls: media buttons: "native", "round", "keys", "squircle", "outline"
+//   today:   the calendar's today: "frame", "circle", "block", "rounded", "outline"
+//   spotlight: tiles drawn apart from the rest, by tile id: "ink" (inverted),
+//            "fill" (solid tile color), "bare" (no card), "art" (over the
+//            blurred album art), "pixelart" (cover redrawn in big pixels)
 var STYLES = {
     // native: draw the card with the Plasma Style's own SVG and take every
     // color from the system (accent for meters, semantic colors for heat).
-    plasma: { name: "Plasma", hint: "Matches your Plasma Style and colors", plasmaFrame: true,
+    plasma: { name: "Plasma", hint: "Matches your Plasma Style and colors, like KDE's own widgets", plasmaFrame: true,
               radius: 0.3, bodyAlpha: 1.0, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
-              border: 0, highlight: false, roundCaps: false, font: "", meter: "ring", chart: "line" },
-    // tint: how much of the tile's own color tints its card (0..1).
-    // font: "" = system, "pixel" = bundled Silkscreen (numbers and titles).
-    // meter: "ring" or "blocks"; chart: "line" or "bars".
+              border: 0, highlight: false, roundCaps: true, font: "", figureWeight: "light",
+              header: "native", gauge: "bar", meter: "ring", chart: "area", details: "rows", heatBar: "thin",
+              controls: "native", today: "frame", spotlight: {} },
     glass: { name: "Glass", hint: "Frosted cards with soft glows",
              radius: 1.2, bodyAlpha: null, tint: 0, glow: true, shadow: true, hardShadow: false, bevel: false,
-             border: 1, highlight: true, roundCaps: true, font: "", meter: "ring", chart: "line" },
-    flat:  { name: "Flat", hint: "Sharp, solid tiles in their own colors, no effects",
+             border: 1, highlight: true, roundCaps: true, font: "", figureWeight: "thin",
+             header: "caps", gauge: "ring", meter: "ring", chart: "area", details: "rows", heatBar: "glow",
+             controls: "round", today: "circle", spotlight: { media: "art" } },
+    flat:  { name: "Flat", hint: "A printed poster: solid tiles, huge bold numbers, square bars",
              radius: 0, bodyAlpha: 0.97, tint: 0.2, glow: false, shadow: false, hardShadow: false, bevel: false,
-             border: 0, highlight: false, roundCaps: false, font: "", meter: "ring", chart: "line" },
-    clear: { name: "Clear", hint: "Barely-there cards that let the wallpaper through",
+             border: 0, highlight: false, roundCaps: false, font: "", figureWeight: "bold",
+             header: "bar", gauge: "bar", meter: "ring", chart: "columns", details: "ruled", heatBar: "square",
+             controls: "keys", today: "block", spotlight: { media: "ink" } },
+    clear: { name: "Clear", hint: "Barely-there panes; the clock sits right on your wallpaper",
              // Light themes put dark text on the card, so it must stay fairly
              // opaque to stay readable over dark wallpapers.
              radius: 1.5, bodyAlpha: { dark: 0.32, light: 0.62 }, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
-             border: 1, highlight: true, roundCaps: true, font: "", meter: "ring", chart: "line" },
-    pixel: { name: "Pixel", hint: "Chunky blocks, bevels and a pixel font, like a voxel game",
+             border: 1, highlight: true, roundCaps: true, font: "", figureWeight: "hairline",
+             header: "quiet", gauge: "ring", meter: "hairline", chart: "line", details: "rows", heatBar: "hairline",
+             controls: "outline", today: "outline", spotlight: { clock: "bare" } },
+    pixel: { name: "Pixel", hint: "A game HUD: chunky blocks, health bars and a pixel font",
              radius: 0, bodyAlpha: 1.0, tint: 0.12, glow: false, shadow: false, hardShadow: true, bevel: true,
-             border: 0, highlight: false, roundCaps: false, font: "pixel", meter: "blocks", chart: "bars" }
+             border: 0, highlight: false, roundCaps: false, font: "pixel", figureWeight: "light",
+             header: "caps", gauge: "hp", meter: "blocks", chart: "bars", details: "caps", heatBar: "segments",
+             controls: "keys", today: "block", spotlight: { media: "pixelart" } },
+    instrument: { name: "Instrument", hint: "Hairline panels, monospaced readouts and tick-mark dials, like test gear",
+             radius: 0.3, bodyAlpha: 1.0, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
+             border: 1, highlight: false, roundCaps: false, font: "", figures: "mono", figureWeight: "light",
+             header: "rule", gauge: "ring", meter: "ticks", chart: "grid", details: "readout", heatBar: "needle",
+             controls: "keys", today: "block", spotlight: {} },
+    bento: { name: "Bento", hint: "Soft, rounded pastel cards with big bold numbers",
+             radius: 1.9, bodyAlpha: 1.0, tint: 0.16, glow: false, shadow: true, hardShadow: false, bevel: false,
+             border: 0, highlight: false, roundCaps: true, font: "", figures: "round", figureWeight: "heavy",
+             header: "plain", gauge: "bar", ringTiles: ["gpu", "disk"], meter: "thick", chart: "rounded", details: "chips", heatBar: "pill",
+             controls: "squircle", today: "rounded", spotlight: { clock: "ink", power: "fill" } }
 };
-var STYLE_ORDER = ["plasma", "glass", "flat", "clear", "pixel"];
+var STYLE_ORDER = ["plasma", "glass", "flat", "clear", "pixel", "instrument", "bento"];
 
 // ---- Themes: colors only ------------------------------------------------------
 // body/text null = follow Plasma. palette = six hues the tiles draw from;
@@ -117,9 +157,16 @@ var THEMES = {
     midnight:  { name: "Midnight",      dark: true,  body: "#0d1117", text: "#e6edf3", opaque: true, edge: "#262d38",
                  palette: ["#60a5fa", "#34d399", "#f472b6", "#fbbf24", "#a78bfa", "#22d3ee"] },
     rgb:       { name: "RGB",           dark: true,  body: "#07070b", text: "#f5f7fa", opaque: true, rgb: true,
-                 palette: ["#00e5ff", "#22ff88", "#ff2d95", "#ffcc00", "#a855f7", "#ff7a00"] }
+                 palette: ["#00e5ff", "#22ff88", "#ff2d95", "#ffcc00", "#a855f7", "#ff7a00"] },
+    // Amber readouts on graphite, like a lab meter; cool blue only for a
+    // second trace (upload, a tile's second color).
+    graphite:  { name: "Graphite Amber", dark: true, body: "#111418", text: "#e6e9ed", opaque: true, edge: "#262b33",
+                 palette: ["#ffb547", "#e9c891", "#ffa05c", "#7dd3fc", "#f2d39b", "#c9d1db"] },
+    // Clear inks on white; the Bento style tints each card to a pastel.
+    oat:       { name: "Oat Milk",      dark: false, body: "#fffdf9", text: "#2b2622",
+                 palette: ["#3b5bdb", "#0c8599", "#7048e8", "#d6336c", "#e8590c", "#b08900"] }
 };
-var THEME_ORDER = ["plasma", "aurora", "glacier", "sandstone", "ember", "lagoon", "plum", "moss", "ink", "lotus", "snow", "midnight", "rgb"];
+var THEME_ORDER = ["plasma", "aurora", "glacier", "sandstone", "ember", "lagoon", "plum", "moss", "ink", "lotus", "snow", "midnight", "rgb", "graphite", "oat"];
 
 // Which palette hue each tile uses (its second color is two steps along).
 var TILE_HUE = { cpu: 0, gpu: 1, memory: 2, network: 0, disk: 3, battery: 1, clock: 5,
@@ -195,7 +242,9 @@ var LOOKS = [
     { name: "Reef",           style: "flat",  theme: "lagoon" },
     { name: "Daylight",       style: "flat",  theme: "snow" },
     { name: "Midnight",       style: "flat",  theme: "midnight" },
-    { name: "RGB Rig",        style: "glass", theme: "rgb" }
+    { name: "RGB Rig",        style: "glass", theme: "rgb" },
+    { name: "Instrument Panel", style: "instrument", theme: "graphite" },
+    { name: "Soft Bento",     style: "bento", theme: "oat" }
 ];
 
 // ---- Native (Plasma style) colors ---------------------------------------------

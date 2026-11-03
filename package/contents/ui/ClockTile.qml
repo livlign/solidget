@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
@@ -47,10 +48,28 @@ GlassTile {
 
     function temp(v) { return isNaN(v) ? "–" : Math.round(v) + "°"; }
 
+    // Bento: the weather sits in its own colored card inside the ink clock.
+    readonly property bool weatherInset: spot === "ink" && side
+    // Instrument: the seconds, small, in the tile's color.
+    readonly property bool showSeconds: monoFigures && !nativeOn
+    // Glass: gradient digits.
+    readonly property bool gradientDigits: glowOn && headerStyle === "caps" && !numberFamily && !nativeOn
+
     Item {
         id: area
         anchors.fill: parent
         clip: true
+        // Clear: no card under the clock, so a soft shadow keeps it readable
+        // on any wallpaper.
+        layer.enabled: tile.cardless
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: tile.dark ? "#000000" : "#ffffff"
+            shadowBlur: 0.6
+            shadowOpacity: 0.55
+            shadowVerticalOffset: 0
+            shadowHorizontalOffset: 0
+        }
 
         // ---- Time + date -------------------------------------------------
         ColumnLayout {
@@ -63,21 +82,74 @@ GlassTile {
             Item { Layout.fillHeight: true }
             Row {
                 spacing: tile.u * 0.3
+                // Glass: the digits are a soft gradient, drawn by masking a
+                // gradient with the text.
+                Item {
+                    id: timeWrap
+                    implicitWidth: time.implicitWidth
+                    implicitHeight: time.implicitHeight
+                    baselineOffset: time.baselineOffset
+                    PlasmaComponents.Label {
+                        id: time
+                        // Pixel: a hard drop shadow under the digits.
+                        PlasmaComponents.Label {
+                            visible: tile.hardShadowOn
+                            z: -1
+                            x: Math.round(time.px * 0.06); y: x
+                            text: time.text
+                            textFormat: Text.PlainText
+                            font: time.font
+                            color: Qt.darker(tile.accent, 2.4)
+                        }
+                        textFormat: Text.PlainText
+                        readonly property real px: Math.max(Kirigami.Units.gridUnit,
+                            Math.min(timeBlock.height * 0.56, timeBlock.width / (tile.hhmm.length * 0.62 + (tile.ampm ? 1 : 0))))
+                        text: tile.hhmm
+                        font.family: tile.numberFamily || tile.figureFamily || Kirigami.Theme.defaultFont.family
+                        font.pixelSize: px
+                        font.weight: tile.numberFamily || tile.nativeOn ? Font.Normal
+                                   : tile.figureWeight > Font.Normal ? tile.figureWeight : Math.min(tile.figureWeight, Font.ExtraLight)
+                        // Fixed-width digits give the colon a whole digit's room: pull them in.
+                        font.letterSpacing: tile.nativeOn ? 0 : -px * (tile.monoFigures ? 0.1 : 0.04)
+                        font.features: { "tnum": 1 }
+                    }
+                    ShaderEffectSource {
+                        id: timeMask
+                        anchors.fill: time
+                        sourceItem: time
+                        hideSource: tile.gradientDigits
+                        visible: false
+                    }
+                    Rectangle {
+                        anchors.fill: time
+                        visible: tile.gradientDigits
+                        gradient: Gradient {
+                            GradientStop { position: 0.25; color: Kirigami.Theme.textColor }
+                            GradientStop { position: 1; color: Qt.tint(Kirigami.Theme.textColor, Qt.rgba(tile.accent.r, tile.accent.g, tile.accent.b, 0.6)) }
+                        }
+                        layer.enabled: visible
+                        layer.effect: MultiEffect {
+                            maskEnabled: true
+                            maskSource: timeMask
+                            maskThresholdMin: 0.5
+                            maskSpreadAtMin: 1
+                        }
+                    }
+                }
                 PlasmaComponents.Label {
-                    id: time
                     textFormat: Text.PlainText
-                    readonly property real px: Math.max(Kirigami.Units.gridUnit,
-                        Math.min(timeBlock.height * 0.56, timeBlock.width / (tile.hhmm.length * 0.62 + (tile.ampm ? 1 : 0))))
-                    text: tile.hhmm
-                    font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
-                    font.pixelSize: px
-                    font.weight: tile.numberFamily || tile.nativeOn ? Font.Normal : Font.ExtraLight
-                    font.letterSpacing: tile.nativeOn ? 0 : -px * 0.04
+                    anchors.baseline: timeWrap.baseline
+                    visible: tile.showSeconds
+                    text: Qt.formatTime(tile.now, "ss")
+                    color: app.accent("cpu")      // the theme's lead color
+                    font.family: time.font.family
+                    font.weight: time.font.weight
+                    font.pixelSize: time.px * 0.36
                     font.features: { "tnum": 1 }
                 }
                 PlasmaComponents.Label {
                     textFormat: Text.PlainText
-                    anchors.baseline: time.baseline
+                    anchors.baseline: timeWrap.baseline
                     text: tile.ampm
                     visible: text !== ""
                     opacity: 0.6
@@ -96,13 +168,26 @@ GlassTile {
         }
 
         // ---- Current weather: beside the clock -----------------------------
-        RowLayout {
-            visible: tile.side
+        Rectangle {
+            visible: tile.weatherInset
             anchors.right: parent.right
             y: 0
             height: tile.topH
             width: tile.weatherW
+            radius: tile.radius * 0.75
+            color: tile.accent
+        }
+        RowLayout {
+            visible: tile.side
+            anchors.right: parent.right
+            anchors.rightMargin: tile.weatherInset ? tile.u * 0.8 : 0
+            y: 0
+            height: tile.topH
+            width: tile.weatherW - (tile.weatherInset ? tile.u * 1.6 : 0)
             spacing: tile.u * 0.6
+            // On the colored inset card, text in near-black or white.
+            Kirigami.Theme.inherit: !tile.weatherInset
+            Kirigami.Theme.textColor: tile.accent.hslLightness > 0.55 ? "#1d1a17" : "#ffffff"
 
             Kirigami.Icon {
                 source: tile.w.icon
@@ -116,6 +201,8 @@ GlassTile {
                 spacing: 0
                 BigNumber {
                 family: tile.numberFamily
+                figures: tile.figureFamily
+                weight: tile.figureWeight
                 plain: tile.nativeOn
                     text: tile.temp(tile.w.temp)
                     unit: tile.w.fahrenheit ? "F" : "C"
