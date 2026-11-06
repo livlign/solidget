@@ -20,7 +20,10 @@ Rectangle {
     implicitHeight: Math.max(Kirigami.Units.gridUnit * 1.2, u * 1.45)
     radius: square ? 0 : height / 2
     // A light wash on any card: white on pastel, ink on dark.
-    color: Kirigami.Theme.backgroundColor.hslLightness > 0.5 ? Qt.rgba(1, 1, 1, 0.7) : Qt.rgba(ink.r, ink.g, ink.b, 0.1)
+    // White on a tinted light card; on a card that's already near-white
+    // (Bento's system tiles) white would vanish, so a soft shade instead.
+    color: Kirigami.Theme.backgroundColor.hslLightness > 0.93 ? Qt.rgba(ink.r, ink.g, ink.b, 0.06)
+         : Kirigami.Theme.backgroundColor.hslLightness > 0.5 ? Qt.rgba(1, 1, 1, 0.7) : Qt.rgba(ink.r, ink.g, ink.b, 0.1)
 
     RowLayout {
         id: chipRow

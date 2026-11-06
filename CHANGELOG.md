@@ -1,5 +1,24 @@
 # What's new
 
+## 0.10.5
+
+- **A calmer Soft Bento.** Cards are colored by what they're for: one tint
+  for your day (clock, Now playing), one for your notes and quotes, and
+  system readings on the plain card. Power & fans fills with color only
+  when it draws a lot.
+- **One shape, one size.** In Bento, CPU, GPU, Memory and Storage all show
+  a big number over a bar. In every look, titles and main numbers are the
+  same size from tile to tile, and the number sits at the top.
+- **Charts and cores in Bento.** History is a smooth line with a dot on
+  the newest reading. Each core fills from the bottom with its load.
+- **Cleaner rings.** A low reading is a short, even arc in one color, not
+  a two-colored blob.
+- **Flat's Now playing** is an ordinary card, not an inverted slab.
+- **The clock's weather fits.** "Thunderstorm" and "Feels 30°" no longer
+  get cut off beside the clock, and Bento's weather card keeps its icon
+  and matches the clock card.
+- **Retro Terminal's** titles and note hint fit their tiles.
+
 ## 0.10.4
 
 - **Now playing, Instrument Panel style.** It reads like the rest of the

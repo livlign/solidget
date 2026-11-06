@@ -57,7 +57,7 @@ GlassTile {
                 id: big
                 value: tile.watts
                 unit: "W"
-                size: Math.min(tile.u * 3.4, tile.height * 0.3)
+                size: Math.min(tile.figureSize, tile.height * 0.3)
             }
         }
 
@@ -113,7 +113,16 @@ GlassTile {
                     QtObject { id: rpm; property real value: 0 }
                     Connections { target: app; function onTickChanged() { rpm.value = rpmSensor.value || 0; } }
 
+                    // Bento: a chip, like every other tile's details.
+                    DetailChip {
+                        visible: tile.detailStyle === "chips"
+                        u: tile.u
+                        label: fanRow.modelData.label
+                        value: rpm.value > 0 ? Math.round(rpm.value) + " RPM" : i18n("Idle")
+                        square: tile.radius === 0
+                    }
                     FanIcon {
+                        visible: tile.detailStyle !== "chips"
                         id: fanIcon
                         rpm: rpm.value || 0
                         color: tile.accent
@@ -121,6 +130,7 @@ GlassTile {
                         Layout.preferredHeight: Layout.preferredWidth
                     }
                     PlasmaComponents.Label {
+                        visible: tile.detailStyle !== "chips"
                         textFormat: Text.PlainText
                         text: fanRow.modelData.label
                         opacity: 0.6
@@ -129,6 +139,7 @@ GlassTile {
                         elide: Text.ElideRight
                     }
                     PlasmaComponents.Label {
+                        visible: tile.detailStyle !== "chips"
                         textFormat: Text.PlainText
                         text: rpm.value > 0 ? Math.round(rpm.value) + " RPM" : i18n("Idle")
                         font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.85)

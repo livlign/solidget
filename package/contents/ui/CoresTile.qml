@@ -24,6 +24,9 @@ GlassTile {
         return best;
     }
     readonly property int rows: Math.max(1, Math.ceil(count / cols))
+    // Bento: each cell a little jar that fills from the bottom with its
+    // load, in the tile's color; elsewhere a heat-colored glow.
+    readonly property bool jars: detailStyle === "chips"
 
     title: i18n("Cores")
     subtitle: count ? i18n("%1 threads", count) : ""
@@ -59,6 +62,17 @@ GlassTile {
                     updateRateLimit: 1000
                 }
                 Rectangle {
+                    visible: tile.jars
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    height: parent.height * Math.min(1, cell.load / 100)
+                    radius: Math.min(parent.radius, height / 2)
+                    color: tile.accent
+                    opacity: 0.85
+                    Behavior on height { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
+                }
+                Rectangle {
+                    visible: !tile.jars
                     anchors.fill: parent
                     radius: parent.radius
                     id: fill
@@ -77,7 +91,8 @@ GlassTile {
                     font.features: { "tnum": 1 }
                     // On a strong fill, pick dark or light text by how bright the fill is
                     // (Ink & Paper fills busy cores near-black).
-                    color: cell.load <= 55 ? Kirigami.Theme.textColor : fill.color.hslLightness > 0.5 ? "#0b1020" : "#ffffff"
+                    color: tile.jars ? (cell.load < 50 ? Kirigami.Theme.textColor : Palette.inkOn(Qt.rgba(tile.accent.r, tile.accent.g, tile.accent.b, 1).toString()))
+                         : cell.load <= 55 ? Kirigami.Theme.textColor : fill.color.hslLightness > 0.5 ? "#0b1020" : "#ffffff"
                     opacity: 0.85
                 }
             }

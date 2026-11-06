@@ -54,6 +54,8 @@ GlassTile {
                 text: i18n("Click to write a note…")
                 opacity: 0.45
                 font: edit.font
+                width: edit.width
+                wrapMode: Text.WordWrap
             }
         }
     }

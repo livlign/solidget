@@ -52,7 +52,9 @@ GlassTile {
     readonly property bool weatherInset: spot === "inset" && side
     // Text on that card: near-black on a bright color, white otherwise
     // (by how bright the color looks, not its lightness: purple is dark).
-    readonly property color insetText: Palette.inkOn(Qt.rgba(accent.r, accent.g, accent.b, 1).toString())
+    // A deeper shade of the card's own tint, so the two read as one piece.
+    readonly property color insetColor: Qt.tint(baseColor, Qt.rgba(tintColor.r, tintColor.g, tintColor.b, dark ? 0.45 : 0.4))
+    readonly property color insetText: Palette.inkOn(Qt.rgba(insetColor.r, insetColor.g, insetColor.b, 1).toString())
     // Instrument: the seconds, small, in the tile's color.
     readonly property bool showSeconds: monoFigures && !nativeOn
     // Glass: gradient digits.
@@ -183,7 +185,9 @@ GlassTile {
             height: tile.topH
             width: tile.weatherW
             radius: tile.radius * 0.75
-            color: tile.accent
+            // A soft tint of the clock's color, not the color itself: a
+            // pastel inside a pastel card (dark gold read as mustard).
+            color: tile.insetColor
             Kirigami.Theme.inherit: false
             Kirigami.Theme.textColor: tile.insetText
 
@@ -192,12 +196,14 @@ GlassTile {
                 anchors.fill: parent
                 anchors.margins: tile.u * 0.8
                 spacing: 0
-                // The icon steps aside when the words need its room.
+                // The icon shrinks to the room the words leave it, and steps
+                // aside only when that's too small to read.
                 Kirigami.Icon {
                     source: tile.w.icon
-                    visible: insetCol.height - insetTemp.implicitHeight - insetWords.implicitHeight
-                             - (insetFeels.visible ? insetFeels.implicitHeight : 0) >= Layout.preferredWidth + tile.u * 0.3
-                    Layout.preferredWidth: Math.min(tile.u * 2.6, parent.height * 0.32)
+                    readonly property real room: insetCol.height - insetTemp.implicitHeight - insetWords.implicitHeight
+                             - (insetFeels.visible ? insetFeels.implicitHeight : 0) - tile.u * 0.2
+                    visible: room >= Kirigami.Units.iconSizes.small
+                    Layout.preferredWidth: Math.max(Kirigami.Units.iconSizes.small, Math.min(tile.u * 2.6, parent.height * 0.32, room))
                     Layout.preferredHeight: Layout.preferredWidth
                 }
                 Item { Layout.fillHeight: true }
@@ -267,6 +273,7 @@ GlassTile {
                 Layout.alignment: Qt.AlignVCenter
             }
             ColumnLayout {
+                id: sideWords
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 spacing: 0
@@ -279,17 +286,27 @@ GlassTile {
                     unit: tile.w.fahrenheit ? "F" : "C"
                     size: tile.weatherTempSize
                 }
+                // The words fit the column: a long one ("Thunderstorm") gets a
+                // little smaller rather than cut to "Thundersto…".
                 PlasmaComponents.Label {
+                    id: sideSummary
                     textFormat: Text.PlainText
                     text: tile.w.summary
-                    font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, Math.min(tile.u * 0.9, tile.weatherTempSize * 0.32))
+                    readonly property real nominal: Math.max(Kirigami.Theme.smallFont.pixelSize, Math.min(tile.u * 0.9, tile.weatherTempSize * 0.32))
+                    font.pixelSize: Math.floor(Math.max(Kirigami.Theme.smallFont.pixelSize * 0.85,
+                        Math.min(nominal, nominal * sideWords.width * 0.96 / Math.max(1, summaryMetrics.advanceWidth))))
                     Layout.fillWidth: true
                     elide: Text.ElideRight
+                    TextMetrics { id: summaryMetrics; font.family: sideSummary.font.family; font.pixelSize: sideSummary.nominal; text: tile.w.summary }
                 }
+                // "Feels 30° · 98%", or just "Feels 30°" when that's all that fits.
                 PlasmaComponents.Label {
+                    id: sideFeels
                     textFormat: Text.PlainText
                     visible: tile.topH > tile.u * 5.5
-                    text: i18n("Feels %1 · %2%", tile.temp(tile.w.feelsLike), tile.w.humidity)
+                    readonly property string full: i18n("Feels %1 · %2%", tile.temp(tile.w.feelsLike), tile.w.humidity)
+                    text: feelsMetrics.advanceWidth <= sideWords.width ? full : i18n("Feels %1", tile.temp(tile.w.feelsLike))
+                    TextMetrics { id: feelsMetrics; font: sideFeels.font; text: sideFeels.full }
                     opacity: 0.6
                     font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, Math.min(tile.u * 0.72, tile.weatherTempSize * 0.27))
                     Layout.fillWidth: true

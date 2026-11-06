@@ -44,7 +44,11 @@ GlassTile {
     // Bar unit: tile.u, shrunk so every row fits the height. A row is about
     // 2 units tall (a label line of 1.25, a 0.25 gap, a bar up to 0.5) with
     // 0.5 between rows.
-    readonly property real barU: Math.min(u, grid.height / Math.max(1, sources.length * 2.5 - 0.5))
+    // Stacked, the number comes first: the bars take what it leaves (down
+    // to a readable floor), so it's the same size as the other tiles'.
+    readonly property real barRows: Math.max(1, sources.length * 2.5 - 0.5)
+    readonly property real barU: Math.min(u, grid.height / barRows,
+        wide ? u : Math.max(u * 0.7, (grid.height - figureSize * 1.4 - grid.rowSpacing) / barRows))
 
     // Pixel: a row of little thermometers instead of bars.
     readonly property bool thermometers: look && look.heatBar === "segments"
@@ -144,7 +148,7 @@ GlassTile {
             // up to 1.4x the font size, e.g. Noto Sans), and steps aside if
             // that's too little.
             readonly property real fit: tile.wide ? parent.height : (parent.height - bars.implicitHeight - parent.rowSpacing) / 1.4
-            size: Math.min(tile.u * 3.4, fit)   // no bigger than the other tiles' numbers
+            size: Math.min(tile.figureSize, fit)   // the same size as the other tiles' numbers
             visible: size >= tile.u * 1.4
         }
         ColumnLayout {

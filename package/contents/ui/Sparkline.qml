@@ -7,7 +7,8 @@ import org.kde.kirigami as Kirigami
 // `sqrtScale` keeps one spike from flattening everything else.
 // `kind` is the style's chart: "line", "area" (deeper fill), "grid" (a line
 // over faint gridlines, no fill), "columns" (square bars, the newest in
-// full color), "rounded" (fewer, rounded bars) or "bars" (Pixel blocks).
+// full color), "rounded" (fewer, rounded bars), "pen" (a soft line with a
+// dot on the newest reading, no fill: Bento) or "bars" (Pixel blocks).
 Item {
     id: chart
 
@@ -20,7 +21,7 @@ Item {
     property color color: "#38bdf8"
     property color colorEnd: color
     property color color2: "#f472b6"
-    property real lineWidth: Math.max(1.5, Math.min(2.5, height / 70))
+    property real lineWidth: Math.max(1.5, Math.min(2.5, height / 70)) * (kind === "pen" ? 1.4 : 1)
     property bool glow: true
     property bool bars: false       // Pixel: blocky columns snapped to a grid
     property string kind: bars ? "bars" : "line"
@@ -54,7 +55,11 @@ Item {
     readonly property var line1: points(values)
     // Columns and rounded bars: the series averaged into a few wide bars.
     readonly property int colCount: kind === "rounded" ? 16 : 24
-    readonly property var colHeights: {
+    readonly property var colHeights: colsOf(values)
+    // Bento: the second series as capsules too, not a line across them.
+    readonly property bool capsules: kind === "rounded"
+    readonly property var colHeights2: capsules && values2 && values2.length ? colsOf(values2) : []
+    function colsOf(values) {
         if (!columns || !values || values.length < 2 || height <= 0) return [];
         var per = Math.max(1, Math.floor(capacity / colCount));
         var out = [];
@@ -122,16 +127,42 @@ Item {
         spacing: Math.max(1, chart.width / chart.colCount * (chart.kind === "rounded" ? 0.3 : 0.12))
         Repeater {
             model: chart.columns ? chart.colHeights.length : 0
-            Rectangle {
+            Item {
+                id: col
                 required property int index
                 readonly property real r: chart.colHeights[index]
+                readonly property real r2: chart.colHeights2.length > index ? chart.colHeights2[index] : -1
                 readonly property bool newest: index === chart.colHeights.length - 1
                 anchors.bottom: parent.bottom
                 width: (chart.width - parent.spacing * (chart.colCount - 1)) / chart.colCount
-                height: r < 0 ? 0 : Math.max(2, r * chart.height)
-                radius: chart.kind === "rounded" ? Math.min(width / 2, height / 2) : 0
-                color: newest ? chart.colorEnd : Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, chart.kind === "rounded" ? 0.4 : 0.35)
-                Behavior on height { NumberAnimation { duration: Kirigami.Units.longDuration } }
+                height: chart.height
+                // Bento: every column is a capsule with a faint track, so a
+                // quiet minute reads as empty capsules, not stray dashes.
+                Rectangle {
+                    visible: chart.capsules && col.r >= 0
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, 0.07)
+                }
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    height: col.r < 0 ? 0 : chart.capsules ? Math.max(width, col.r * chart.height) : Math.max(2, col.r * chart.height)
+                    radius: chart.capsules ? width / 2 : 0
+                    color: col.newest ? chart.colorEnd : Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, chart.capsules ? 0.55 : 0.35)
+                    Behavior on height { NumberAnimation { duration: Kirigami.Units.longDuration } }
+                }
+                // The second series, a slimmer capsule inside.
+                Rectangle {
+                    visible: col.r2 >= 0
+                    anchors.bottom: parent.bottom
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width * 0.42
+                    height: Math.max(width, col.r2 * chart.height)
+                    radius: width / 2
+                    color: chart.color2
+                    Behavior on height { NumberAnimation { duration: Kirigami.Units.longDuration } }
+                }
             }
         }
     }
@@ -169,7 +200,7 @@ Item {
             fillGradient: LinearGradient {
                 x1: 0; y1: 0; x2: 0; y2: chart.height
                 GradientStop { position: 0; color: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b,
-                    chart.kind === "grid" ? 0 : chart.kind === "area" ? 0.45 : 0.30) }
+                    chart.kind === "grid" || chart.kind === "pen" ? 0 : chart.kind === "area" ? 0.45 : 0.30) }
                 GradientStop { position: 1; color: Qt.rgba(chart.colorEnd.r, chart.colorEnd.g, chart.colorEnd.b, 0.0) }
             }
             PathSvg { path: chart.columns ? "" : chart.area1 }
@@ -198,7 +229,7 @@ Item {
             strokeWidth: chart.lineWidth
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
-            PathSvg { path: chart.path2 }
+            PathSvg { path: chart.capsules ? "" : chart.path2 }
         }
     }
 

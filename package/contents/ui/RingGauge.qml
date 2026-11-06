@@ -117,12 +117,27 @@ Item {
                 startAngle: gauge.startDeg; sweepAngle: gauge.valueSweep
             }
         }
-        // Value arc as a filled band, so it can carry a conical gradient
-        // (stroke gradients need a newer Qt).
+        // Value arc, one color: a plain stroke with its own caps, so a low
+        // reading is a short, even arc, not a two-colored blob.
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: gauge.glow && gauge.frac > 0.002 || gauge.frac <= 0.002 ? "transparent" : gauge.accent
+            strokeWidth: gauge.thickness
+            capStyle: gauge.roundCaps ? ShapePath.RoundCap : ShapePath.FlatCap
+            PathAngleArc {
+                centerX: gauge.cx; centerY: gauge.cy
+                radiusX: gauge.r; radiusY: gauge.r
+                startAngle: gauge.startDeg; sweepAngle: gauge.valueSweep
+            }
+        }
+        // Glass: the value arc as a filled band, so it can carry a conical
+        // gradient (stroke gradients need a newer Qt).
         ShapePath {
             strokeWidth: 0
             strokeColor: "transparent"
-            fillGradient: ConicalGradient {
+            fillGradient: gauge.glow ? glassGradient : null
+            fillColor: "transparent"
+            property ConicalGradient glassGradient: ConicalGradient {
                 centerX: gauge.cx; centerY: gauge.cy
                 angle: 225
                 GradientStop { position: 0.0; color: gauge.accent2 }
@@ -147,16 +162,17 @@ Item {
         }
     }
 
-    // Rounded caps for the value band
+    // Glass: rounded caps for the gradient band, each the color of the
+    // band where it ends (the gradient starts at accent2).
     Rectangle {
-        visible: !gauge.blocks && !gauge.ticks && gauge.roundCaps && gauge.frac > 0.002
+        visible: gauge.glow && !gauge.blocks && !gauge.ticks && gauge.roundCaps && gauge.frac > 0.002
         width: gauge.thickness; height: width; radius: width / 2
         x: gauge.cx + gauge.r * Math.cos(gauge.startDeg * Math.PI / 180) - width / 2
         y: gauge.cy + gauge.r * Math.sin(gauge.startDeg * Math.PI / 180) - height / 2
-        color: gauge.accent
+        color: gauge.accent2
     }
     Rectangle {
-        visible: !gauge.blocks && !gauge.ticks && gauge.roundCaps && gauge.frac > 0.002
+        visible: gauge.glow && !gauge.blocks && !gauge.ticks && gauge.roundCaps && gauge.frac > 0.002
         width: gauge.thickness; height: width; radius: width / 2
         x: gauge.cx + gauge.r * Math.cos(gauge.endRad) - width / 2
         y: gauge.cy + gauge.r * Math.sin(gauge.endRad) - height / 2

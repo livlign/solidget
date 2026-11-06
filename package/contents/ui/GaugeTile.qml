@@ -26,9 +26,9 @@ GlassTile {
 
     level: value / 100
 
-    // A style may keep the dial for some tiles (Bento: GPU and Disk).
-    readonly property string gauge: !look || !look.gauge ? "ring"
-        : (look.ringTiles || []).indexOf(tileId) >= 0 ? "ring" : look.gauge
+    // One shape for every reading in a style, so the shape says nothing
+    // the number doesn't.
+    readonly property string gauge: !look || !look.gauge ? "ring" : look.gauge
     readonly property bool barMode: gauge === "bar" || gauge === "hp"
     readonly property bool chips: detailStyle === "chips"
     readonly property bool sideBySide: width >= height * 1.5
@@ -44,7 +44,7 @@ GlassTile {
         : Math.min(body.width * 0.9, body.height - (details.length ? rowH * Math.min(2, detailSlots) + gap : 0))
     // Bar mode: the number's size and the block it makes with its bar.
     readonly property real numberSize: Math.max(Kirigami.Units.gridUnit * 1.6,
-        Math.min(u * 3.6, body.height * (sideBySide ? 0.42 : 0.3), (sideBySide ? body.width * 0.42 : body.width) * 0.42))
+        Math.min(figureSize, body.height * (sideBySide ? 0.42 : 0.3), (sideBySide ? body.width * 0.42 : body.width) * 0.42))
     // A number's line is up to 1.4 × its size (Manrope, Noto Sans).
     readonly property real headH: numberSize * 1.4 + u * 0.4 + (slotMode ? slotH : barH)
     // Pixel: the value as inventory slots (Memory: one per GiB).
@@ -110,7 +110,7 @@ GlassTile {
             width: tile.leadW
             height: tile.leadH
             spacing: tile.u * 0.4
-            Item { visible: tile.sideBySide; Layout.fillHeight: true }
+            // The number at the top, under the title, as on every tile.
             BigNumber {
                 family: tile.numberFamily
                 figures: tile.figureFamily
@@ -153,6 +153,7 @@ GlassTile {
                 segments: tile.gauge === "hp" ? 10 : 0
                 rounded: tile.look ? tile.look.roundCaps : true
             }
+            Item { visible: tile.sideBySide; Layout.fillHeight: true }
         }
 
         ColumnLayout {

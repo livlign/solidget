@@ -74,7 +74,8 @@ function tempLevel(c) {
 //   gauge:   CPU/GPU/Memory/Disk: "ring" (a dial) or "bar" / "hp" (a big
 //            number over a bar; "hp" = segmented like a game's health bar)
 //   meter:   the dial: "ring", "thick", "hairline", "ticks" or "blocks"
-//   chart:   "line", "area", "grid", "columns", "rounded" or "bars" (Pixel)
+//   chart:   "line", "area", "grid", "columns", "rounded", "pen" (a line and
+//            a dot, no fill) or "bars" (Pixel)
 //   details: label/value rows: "rows", "ruled", "readout" (dotted leader),
 //            "chips" (rounded tags) or "caps"
 //   heatBar: temperature bars: "thin", "glow", "square", "hairline",
@@ -86,7 +87,10 @@ function tempLevel(c) {
 //            "fill" (solid tile color), "bare" (no card), "inset" (an
 //            ordinary card; the clock's weather gets a card of its own color),
 //            "art" (over the blurred album art), "pixelart" (cover redrawn
-//            in big pixels)
+//            in big pixels), "alert" (an ordinary card that fills with its
+//            color only when the reading runs high)
+//   tintBy:  "group" = only some groups' cards are tinted, one color per
+//            group (see TILE_GROUP); system tiles stay on the plain card
 var STYLES = {
     // native: draw the card with the Plasma Style's own SVG and take every
     // color from the system (accent for meters, semantic colors for heat).
@@ -104,7 +108,7 @@ var STYLES = {
              radius: 0, bodyAlpha: 0.97, tint: 0.2, glow: false, shadow: false, hardShadow: false, bevel: false,
              border: 0, highlight: false, roundCaps: false, font: "", figureWeight: "bold",
              header: "bar", gauge: "bar", meter: "ring", chart: "columns", details: "ruled", heatBar: "square",
-             controls: "keys", today: "block", spotlight: { media: "ink" } },
+             controls: "keys", today: "block", spotlight: {} },
     clear: { name: "Clear", hint: "Barely-there panes; the clock sits right on your wallpaper",
              // Light themes put dark text on the card, so it must stay mostly
              // opaque: thinner, a dark wallpaper turns it a muddy grey.
@@ -123,10 +127,10 @@ var STYLES = {
              header: "rule", gauge: "ring", meter: "ticks", chart: "grid", details: "readout", heatBar: "needle",
              controls: "panel", today: "block", spotlight: {} },
     bento: { name: "Bento", hint: "Soft, rounded pastel cards with big bold numbers",
-             radius: 1.9, bodyAlpha: 1.0, tint: 0.16, glow: false, shadow: true, hardShadow: false, bevel: false,
+             radius: 1.9, bodyAlpha: 1.0, tint: 0.16, tintBy: "group", glow: false, shadow: true, hardShadow: false, bevel: false,
              border: 0, highlight: false, roundCaps: true, font: "", figures: "round", figureWeight: "semi",
-             header: "plain", gauge: "bar", ringTiles: ["gpu", "disk"], meter: "thick", chart: "rounded", details: "chips", heatBar: "pill",
-             controls: "squircle", today: "rounded", spotlight: { clock: "inset", power: "fill" } },
+             header: "plain", gauge: "bar", meter: "thick", chart: "pen", details: "chips", heatBar: "pill",
+             controls: "squircle", today: "rounded", spotlight: { clock: "inset", power: "alert" } },
     // edge: "neon" = a glowing outline in the tile's own color.
     neon:  { name: "Neon", hint: "Dark panes outlined in glowing light, like signs at night",
              radius: 0.8, bodyAlpha: { dark: 0.5, light: 0.75 }, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
@@ -229,6 +233,20 @@ var TILE_HUE = { cpu: 0, gpu: 1, memory: 2, network: 0, disk: 3, battery: 1, clo
                  specs: 2, processes: 3, power: 4, cores: 0, temps: 4,
                  pet: 4, photo: 5, media: 3, calendar: 1, quote: 2, note: 5, worldclock: 0, focus: 4, uptime: 5,
                  bluetooth: 2, health: 1 };
+
+// Tiles by what they're for, for styles that tint cards by group (Bento):
+// "life" (your day, what's playing) and "personal" (things you wrote or
+// keep). Anything else is a system reading and stays on the plain card.
+var TILE_GROUP = { clock: "life", media: "life", calendar: "life", worldclock: "life", focus: "life", uptime: "life",
+                   note: "personal", quote: "personal", pet: "personal", photo: "personal" };
+var GROUP_HUE = { life: 3, personal: 5 };
+function groupTint(themeId, group, plasma) {
+    var t = THEMES[themeId];
+    var p = t && (t.palette || (themeId === "plasma" ? plasma : null));
+    if (!GROUP_HUE.hasOwnProperty(group)) return "";
+    if (!p) return (ACCENTS[group === "life" ? "media" : "note"] || ACCENTS.cpu)[0];
+    return p[GROUP_HUE[group] % p.length];
+}
 
 // Follow Plasma: six hues spread around the system accent color, made
 // lighter on dark backgrounds and deeper on light ones so they stay readable.

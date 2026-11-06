@@ -72,7 +72,8 @@ ColumnLayout {
             visible: bar.kind !== "needle" && bar.kind !== "segments"
             anchors.fill: parent
             radius: bar.square || bar.kind === "square" ? 0 : height / 2
-            color: bar.kind === "pill" && Kirigami.Theme.backgroundColor.hslLightness > 0.5 ? Qt.rgba(1, 1, 1, 0.7) : track.wash
+            color: bar.kind === "pill" && Kirigami.Theme.backgroundColor.hslLightness > 0.5 && Kirigami.Theme.backgroundColor.hslLightness <= 0.93
+                   ? Qt.rgba(1, 1, 1, 0.7) : track.wash
             Rectangle {   // glow
                 visible: bar.kind === "glow"
                 anchors.verticalCenter: parent.verticalCenter

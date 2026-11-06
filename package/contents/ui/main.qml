@@ -143,6 +143,9 @@ PlasmoidItem {
     // orientation and some tiles get portrait-friendly shapes (layout.js).
     readonly property string orientationSetting: Plasmoid.configuration.orientation || "auto"
     property real boardAspect: 1    // width / height, reported by the board
+    // The size unit of a one-cell tile, reported by the board: titles and
+    // main numbers size from it, so they match from tile to tile.
+    property real boardUnit: 0
     readonly property bool isPortrait: orientationSetting === "portrait"
         || (orientationSetting === "auto" && boardAspect < 1)
     onIsPortraitChanged: if (!customized) Qt.callLater(applyPreset, currentPreset)
@@ -553,11 +556,17 @@ PlasmoidItem {
             figureWeight: ({ hairline: Font.Thin, thin: Font.ExtraLight, light: Font.Light, regular: Font.Normal,
                              semi: Font.DemiBold, bold: Font.Bold, heavy: Font.ExtraBold })[tw.weight || st.figureWeight] || Font.Light,
             // The style's recipe for laying tiles out (see palette.js).
-            figures: st.figures || "", ringTiles: st.ringTiles || [],
+            figures: st.figures || "",
             neonEdge: st.edge === "neon", raised: st.raised === true && tw.shadow !== "none", inkBorder: st.inkBorder === true,
             header: st.header || "caps", gauge: st.gauge || "ring", details: st.details || "rows",
             heatBar: st.heatBar || "thin", controls: st.controls || "round", today: st.today || "circle",
             spotlight: st.spotlight || ({}),
+            // Bento: cards tinted by group, one color each; and the size unit
+            // shared by every tile (0 until the board has a size).
+            tintBy: st.tintBy || "",
+            groupTints: st.tintBy === "group" ? ({ life: Palette.groupTint(themeId, "life", plasmaPalette),
+                                                   personal: Palette.groupTint(themeId, "personal", plasmaPalette) }) : ({}),
+            unit: boardUnit,
             // RGB: every tile reads the moving phase from here.
             rgb: th.rgb === true && !nativeStyle, rgbClock: rgbClock,
             edge: !nativeStyle && th.edge ? th.edge : ""
@@ -995,6 +1004,10 @@ PlasmoidItem {
                 }
                 Component.onCompleted: root.boardRef = board
                 onWidthChanged: if (scroll.height > 0) root.boardAspect = scroll.width / scroll.height
+                Binding {
+                    target: root; property: "boardUnit"
+                    value: Math.min(board.plan.cellW, board.plan.cellH * 1.4) / 14
+                }
                 Connections {
                     target: scroll
                     function onHeightChanged() { if (scroll.height > 0) root.boardAspect = scroll.width / scroll.height; }

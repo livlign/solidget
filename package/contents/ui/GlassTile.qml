@@ -21,7 +21,10 @@ Item {
     // (solid tile color), "bare" (no card at all) or a tile's own treatment
     // ("art", "pixelart"); "" = an ordinary card.
     readonly property string spot: look && look.spotlight && tileId !== "" ? (look.spotlight[tileId] || "") : ""
-    readonly property bool inked: spot === "ink" || spot === "fill"
+    // "alert": filled with the tile's color only while the reading runs
+    // high (Bento's Power), so color means "look here".
+    readonly property bool alerting: spot === "alert" && level >= 0.6
+    readonly property bool inked: spot === "ink" || spot === "fill" || alerting
     // Card treatments some styles add (see palette.js): a glowing outline
     // (Neon), raised clay (Soft), a thick ink border (Brutal).
     readonly property bool neonOn: !cardless && look ? look.neonEdge === true : false
@@ -54,9 +57,14 @@ Item {
     // Flat and Pixel tint each card with its tile's own color.
     // Ink: the card takes the theme's text color, and its text the card's.
     readonly property color inkColor: look && look.text ? look.text : (dark ? "#f2f2f2" : "#1d1d1d")
+    // Bento tints by group instead: one color for your day, one for your
+    // notes, and system readings on the plain card.
+    readonly property string tintGroup: look && look.tintBy === "group" ? (Palette.TILE_GROUP[tileId] || "") : ""
+    readonly property color tintColor: tintGroup !== "" && look.groupTints[tintGroup] ? look.groupTints[tintGroup] : accent
+    readonly property real tintShown: look && look.tintBy === "group" && tintGroup === "" ? 0 : tintAmount
     readonly property color bodyColor: spot === "ink" ? inkColor
-        : spot === "fill" ? accent
-        : tintAmount > 0 ? Qt.tint(baseColor, Qt.rgba(accent.r, accent.g, accent.b, tintAmount)) : baseColor
+        : spot === "fill" || alerting ? accent
+        : tintShown > 0 ? Qt.tint(baseColor, Qt.rgba(tintColor.r, tintColor.g, tintColor.b, tintShown)) : baseColor
     // The title row.
     readonly property bool mixedCaseTitle: nativeOn || headerStyle === "plain" || headerStyle === "bar" || headerStyle === "quiet"
     readonly property real headerMax: Kirigami.Units.gridUnit * (headerStyle === "plain" || headerStyle === "bar" ? 1.15 : 0.95)
@@ -101,6 +109,11 @@ Item {
     // Size helpers for children: `u` is a font/spacing unit that scales with
     // the tile, so a tile on a 4K wall dashboard reads from across the room.
     readonly property real u: Math.max(Kirigami.Units.gridUnit * 0.75, Math.min(width, height * 1.4) / 14)
+    // The board's unit (a one-cell tile's u): what must match across tiles
+    // (titles, main numbers) sizes from it, not from this tile's own size.
+    readonly property real boardU: look && look.unit > 0 ? Math.max(Kirigami.Units.gridUnit * 0.75, look.unit) : u
+    // A tile's main number, the same size on every tile that has room.
+    readonly property real figureSize: Math.max(Kirigami.Units.gridUnit * 1.6, boardU * 3.0)
     // Plasma: the same padding on every tile, as in Plasma's own widgets.
     // (Plasma's frame margins count from the outside of its shadow band, which
     // sits outside the tile: measure from the card's visible edge instead.)
@@ -393,7 +406,7 @@ Item {
             // rounded chip (Bento). Flat and Clear go without.
             Rectangle {
                 visible: !tile.nativeOn && tile.headerStyle !== "bar" && tile.headerStyle !== "quiet"
-                Layout.preferredWidth: tile.u * (tile.headerStyle === "plain" ? 0.8 : 0.45)
+                Layout.preferredWidth: tile.boardU * (tile.headerStyle === "plain" ? 0.8 : 0.45)
                 Layout.preferredHeight: Layout.preferredWidth
                 radius: tile.headerStyle === "plain" ? width * 0.3
                       : tile.headerStyle === "rule" || tile.radius === 0 ? 0 : width / 2
@@ -414,17 +427,21 @@ Item {
                 // Plasma's own widgets title things.
                 // Titles grow a little with the tile but stop early, so a big
                 // tile's title doesn't shout over a small one's.
+                // One size across the board (from its unit, not this tile's).
                 font.pixelSize: tile.nativeOn ? Kirigami.Units.gridUnit * 0.85
-                              : Math.min(tile.headerMax, tile.headerStyle === "plain" || tile.headerStyle === "bar" ? Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 0.85)
-                              : tile.headerStyle === "rule" ? Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.68)
-                              : tile.headerStyle === "quiet" ? Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.75)
-                              : Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.78))
+                              : Math.min(tile.headerMax, tile.headerStyle === "plain" || tile.headerStyle === "bar" ? Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.boardU * 0.85)
+                              : tile.headerStyle === "rule" ? Math.max(Kirigami.Theme.smallFont.pixelSize, tile.boardU * 0.68)
+                              : tile.headerStyle === "quiet" ? Math.max(Kirigami.Theme.smallFont.pixelSize, tile.boardU * 0.75)
+                              : Math.max(Kirigami.Theme.smallFont.pixelSize, tile.boardU * 0.78))
                 font.weight: tile.headerStyle === "bar" ? Font.Bold
                            : tile.headerStyle === "plain" ? Font.DemiBold
                            : tile.headerStyle === "rule" || tile.headerStyle === "quiet" ? Font.Medium : Font.DemiBold
                 font.capitalization: tile.mixedCaseTitle ? Font.MixedCase : Font.AllUppercase
                 font.letterSpacing: tile.mixedCaseTitle ? 0
-                                  : tile.headerStyle === "rule" ? tile.u * 0.05 : Math.min(tile.u, tile.headerMax) * 0.12
+                                  : tile.headerStyle === "rule" ? tile.boardU * 0.05
+                                  // Pixel glyphs are already wide: tracked like the
+                                  // system font, "Quote of the day" won't fit.
+                                  : Math.min(tile.boardU, tile.headerMax) * (tile.numberFamily ? 0.04 : 0.12)
                 opacity: tile.mixedCaseTitle && tile.headerStyle !== "quiet" ? 0.92 : 0.75
                 Layout.fillWidth: true
                 Layout.minimumWidth: Math.min(implicitWidth, tile.width * 0.45)
@@ -436,7 +453,7 @@ Item {
                 // Drop the subtitle rather than truncate the title.
                 visible: text !== "" && titleLabel.implicitWidth + Math.min(implicitWidth, tile.u * 4) + tile.u * 2 < tile.width - tile.pad * 2
                 font.pixelSize: tile.nativeOn ? Kirigami.Units.gridUnit * 0.75
-                              : Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.72)
+                              : Math.max(Kirigami.Theme.smallFont.pixelSize, tile.boardU * 0.72)
                 opacity: subtitleMouse.containsMouse ? 0.9 : 0.55
                 font.underline: subtitleMouse.containsMouse
                 elide: Text.ElideRight

@@ -99,3 +99,4 @@ Then upload the file to the KDE Store. Copr rebuilds the RPM by itself.
 | `tests/` | All checks; `run.sh` runs them |
 | `tools/package.sh` | Builds the `.plasmoid` file |
 | `tools/poodle.py` | Draws the poodle sprite sheet (`images/poodle.png`) |
+| `tools/lookbook/lookbook.py` | Draws every ready-made look as a full board (offscreen, made-up readings) into `dist/lookbook/contact.png`, to check them all at once. Needs python3-pyside6, node, ImageMagick |
