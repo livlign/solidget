@@ -4,7 +4,7 @@
 %global plugin_id io.github.solidget
 
 Name:           solidget
-Version:        0.10.3
+Version:        0.10.4
 Release:        1%{?dist}
 Summary:        Live stats, PC specs and your day in one Plasma desktop widget
 
@@ -56,6 +56,10 @@ python3 -c 'import json, sys; v = json.load(open("package/metadata.json"))["KPlu
 %{_datadir}/plasma/plasmoids/%{plugin_id}/
 
 %changelog
+* Fri Nov 06 2026 Solidget contributors - 0.10.4-1
+- Now playing redrawn for Instrument Panel and tidier in every style; see
+  CHANGELOG.md for what's in 0.10.4
+
 * Fri Nov 06 2026 Solidget contributors - 0.10.3-1
 - Clocks that match their board, readable text on colored cards, a calmer
   Temperatures tile and release notes in Settings; see CHANGELOG.md for

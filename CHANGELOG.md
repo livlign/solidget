@@ -1,5 +1,20 @@
 # What's new
 
+## 0.10.4
+
+- **Now playing, Instrument Panel style.** It reads like the rest of the
+  panel: left-aligned, the output as a readout ("Headphones ···· 40%"),
+  the time beside the play key, and the position as a tick scale with a
+  needle. Play is an ordinary key, not a loud colored block.
+- **Whole titles on the wide tile.** In Instrument Panel, the two-wide Now
+  playing sizes its text for its column, like the tiles beside it, and
+  wraps a long title instead of cutting it off.
+- **No dead buttons.** Previous and next are left out when the player
+  can't skip (a browser tab, often), in every style.
+- **No empty band on small tiles.** Without room for a cover, the title
+  starts at the top (on two lines when it fits) and the buttons stay at
+  the bottom, with space between them and the progress bar.
+
 ## 0.10.3
 
 - **Clocks that match the board.** Soft Bento's clock is an ordinary card

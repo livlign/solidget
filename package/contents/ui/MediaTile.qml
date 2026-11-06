@@ -63,19 +63,46 @@ GlassTile {
     // ---- Sizes ----
     // Side by side when there's width to spare, otherwise the cover on top.
     readonly property bool sideBySide: body.width > body.height * 1.25
-    readonly property real btn: Math.max(Kirigami.Units.gridUnit * 1.3, Math.min(tile.u * 1.9, Kirigami.Units.gridUnit * 2.2))
-    FontMetrics { id: titleFm; font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.u * 1.0); font.weight: Font.DemiBold }
-    FontMetrics { id: smallFm; font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.75) }
+    // Instrument: a front panel, not a phone player. Left-aligned like its
+    // other tiles, the output as a readout row, the time beside the play
+    // key, and the position as a tick scale with a needle.
+    readonly property bool gear: detailStyle === "readout" && !nativeOn
+    readonly property bool leftAligned: sideBySide || gear
+    // Instrument's keys are only outlines: a size smaller reads the same.
+    readonly property real btn: Math.max(Kirigami.Units.gridUnit * 1.3, Math.min(tile.tu * 1.9, Kirigami.Units.gridUnit * 2.2)) * (gear ? 0.82 : 1)
+    // Text unit. Instrument, side by side: sized for the text's column, not
+    // the whole tile (a two-wide tile has twice the width but the words get
+    // half of it), so it matches the readouts on the tiles beside it.
+    readonly property real tu: gear && sideBySide
+        ? Math.min(u, Math.max(Kirigami.Units.gridUnit * 0.75, Math.min(width * 0.5, height * 1.4) / 14)) : u
+    // Instrument: a quieter title that wraps to more lines rather than
+    // cutting the name off.
+    FontMetrics { id: titleFm; font.pixelSize: Math.max(Kirigami.Theme.defaultFont.pixelSize, tile.tu * (tile.gear ? 0.9 : 1.0)); font.weight: tile.gear ? Font.Medium : Font.DemiBold }
+    FontMetrics { id: smallFm; font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.tu * 0.75) }
     // Beside the cover, the text needs room for the buttons and the time
     // (the controls row can't shrink); the cover shrinks rather than push
     // them past the tile's edge.
-    readonly property real infoMinW: controls.implicitWidth
+    readonly property real infoMinW: controls.keysWidth + controls.spacing * 2 + (lengthUs > 0 ? fullMetrics.advanceWidth : 0)
     // Height of everything but the title: artist, output, controls, progress line.
-    readonly property real restH: smallFm.height * (output ? 2 : 1) + btn * 1.15 + tile.u * 0.9
-    readonly property int titleLines: (sideBySide ? body.height : body.height - tile.u * 4) - restH >= titleFm.height * 2 ? 2 : 1
+    readonly property real restH: smallFm.height * (output ? 2 : 1) + btn * 1.15 + tile.tu * 1.25
+    // The words' measured height as if the title took one line: whether a
+    // cover fits, and whether a second title line does, are judged on it
+    // (on the real height they'd flip each other back and forth). Measured
+    // once the layout settles, not bound: the layout reads titleLines.
+    property real infoOneLineH: 0
+    // After a short wait: a layout's height catches up with its parts only
+    // on the next frame, and reading it sooner swings the answer.
+    function measureInfo() { infoOneLineH = info.implicitHeight - titleLabel.implicitHeight + titleFm.height; }
+    Timer { id: measureTimer; interval: 60; onTriggered: tile.measureInfo() }
+    // No cover (no room for one, or beside it): a second title line if the
+    // words leave room for it.
+    readonly property int titleLines: sideBySide || !art.visible
+        ? 1 + (infoOneLineH > 0 ? Math.max(0, Math.min(gear ? 2 : 1, Math.floor((body.height - infoOneLineH) / (titleFm.height * 0.95)))) : 0)
+        : (body.height - tile.u * 4 - restH >= titleFm.height * 2 ? 2 : 1)
 
     // Buttons, the style's way: "native" (Plasma), "round", "keys" (flat
-    // keys; Pixel's bevelled), "squircle" (Bento) or "outline" (Clear).
+    // keys; Pixel's bevelled), "squircle" (Bento), "outline" (Clear) or
+    // "panel" (Instrument: equal hairline keys, play a firmer outline).
     readonly property string controls: look && look.controls ? look.controls : "round"
     // Glass: frosted glass over the blurred album art. Pixel: the cover
     // redrawn in big pixels.
@@ -87,15 +114,22 @@ GlassTile {
         property string iconName
         property string tip
         property bool main: false
-        readonly property bool keys: tile.controls === "keys"
+        readonly property bool panel: tile.controls === "panel"
+        readonly property bool keys: tile.controls === "keys" || panel
+        // A skip the player can't do (a browser tab, often) isn't drawn as
+        // a dead button: it's left out.
+        visible: enabled || main
         readonly property bool squircle: tile.controls === "squircle"
-        implicitWidth: tile.btn * (main ? (keys || squircle ? 1.4 : 1.15) : 1)
+        // Instrument: every key the same size; play is set apart only by a
+        // firmer outline, so it doesn't shout over the readouts.
+        implicitWidth: tile.btn * (main && !panel ? (keys || squircle ? 1.4 : 1.15) : 1)
         implicitHeight: tile.btn * (main && !keys && !squircle ? 1.15 : 1)
         hoverEnabled: true
         opacity: enabled ? 1 : 0.3
         // Plasma style: flat like Plasma's tool buttons, with the
         // highlight-colored hover frame; no filled play button.
-        readonly property bool filled: cb.main && !tile.nativeOn && tile.controls !== "outline"
+        readonly property bool filled: cb.main && !tile.nativeOn && tile.controls !== "outline" && !cb.panel
+        readonly property bool accentMain: cb.main && cb.panel   // Instrument's play key
         readonly property color ink: Kirigami.Theme.textColor
         // Flat fills play in the text color; everything else in the accent.
         readonly property color fillColor: tile.headerStyle === "bar" ? ink : tile.artOn ? "#ffffff" : tile.accent
@@ -110,10 +144,12 @@ GlassTile {
                   : tile.radius > 0 ? Math.min(width, height) / 2 : 0
             color: cb.filled ? cb.fillColor
                  : tile.nativeOn ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, cb.hovered ? 0.2 : 0)
+                 : cb.accentMain ? Qt.rgba(cb.ink.r, cb.ink.g, cb.ink.b, cb.hovered ? 0.12 : 0.04)
                  : Qt.rgba(cb.ink.r, cb.ink.g, cb.ink.b, cb.hovered ? 0.16 : cb.squircle || tile.artOn ? 0.1 : cb.keys ? 0.04 : 0)
             border.width: tile.nativeOn && cb.hovered ? 1
                         : (cb.keys || tile.controls === "outline") && !cb.filled ? 1 : 0
             border.color: tile.nativeOn ? Kirigami.Theme.highlightColor
+                        : cb.accentMain ? Qt.rgba(cb.ink.r, cb.ink.g, cb.ink.b, cb.hovered ? 0.7 : 0.45)
                         : Qt.rgba(cb.ink.r, cb.ink.g, cb.ink.b, tile.controls === "outline" && cb.main ? 0.8 : 0.22)
             opacity: cb.filled && !cb.hovered ? 0.92 : 1
             // Pixel: bevelled keys with a hard shadow.
@@ -135,7 +171,8 @@ GlassTile {
                 width: Math.round(cb.width * 0.5); height: width
                 source: cb.iconName
                 isMask: true
-                color: cb.filled ? (cb.fillColor.hslLightness > 0.6 ? "#111111" : "#ffffff") : Kirigami.Theme.textColor
+                color: cb.filled ? (cb.fillColor.hslLightness > 0.6 ? "#111111" : "#ffffff")
+                     : Kirigami.Theme.textColor
             }
         }
     }
@@ -178,10 +215,11 @@ GlassTile {
             // Whole pixels, so the cover isn't resampled half a pixel off.
             readonly property real side: Math.floor(tile.sideBySide ? Math.min(body.height, body.width - tile.u * 0.9 - tile.infoMinW)
                 : Math.min(body.width, body.height - info.implicitHeight - tile.u * 0.6))
-            visible: side >= tile.u * 3
+            visible: tile.sideBySide ? side >= tile.u * 3
+                : Math.min(body.width, body.height - tile.infoOneLineH - tile.u * 0.6) >= tile.u * (tile.gear ? 4.5 : 3)
             width: visible ? side : 0
             height: width
-            x: tile.sideBySide ? 0 : Math.round((body.width - width) / 2)
+            x: tile.leftAligned ? 0 : Math.round((body.width - width) / 2)
             y: 0
             Rectangle {
                 id: artMask
@@ -256,20 +294,26 @@ GlassTile {
         // ---- Title, artist, controls, progress ----
         ColumnLayout {
             id: info
-            x: tile.sideBySide ? art.width + (art.visible ? tile.u * 0.9 : 0) : 0
+            x: tile.sideBySide ? art.width + (art.visible ? tile.tu * 0.9 : 0) : 0
             width: body.width - x
             anchors.bottom: parent.bottom
-            height: tile.sideBySide ? body.height : implicitHeight
-            spacing: tile.u * 0.15
+            // Without a cover (no room for one), the words start at the top
+            // and the controls stay at the bottom, like the other tiles,
+            // not a block sunk under an empty band.
+            height: tile.sideBySide || !art.visible ? body.height : implicitHeight
+            spacing: tile.tu * 0.15
+            onImplicitHeightChanged: measureTimer.restart()
 
             PlasmaComponents.Label {
+                id: titleLabel
+                onImplicitHeightChanged: measureTimer.restart()
                 Layout.fillWidth: true
                 text: tile.track
                 textFormat: Text.PlainText   // text from outside; never render it as HTML
                 font.pixelSize: titleFm.font.pixelSize
-                font.weight: Font.DemiBold
+                font.weight: tile.gear ? Font.Medium : Font.DemiBold
                 font.family: tile.numberFamily || Kirigami.Theme.defaultFont.family
-                horizontalAlignment: tile.sideBySide ? Text.AlignLeft : Text.AlignHCenter
+                horizontalAlignment: tile.leftAligned ? Text.AlignLeft : Text.AlignHCenter
                 wrapMode: Text.Wrap
                 maximumLineCount: tile.titleLines
                 elide: Text.ElideRight
@@ -281,20 +325,20 @@ GlassTile {
                 textFormat: Text.PlainText
                 opacity: 0.65
                 font.pixelSize: smallFm.font.pixelSize
-                horizontalAlignment: tile.sideBySide ? Text.AlignLeft : Text.AlignHCenter
+                horizontalAlignment: tile.leftAligned ? Text.AlignLeft : Text.AlignHCenter
                 elide: Text.ElideRight
             }
             // Output and volume: scroll to change it, click the icon to mute.
             RowLayout {
-                visible: tile.output !== null
+                visible: tile.output !== null && !tile.gear
                 Layout.fillWidth: true
-                spacing: tile.u * 0.3
+                spacing: tile.tu * 0.3
                 opacity: 0.65
                 WheelHandler {
                     acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                     onWheel: (event) => tile.output.setPercent(tile.output.percent + (event.angleDelta.y > 0 ? 5 : -5))
                 }
-                Item { visible: !tile.sideBySide; Layout.fillWidth: true }
+                Item { visible: !tile.leftAligned; Layout.fillWidth: true }
                 Kirigami.Icon {
                     Layout.preferredWidth: smallFm.height
                     Layout.preferredHeight: smallFm.height
@@ -305,7 +349,7 @@ GlassTile {
                     color: Kirigami.Theme.textColor
                     MouseArea {
                         anchors.fill: parent
-                        anchors.margins: -tile.u * 0.2
+                        anchors.margins: -tile.tu * 0.2
                         cursorShape: Qt.PointingHandCursor
                         onClicked: tile.output.toggleMute()
                     }
@@ -324,28 +368,48 @@ GlassTile {
                     font.pixelSize: smallFm.font.pixelSize
                     font.features: { "tnum": 1 }
                 }
-                Item { visible: !tile.sideBySide; Layout.fillWidth: true }
+                Item { visible: !tile.leftAligned; Layout.fillWidth: true }
             }
-            Item { Layout.fillHeight: true; Layout.minimumHeight: tile.u * 0.3 }
+            DetailRow {
+                visible: tile.output !== null && tile.gear
+                u: tile.tu
+                kind: "readout"
+                family: tile.figureFamily
+                // The device as the label, its volume as the reading.
+                label: tile.output ? tile.output.name : ""
+                value: !tile.output ? "" : tile.output.muted ? i18n("Muted") : tile.output.percent + "%"
+                WheelHandler {
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    onWheel: (event) => tile.output.setPercent(tile.output.percent + (event.angleDelta.y > 0 ? 5 : -5))
+                }
+                TapHandler { onTapped: tile.output.toggleMute() }
+            }
+            Item { Layout.fillHeight: true; Layout.minimumHeight: tile.tu * 0.3 }
 
             RowLayout {
                 id: controls
+                // The keys' own width, for the time beside them.
+                readonly property real keysWidth: (prevKey.visible ? prevKey.implicitWidth + spacing : 0)
+                    + playKey.implicitWidth + (nextKey.visible ? nextKey.implicitWidth + spacing : 0)
                 Layout.fillWidth: true
-                spacing: tile.u * 0.2
-                Item { visible: !tile.sideBySide; Layout.fillWidth: true }
+                spacing: tile.tu * 0.2
+                Item { visible: !tile.leftAligned; Layout.fillWidth: true }
                 CtlButton {
+                    id: prevKey
                     iconName: "media-skip-backward"
                     tip: i18n("Previous")
                     enabled: tile.hasPlayer && tile.player.canGoPrevious
                     onClicked: tile.player.container.Previous()
                 }
                 CtlButton {
+                    id: playKey
                     main: true
                     iconName: tile.playing ? "media-playback-pause" : "media-playback-start"
                     tip: tile.playing ? i18n("Pause") : i18n("Play")
                     onClicked: tile.player.container.PlayPause()
                 }
                 CtlButton {
+                    id: nextKey
                     iconName: "media-skip-forward"
                     tip: i18n("Next")
                     enabled: tile.hasPlayer && tile.player.canGoNext
@@ -353,21 +417,64 @@ GlassTile {
                 }
                 Item { Layout.fillWidth: true }
                 PlasmaComponents.Label {
-                    visible: tile.lengthUs > 0 && tile.sideBySide
+                    id: timeText
+                    visible: tile.lengthUs > 0 && (tile.sideBySide || tile.gear)
                     textFormat: Text.PlainText
-                    text: tile.mmss(tile.positionUs) + " / " + tile.mmss(tile.lengthUs)
+                    // Just the time played when the whole doesn't fit beside
+                    // the keys (Instrument's scale still shows the length).
+                    readonly property string full: tile.mmss(tile.positionUs) + " / " + tile.mmss(tile.lengthUs)
+                    readonly property real room: info.width - controls.keysWidth - controls.spacing * 2
+                    text: !tile.gear || fullMetrics.advanceWidth <= room ? full : tile.mmss(tile.positionUs)
+                    TextMetrics { id: fullMetrics; font: timeText.font; text: timeText.full }
                     opacity: 0.55
                     font.pixelSize: smallFm.font.pixelSize * 0.9
+                    font.family: tile.figureFamily || Kirigami.Theme.defaultFont.family
                     font.features: { "tnum": 1 }
                 }
             }
 
-            // Thin progress line
+            // Instrument: the position on a scale, minor ticks every 5%,
+            // major every 25%, the played part's ticks lit, a needle at now.
+            Item {
+                id: posScale
+                visible: tile.lengthUs > 0 && tile.gear
+                Layout.fillWidth: true
+                Layout.topMargin: tile.tu * 0.3
+                Layout.preferredHeight: Math.round(tile.tu * 0.5)
+                readonly property real frac: Math.min(1, tile.positionUs / Math.max(1, tile.lengthUs))
+                readonly property color ink: Kirigami.Theme.textColor
+                Rectangle {   // baseline
+                    anchors.bottom: parent.bottom
+                    width: parent.width; height: 1
+                    color: Qt.rgba(posScale.ink.r, posScale.ink.g, posScale.ink.b, 0.25)
+                }
+                Repeater {
+                    model: posScale.visible ? 21 : 0
+                    Rectangle {
+                        required property int index
+                        readonly property bool major: index % 5 === 0
+                        x: Math.min(posScale.width - 1, Math.round(posScale.width * index / 20))
+                        anchors.bottom: parent.bottom
+                        width: 1
+                        height: Math.round(posScale.height * (major ? 0.62 : 0.32))
+                        color: index / 20 <= posScale.frac ? tile.accent
+                             : Qt.rgba(posScale.ink.r, posScale.ink.g, posScale.ink.b, major ? 0.4 : 0.22)
+                    }
+                }
+                Rectangle {   // needle
+                    x: Math.round((posScale.width - width) * posScale.frac)
+                    Behavior on x { NumberAnimation { duration: Kirigami.Units.longDuration } }
+                    width: 2; height: posScale.height
+                    color: tile.accent
+                }
+            }
+
+            // Thin progress line, a clear step below the buttons.
             Rectangle {
                 Layout.fillWidth: true
-                Layout.topMargin: tile.u * 0.2
-                Layout.preferredHeight: Math.max(2, Math.round(tile.u * 0.16))
-                visible: tile.lengthUs > 0
+                Layout.topMargin: tile.tu * 0.55
+                Layout.preferredHeight: Math.max(2, Math.round(tile.tu * 0.16))
+                visible: tile.lengthUs > 0 && !tile.gear
                 radius: tile.radius > 0 ? height / 2 : 0
                 color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.12)
                 // Plasma: a round handle at the play position, like Breeze's sliders.
@@ -395,11 +502,11 @@ GlassTile {
                 }
             }
             RowLayout {
-                visible: tile.lengthUs > 0 && !tile.sideBySide
+                visible: tile.lengthUs > 0 && !tile.sideBySide && !tile.gear
                 Layout.fillWidth: true
-                PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.positionUs); opacity: 0.55; font.pixelSize: smallFm.font.pixelSize * 0.9; font.features: { "tnum": 1 } }
+                PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.positionUs); opacity: 0.55; font.pixelSize: smallFm.font.pixelSize * 0.9; font.family: tile.figureFamily || Kirigami.Theme.defaultFont.family; font.features: { "tnum": 1 } }
                 Item { Layout.fillWidth: true }
-                PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.lengthUs); opacity: 0.55; font.pixelSize: smallFm.font.pixelSize * 0.9; font.features: { "tnum": 1 } }
+                PlasmaComponents.Label { textFormat: Text.PlainText; text: tile.mmss(tile.lengthUs); opacity: 0.55; font.pixelSize: smallFm.font.pixelSize * 0.9; font.family: tile.figureFamily || Kirigami.Theme.defaultFont.family; font.features: { "tnum": 1 } }
             }
         }
     }

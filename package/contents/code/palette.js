@@ -79,7 +79,8 @@ function tempLevel(c) {
 //            "chips" (rounded tags) or "caps"
 //   heatBar: temperature bars: "thin", "glow", "square", "hairline",
 //            "needle", "pill" or "segments"
-//   controls: media buttons: "native", "round", "keys", "squircle", "outline"
+//   controls: media buttons: "native", "round", "keys", "squircle", "outline",
+//            "panel" (equal hairline keys, play a firmer outline)
 //   today:   the calendar's today: "frame", "circle", "block", "rounded", "outline"
 //   spotlight: tiles drawn apart from the rest, by tile id: "ink" (inverted),
 //            "fill" (solid tile color), "bare" (no card), "inset" (an
@@ -120,7 +121,7 @@ var STYLES = {
              radius: 0.3, bodyAlpha: 1.0, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
              border: 1, highlight: false, roundCaps: false, font: "", figures: "mono", figureWeight: "light",
              header: "rule", gauge: "ring", meter: "ticks", chart: "grid", details: "readout", heatBar: "needle",
-             controls: "keys", today: "block", spotlight: {} },
+             controls: "panel", today: "block", spotlight: {} },
     bento: { name: "Bento", hint: "Soft, rounded pastel cards with big bold numbers",
              radius: 1.9, bodyAlpha: 1.0, tint: 0.16, glow: false, shadow: true, hardShadow: false, bevel: false,
              border: 0, highlight: false, roundCaps: true, font: "", figures: "round", figureWeight: "semi",
