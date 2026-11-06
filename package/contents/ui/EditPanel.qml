@@ -672,10 +672,12 @@ GlassTile {
             }
         }
 
-        // A new version is out: say so on every tab.
+        // A new version is out: say so on every tab, until "Later" (then
+        // General → Updates can bring it back).
         Section {
             id: updateBanner
-            visible: panel.app.updateAvailable
+            visible: panel.app.updateNotice
+            property bool notesOpen: false
             border.width: 1
             border.color: panel.pAccent
             readonly property string upgradeCommand: "sudo dnf upgrade solidget"   // guard: text only
@@ -687,9 +689,8 @@ GlassTile {
                 RowLayout {
                     spacing: Kirigami.Units.smallSpacing
                     SButton {
-                        visible: panel.app.updateNotice
                         text: i18n("Later")
-                        tip: i18n("Hide the desktop button until the next version")
+                        tip: i18n("Hide this until the next version")
                         onClicked: Plasmoid.configuration.updateDismissed = panel.app.latestVersion
                     }
                     SButton {
@@ -698,11 +699,48 @@ GlassTile {
                         tip: i18n("Copy the update command")
                         onClicked: panel.app.copyToClipboard(updateBanner.upgradeCommand)
                     }
+                    // The notes, right here; the web page only when there
+                    // are none to show.
                     SButton {
                         text: i18n("What's new")
-                        primary: true
-                        onClicked: panel.app.openReleases()
+                        primary: !updateBanner.notesOpen
+                        checked: updateBanner.notesOpen
+                        onClicked: if (panel.app.updateNotes.length) updateBanner.notesOpen = !updateBanner.notesOpen
+                                   else panel.app.openReleases()
                     }
+                }
+            }
+            ColumnLayout {
+                visible: updateBanner.notesOpen
+                Layout.fillWidth: true
+                spacing: Kirigami.Units.smallSpacing
+                Repeater {
+                    model: updateBanner.notesOpen ? panel.app.updateNotes : []
+                    RowLayout {
+                        required property string modelData
+                        Layout.fillWidth: true
+                        spacing: Kirigami.Units.smallSpacing
+                        PlasmaComponents.Label {
+                            textFormat: Text.PlainText
+                            text: "•"
+                            color: panel.pAccent
+                            Layout.alignment: Qt.AlignTop
+                        }
+                        PlasmaComponents.Label {
+                            textFormat: Text.PlainText
+                            text: modelData
+                            color: panel.pText
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+                SButton {
+                    Layout.alignment: Qt.AlignRight
+                    text: i18n("Release page")
+                    iconName: "internet-services"
+                    tip: i18n("The full notes and downloads, on GitHub")
+                    onClicked: panel.app.openReleases()
                 }
             }
         }
@@ -1657,8 +1695,16 @@ GlassTile {
                     title: i18n("Updates")
                     SettingRow {
                         label: i18n("Solidget %1", panel.app.version)
-                        hint: panel.app.updateAvailable ? i18n("Version %1 is out: see the top of Settings.", panel.app.latestVersion)
+                        hint: panel.app.updateNotice ? i18n("Version %1 is out: see the top of Settings.", panel.app.latestVersion)
+                            : panel.app.updateAvailable ? i18n("Version %1 is out.", panel.app.latestVersion)
                             : Plasmoid.configuration.updateCheck ? i18n("You have the latest version.") : ""
+                        // Hidden with "Later": bring it back.
+                        SButton {
+                            visible: panel.app.updateAvailable && !panel.app.updateNotice
+                            text: i18n("Show")
+                            tip: i18n("Show the update notice again")
+                            onClicked: Plasmoid.configuration.updateDismissed = ""
+                        }
                     }
                     SettingRow {
                         label: i18n("Check for new versions")

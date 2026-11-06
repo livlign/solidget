@@ -20,7 +20,7 @@ function test(name, fn) {
 }
 
 // ---- format.js -------------------------------------------------------------
-const F = load("format.js", ["bytes", "rate", "temp", "toFahrenheit", "driveSize", "percent", "ghz", "uptime", "uptimeClock", "uptimeParts", "versionNewer"]);
+const F = load("format.js", ["bytes", "rate", "temp", "toFahrenheit", "driveSize", "percent", "ghz", "uptime", "uptimeClock", "uptimeParts", "versionNewer", "releaseNotes"]);
 
 test("bytes: binary and decimal units", () => {
     assert.strictEqual(F.bytes(0), "0 B");
@@ -35,6 +35,13 @@ test("rate: bytes per second or bits", () => {
     assert.strictEqual(F.rate(2048), "2.0 KiB/s");
     assert.strictEqual(F.rate(125000, true, true), "1.0 Mbps");
     assert.strictEqual(F.rate(100, false, true), "800 bps");
+});
+test("releaseNotes: plain points from the changelog, up to the first heading", () => {
+    const body = "- **Chips fit.** In *Soft* Bento, chips wrap\n  onto two lines.\n- **Looks.** Each style:\n  - *Plasma*: icons.\n  - `Glass`: art.\n\n\n### Install\n- not this";
+    assert.deepStrictEqual(F.releaseNotes(body), ["Chips fit. In Soft Bento, chips wrap onto two lines.", "Looks. Each style: · Plasma: icons. · Glass: art."]);
+    assert.deepStrictEqual(F.releaseNotes(""), []);
+    assert.deepStrictEqual(F.releaseNotes(null), []);
+    assert.strictEqual(F.releaseNotes(Array(10).fill("- x").join("\n")).length, 6);
 });
 test("versionNewer: compares numbers, not text; malformed is never newer", () => {
     assert.strictEqual(F.versionNewer("0.8.2", "0.8.1"), true);

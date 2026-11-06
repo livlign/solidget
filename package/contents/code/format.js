@@ -72,6 +72,27 @@ function uptimeParts(seconds) {
              m: Math.floor(seconds % 3600 / 60), s: seconds % 60 };
 }
 
+// A release's notes (GitHub Markdown, from CHANGELOG.md) as a few lines of
+// plain text: one per top-level "- " point, nested points folded in, the
+// Markdown marks dropped. Stops at the first heading ("### Install").
+function releaseNotes(body, max) {
+    var items = [];
+    var lines = String(body || "").replace(/\r/g, "").split("\n");
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (/^\s*#/.test(line) && items.length) break;
+        var top = /^- (.*)$/.exec(line);
+        var sub = /^\s+- (.*)$/.exec(line);
+        if (top) items.push(top[1]);
+        else if (sub && items.length) items[items.length - 1] += " · " + sub[1];
+        else if (/^\s+\S/.test(line) && items.length) items[items.length - 1] += " " + line.trim();
+    }
+    return items.slice(0, max || 6).map(function (t) {
+        t = t.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*|__|`/g, "").replace(/(^|\W)\*(\S[^*]*)\*/g, "$1$2").trim();
+        return t.length > 280 ? t.slice(0, 279) + "…" : t;
+    });
+}
+
 // Is version a ("1.2.10") newer than b ("1.2.9")? Anything malformed: no.
 function versionNewer(a, b) {
     var re = /^\d+\.\d+\.\d+$/;

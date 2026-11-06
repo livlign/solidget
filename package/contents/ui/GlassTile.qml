@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.ksvg as KSvg
 import org.kde.plasma.components as PlasmaComponents
+import "../code/palette.js" as Palette
 
 // The card every tile is built on. `look` (from main.qml) picks the style:
 // Glass = translucent body, drop shadow and color glows that follow `level`
@@ -79,9 +80,13 @@ Item {
     property real bodyOpacity: solid || inked ? 1.0 : cardless ? 0 : look ? look.bodyAlpha : (dark ? 0.66 : 0.72)
     // On an ink or filled card everything inside reads in the card's
     // opposite: the board's background color, or near-black on a light fill.
-    Kirigami.Theme.inherit: !inked
-    readonly property color inkText: spot === "ink" ? baseColor
-        : bodyColor.hslLightness > 0.6 ? "#1d1a17" : "#ffffff"
+    // A card-less tile (Clear's clock) sits right on the wallpaper, which
+    // we can't see: white with a dark shadow, like a lock screen, reads on
+    // any of them, where a light theme's dark ink vanishes on a dark one.
+    Kirigami.Theme.inherit: !inked && !cardless
+    readonly property color inkText: cardless ? "#ffffff"
+        : spot === "ink" ? baseColor
+        : Palette.inkOn(Qt.rgba(bodyColor.r, bodyColor.g, bodyColor.b, 1).toString())
     Kirigami.Theme.textColor: inkText
     Kirigami.Theme.disabledTextColor: Qt.rgba(inkText.r, inkText.g, inkText.b, 0.55)
     Kirigami.Theme.backgroundColor: bodyColor

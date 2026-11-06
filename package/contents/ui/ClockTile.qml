@@ -49,10 +49,10 @@ GlassTile {
     function temp(v) { return isNaN(v) ? "–" : Math.round(v) + "°"; }
 
     // Bento: the weather sits in its own colored card inside the ink clock.
-    readonly property bool weatherInset: spot === "ink" && side
+    readonly property bool weatherInset: spot === "inset" && side
     // Text on that card: near-black on a bright color, white otherwise
     // (by how bright the color looks, not its lightness: purple is dark).
-    readonly property color insetText: 0.2126 * accent.r + 0.7152 * accent.g + 0.0722 * accent.b > 0.55 ? "#1d1a17" : "#ffffff"
+    readonly property color insetText: Palette.inkOn(Qt.rgba(accent.r, accent.g, accent.b, 1).toString())
     // Instrument: the seconds, small, in the tile's color.
     readonly property bool showSeconds: monoFigures && !nativeOn
     // Glass: gradient digits.
@@ -67,9 +67,9 @@ GlassTile {
         layer.enabled: tile.cardless
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: tile.dark ? "#000000" : "#ffffff"
-            shadowBlur: 0.6
-            shadowOpacity: 0.55
+            shadowColor: "#000000"
+            shadowBlur: 0.7
+            shadowOpacity: 0.8
             shadowVerticalOffset: 0
             shadowHorizontalOffset: 0
         }
@@ -94,7 +94,9 @@ GlassTile {
                     baselineOffset: time.baselineOffset
                     PlasmaComponents.Label {
                         id: time
-                        // Pixel: a hard drop shadow under the digits.
+                        // Pixel, Brutal: a hard drop shadow under the digits,
+                        // dark under light digits and pale under dark ones
+                        // (dark on dark just smears them).
                         PlasmaComponents.Label {
                             visible: tile.hardShadowOn
                             z: -1
@@ -102,7 +104,8 @@ GlassTile {
                             text: time.text
                             textFormat: Text.PlainText
                             font: time.font
-                            color: Qt.darker(tile.accent, 2.4)
+                            color: time.color.hslLightness > 0.5 ? Qt.darker(tile.accent, 2.4)
+                                 : Qt.tint(tile.accent, Qt.rgba(1, 1, 1, 0.55))
                         }
                         textFormat: Text.PlainText
                         readonly property real px: Math.max(Kirigami.Units.gridUnit,
@@ -185,16 +188,21 @@ GlassTile {
             Kirigami.Theme.textColor: tile.insetText
 
             ColumnLayout {
+                id: insetCol
                 anchors.fill: parent
                 anchors.margins: tile.u * 0.8
                 spacing: 0
+                // The icon steps aside when the words need its room.
                 Kirigami.Icon {
                     source: tile.w.icon
+                    visible: insetCol.height - insetTemp.implicitHeight - insetWords.implicitHeight
+                             - (insetFeels.visible ? insetFeels.implicitHeight : 0) >= Layout.preferredWidth + tile.u * 0.3
                     Layout.preferredWidth: Math.min(tile.u * 2.6, parent.height * 0.32)
                     Layout.preferredHeight: Layout.preferredWidth
                 }
                 Item { Layout.fillHeight: true }
                 BigNumber {
+                    id: insetTemp
                     family: tile.numberFamily
                     figures: tile.figureFamily
                     weight: tile.figureWeight
@@ -204,17 +212,32 @@ GlassTile {
                     unit: tile.w.fahrenheit ? "F" : "C"
                     size: Math.min(tile.u * 3.4, parent.height * 0.36, parent.width * 0.4)
                 }
+                // Wrapped only between words: a word too long for the card
+                // ("Thunderstorm") makes the text smaller instead of breaking.
                 PlasmaComponents.Label {
+                    id: insetWords
                     textFormat: Text.PlainText
                     text: tile.w.summary
-                    font.pixelSize: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.8)
+                    readonly property real nominal: Math.max(Kirigami.Theme.smallFont.pixelSize, tile.u * 0.8)
+                    // Whole pixels, rounded down (rounding up overflows), with
+                    // a little slack for the bold glyphs' overhang.
+                    font.pixelSize: Math.floor(Math.max(Kirigami.Theme.smallFont.pixelSize * 0.85,
+                        Math.min(nominal, nominal * insetCol.width * 0.96 / Math.max(1, longest.advanceWidth))))
                     font.weight: Font.DemiBold
                     Layout.fillWidth: true
-                    wrapMode: Text.Wrap
+                    wrapMode: Text.WordWrap
                     maximumLineCount: 2
                     elide: Text.ElideRight
+                    TextMetrics {
+                        id: longest
+                        font.family: insetWords.font.family
+                        font.weight: Font.DemiBold
+                        font.pixelSize: insetWords.nominal
+                        text: tile.w.summary.split(/\s+/).reduce(function (a, b) { return b.length > a.length ? b : a; }, "")
+                    }
                 }
                 PlasmaComponents.Label {
+                    id: insetFeels
                     textFormat: Text.PlainText
                     visible: tile.topH > tile.u * 9
                     text: i18n("Feels %1 · %2%", tile.temp(tile.w.feelsLike), tile.w.humidity)

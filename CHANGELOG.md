@@ -1,5 +1,26 @@
 # What's new
 
+## 0.10.3
+
+- **Clocks that match the board.** Soft Bento's clock is an ordinary card
+  again (with its colored weather card), not a bright slab on a dark
+  board. Clear's clock, right on the wallpaper, is white with a shadow, so
+  it reads on dark wallpapers too.
+- **Readable text on colored cards.** Filled cards (Bento's Power, Brutal's
+  clock, the weather card) pick black or white by real contrast: no more
+  white on yellow.
+- **Weather card words fit.** "Thunderstorm" shrinks a little instead of
+  breaking mid-word and running off the card.
+- **A calmer Temperatures tile.** Its big number is the board's color and
+  size, and turns heat-colored only once it's warm. In Instrument Panel its
+  rows are readouts like the other tiles'. The last bar no longer touches
+  the bottom edge.
+- **Clearer Clear panes** in light colors: more solid, so dark wallpapers
+  don't turn them grey.
+- **Release notes in Settings.** "What's new" shows what changed right
+  there, not just a link to GitHub, and "Later" hides the notice until the
+  next version (General → Updates brings it back).
+
 ## 0.10.2
 
 - **Chips fit their tile.** In Soft Bento, a narrow Storage (or CPU, GPU,

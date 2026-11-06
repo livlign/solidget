@@ -525,7 +525,7 @@ PlasmoidItem {
         var dark = th.dark === null ? plasmaDark : th.dark;
         var tw = nativeStyle ? ({ corners: "", surface: "", shadow: "", weight: "" }) : lookTweaks;
         var surface = tw.surface === "solid" ? 1.0 : tw.surface === "frosted" ? null
-                    : tw.surface === "clear" ? ({ dark: 0.32, light: 0.62 }) : st.bodyAlpha;
+                    : tw.surface === "clear" ? Palette.STYLES.clear.bodyAlpha : st.bodyAlpha;
         return {
             style: styleId, theme: themeId, dark: dark, plasmaFrame: nativeStyle,
             body: th.body || plasmaBody,
@@ -750,7 +750,15 @@ PlasmoidItem {
     readonly property string latestVersion: Plasmoid.configuration.updateLatest
     readonly property bool updateAvailable: Plasmoid.configuration.updateCheck
         && Fmt.versionNewer(latestVersion, version)
-    // The desktop shows it until "Later" is picked for this version.
+    // What changed in it, from the release's notes (see Fmt.releaseNotes).
+    readonly property var updateNotes: {
+        try {
+            var n = JSON.parse(Plasmoid.configuration.updateNotes || "{}");
+            return n.version === latestVersion && Array.isArray(n.items) ? n.items : [];
+        } catch (e) { return []; }
+    }
+    // Shown, on the desktop and at the top of Settings, until "Later" is
+    // picked for this version.
     readonly property bool updateNotice: updateAvailable && Plasmoid.configuration.updateDismissed !== latestVersion
     // Installed for everyone (a package, e.g. Copr): the package manager updates it.
     readonly property bool systemInstall: Qt.resolvedUrl(".").toString().indexOf("file:///usr/") === 0
@@ -758,14 +766,19 @@ PlasmoidItem {
     readonly property int updateDelay: 120 + Math.floor(Math.random() * 480)
     function checkForUpdate() {
         var day = Qt.formatDate(new Date(), "yyyy-MM-dd");
-        if (!Plasmoid.configuration.updateCheck || Plasmoid.configuration.updateCheckedDay === day) return;
+        // Asked again within the day only while a known update has no notes yet.
+        if (!Plasmoid.configuration.updateCheck
+            || (Plasmoid.configuration.updateCheckedDay === day && !(updateAvailable && updateNotes.length === 0))) return;
         Plasmoid.configuration.updateCheckedDay = day;   // one try a day, even if it fails
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE || xhr.status !== 200) return;
             try {
                 var m = /^v?(\d{1,4}\.\d{1,4}\.\d{1,4})$/.exec(String(JSON.parse(xhr.responseText).tag_name || ""));
-                if (m) Plasmoid.configuration.updateLatest = m[1];
+                if (!m) return;
+                var r = JSON.parse(xhr.responseText);
+                Plasmoid.configuration.updateNotes = JSON.stringify({ version: m[1], items: Fmt.releaseNotes(r.body) });
+                Plasmoid.configuration.updateLatest = m[1];
             } catch (e) {}
         };
         xhr.open("GET", "https://api.github.com/repos/livlign/solidget/releases/latest");

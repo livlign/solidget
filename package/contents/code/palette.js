@@ -82,8 +82,10 @@ function tempLevel(c) {
 //   controls: media buttons: "native", "round", "keys", "squircle", "outline"
 //   today:   the calendar's today: "frame", "circle", "block", "rounded", "outline"
 //   spotlight: tiles drawn apart from the rest, by tile id: "ink" (inverted),
-//            "fill" (solid tile color), "bare" (no card), "art" (over the
-//            blurred album art), "pixelart" (cover redrawn in big pixels)
+//            "fill" (solid tile color), "bare" (no card), "inset" (an
+//            ordinary card; the clock's weather gets a card of its own color),
+//            "art" (over the blurred album art), "pixelart" (cover redrawn
+//            in big pixels)
 var STYLES = {
     // native: draw the card with the Plasma Style's own SVG and take every
     // color from the system (accent for meters, semantic colors for heat).
@@ -103,9 +105,9 @@ var STYLES = {
              header: "bar", gauge: "bar", meter: "ring", chart: "columns", details: "ruled", heatBar: "square",
              controls: "keys", today: "block", spotlight: { media: "ink" } },
     clear: { name: "Clear", hint: "Barely-there panes; the clock sits right on your wallpaper",
-             // Light themes put dark text on the card, so it must stay fairly
-             // opaque to stay readable over dark wallpapers.
-             radius: 1.5, bodyAlpha: { dark: 0.32, light: 0.62 }, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
+             // Light themes put dark text on the card, so it must stay mostly
+             // opaque: thinner, a dark wallpaper turns it a muddy grey.
+             radius: 1.5, bodyAlpha: { dark: 0.32, light: 0.9 }, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
              border: 1, highlight: true, roundCaps: true, font: "", figureWeight: "hairline",
              header: "quiet", gauge: "ring", meter: "hairline", chart: "line", details: "rows", heatBar: "hairline",
              controls: "outline", today: "outline", spotlight: { clock: "bare" } },
@@ -123,7 +125,7 @@ var STYLES = {
              radius: 1.9, bodyAlpha: 1.0, tint: 0.16, glow: false, shadow: true, hardShadow: false, bevel: false,
              border: 0, highlight: false, roundCaps: true, font: "", figures: "round", figureWeight: "semi",
              header: "plain", gauge: "bar", ringTiles: ["gpu", "disk"], meter: "thick", chart: "rounded", details: "chips", heatBar: "pill",
-             controls: "squircle", today: "rounded", spotlight: { clock: "ink", power: "fill" } },
+             controls: "squircle", today: "rounded", spotlight: { clock: "inset", power: "fill" } },
     // edge: "neon" = a glowing outline in the tile's own color.
     neon:  { name: "Neon", hint: "Dark panes outlined in glowing light, like signs at night",
              radius: 0.8, bodyAlpha: { dark: 0.5, light: 0.75 }, tint: 0, glow: false, shadow: false, hardShadow: false, bevel: false,
@@ -205,6 +207,12 @@ var THEMES = {
 // Themes and looks go from the lightest card to the darkest. Follow Plasma
 // has no color of its own: it sorts by the system's (see byLightness), and
 // comes first where that isn't known.
+// Text for a card of this color: near-black or white, whichever stands
+// out more (WCAG contrast; by eye, yellow takes black and teal takes black).
+function inkOn(hex) {
+    var l = luminance(/^#[0-9a-f]{6}$/i.test(hex || "") ? hex : "#808080");
+    return (l + 0.05) / (luminance("#1d1a17") + 0.05) > 1.05 / (l + 0.05) ? "#1d1a17" : "#ffffff";
+}
 function luminance(hex) {
     var c = hexToRgb(hex).map(function (v) {
         v /= 255;

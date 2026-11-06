@@ -42,8 +42,9 @@ GlassTile {
     level: Palette.tempLevel(hottest)
 
     // Bar unit: tile.u, shrunk so every row fits the height. A row is about
-    // 1.7 units tall (label, gap, bar) with 0.5 between rows.
-    readonly property real barU: Math.min(u, (grid.height + 1) / Math.max(1, sources.length * 2.2 - 0.5))
+    // 2 units tall (a label line of 1.25, a 0.25 gap, a bar up to 0.5) with
+    // 0.5 between rows.
+    readonly property real barU: Math.min(u, grid.height / Math.max(1, sources.length * 2.5 - 0.5))
 
     // Pixel: a row of little thermometers instead of bars.
     readonly property bool thermometers: look && look.heatBar === "segments"
@@ -136,12 +137,14 @@ GlassTile {
             Layout.alignment: Qt.AlignTop | Qt.AlignLeft
             value: app.tempValue(tile.hottest)
             unit: app.tempUnit
-            color: tile.hotColor
+            // In the board's ink like every other tile's number, so a cool
+            // reading stays calm; it takes the heat color once it's warm.
+            color: tile.hottest >= 70 ? tile.hotColor : Kirigami.Theme.textColor
             // Stacked: the number gets the height the bars leave (its line is
             // up to 1.4x the font size, e.g. Noto Sans), and steps aside if
             // that's too little.
             readonly property real fit: tile.wide ? parent.height : (parent.height - bars.implicitHeight - parent.rowSpacing) / 1.4
-            size: Math.min(tile.u * (tile.wide ? 4.2 : 3.4), fit)
+            size: Math.min(tile.u * 3.4, fit)   // no bigger than the other tiles' numbers
             visible: size >= tile.u * 1.4
         }
         ColumnLayout {
@@ -165,6 +168,8 @@ GlassTile {
                     coolColor: app.heat(0)
                     square: tile.radius === 0
                     kind: tile.look && tile.look.heatBar ? tile.look.heatBar : "thin"
+                    detailKind: tile.detailStyle
+                    family: tile.figureFamily
                 }
             }
         }

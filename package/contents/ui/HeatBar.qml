@@ -18,12 +18,28 @@ ColumnLayout {
     property bool square: false
     property string kind: "thin"
     property real u: Kirigami.Units.gridUnit
+    // The tile's detail rows, so the label line matches the other tiles:
+    // "readout" (Instrument) = a DetailRow, mono caps with a dotted leader
+    // and the heat in its square; anything else = label and colored value.
+    property string detailKind: ""
+    property string family: ""
 
     readonly property real frac: Math.max(0, Math.min(1, celsius / 100))
     Layout.fillWidth: true
     spacing: u * 0.25
 
+    DetailRow {
+        visible: bar.detailKind === "readout"
+        Layout.fillWidth: true
+        u: bar.u
+        label: bar.label
+        value: bar.valueText
+        dot: bar.hotColor
+        kind: "readout"
+        family: bar.family
+    }
     RowLayout {
+        visible: bar.detailKind !== "readout"
         Layout.fillWidth: true
         PlasmaComponents.Label {
             textFormat: Text.PlainText

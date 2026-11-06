@@ -150,6 +150,10 @@
     <entry name="updateLatest" type="String">
       <default></default>
     </entry>
+    <!-- The latest release's notes, as JSON: {"version": "0.10.2", "items": ["…"]} -->
+    <entry name="updateNotes" type="String">
+      <default></default>
+    </entry>
     <!-- "Later" on this version: no button on the desktop until a newer one -->
     <entry name="updateDismissed" type="String">
       <default></default>
