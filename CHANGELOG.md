@@ -1,5 +1,14 @@
 # What's new
 
+## 0.10.7
+
+- **Now playing finds your song.** After a browser tab stops playing, the
+  browser can leave an empty player behind, and the tile used to go blank
+  even with Spotify paused on a song. It now shows whatever is playing,
+  or else a song that's paused.
+- **Tests on Arch** run again: the check updates the system before adding
+  Python.
+
 ## 0.10.6
 
 - **Bluetooth, redrawn to match the board.** Each device is a readout row

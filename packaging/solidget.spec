@@ -4,7 +4,7 @@
 %global plugin_id io.github.solidget
 
 Name:           solidget
-Version:        0.10.6
+Version:        0.10.7
 Release:        1%{?dist}
 Summary:        Live stats, PC specs and your day in one Plasma desktop widget
 
@@ -56,6 +56,10 @@ python3 -c 'import json, sys; v = json.load(open("package/metadata.json"))["KPlu
 %{_datadir}/plasma/plasmoids/%{plugin_id}/
 
 %changelog
+* Thu Nov 12 2026 Solidget contributors - 0.10.7-1
+- Now playing no longer goes blank when a browser leaves an empty player
+  behind; see CHANGELOG.md for what's in 0.10.7
+
 * Wed Nov 11 2026 Solidget contributors - 0.10.6-1
 - The Bluetooth tile redrawn to match the board, with options in
   Settings; see CHANGELOG.md for what's in 0.10.6
