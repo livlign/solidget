@@ -12,16 +12,32 @@ GlassTile {
     id: tile
     required property var app
 
-    // The multiplexer exposes the "current" player as a single row.
-    property var player: null
+    // Every player Plasma knows (the first row is its "current" one). Its
+    // pick stays on the last one used even once that has nothing left: a
+    // browser keeps an empty, stopped player after its media tab closes,
+    // which would leave the tile blank while Spotify sits paused on a song.
+    property var players: []
     Repeater {
-        model: Mpris.MultiplexerModel { }
+        model: Mpris.Mpris2Model { }
         delegate: Item {
             required property var model
-            Component.onCompleted: tile.player = model
-            Component.onDestruction: if (tile.player === model) tile.player = null
+            Component.onCompleted: tile.players = tile.players.concat([model])
+            Component.onDestruction: tile.players = tile.players.filter(function (p) { return p !== model; })
         }
     }
+    // Something playing first, then Plasma's own pick if it has a track,
+    // then anything paused on a track.
+    function hasTrack(p) { return !!p && String(p.track || "") !== ""; }
+    function pickPlayer() {
+        var list = players.filter(hasTrack);
+        for (var i = 0; i < list.length; i++)
+            if (list[i].playbackStatus === Mpris.PlaybackStatus.Playing) return list[i];
+        if (players.length && hasTrack(players[0])) return players[0];
+        for (var j = 0; j < list.length; j++)
+            if (list[j].playbackStatus === Mpris.PlaybackStatus.Paused) return list[j];
+        return list.length ? list[0] : null;
+    }
+    property var player: pickPlayer()
 
     readonly property bool hasPlayer: player !== null && (player.track || "") !== ""
     readonly property bool playing: hasPlayer && player.playbackStatus === Mpris.PlaybackStatus.Playing
