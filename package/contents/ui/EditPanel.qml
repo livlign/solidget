@@ -1468,6 +1468,49 @@ GlassTile {
                 }
 
                 Section {
+                    title: i18n("Bluetooth")
+                    hint: i18n("Your connected headphones, mice and keyboards with their batteries.")
+
+                    SettingRow {
+                        label: i18n("Names")
+                        hint: panel.app.masked ? i18n("Hide personal info is on, so only the kind of device shows.") : ""
+                        Segmented {
+                            options: [{ value: "name", text: i18n("Device's own") }, { value: "kind", text: i18n("Kind") }]
+                            current: panel.app.bluetoothOptions.names
+                            onPicked: (v) => Plasmoid.configuration.bluetoothNames = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Colors")
+                        Segmented {
+                            options: [{ value: "accent", text: i18n("One") }, { value: "rainbow", text: i18n("Rainbow") },
+                                      { value: "charge", text: i18n("By charge") }]
+                            current: panel.app.bluetoothOptions.colors
+                            onPicked: (v) => Plasmoid.configuration.bluetoothColors = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Warn when low")
+                        hint: i18n("The device turns red and the tile glows.")
+                        Segmented {
+                            options: [{ value: 0, text: i18n("Never") }, { value: 10, text: "10%" },
+                                      { value: 20, text: "20%" }, { value: 30, text: "30%" }]
+                            current: panel.app.bluetoothOptions.low
+                            onPicked: (v) => Plasmoid.configuration.bluetoothLow = v
+                        }
+                    }
+                    SettingRow {
+                        label: i18n("Title")
+                        SField {
+                            width: Kirigami.Units.gridUnit * 9
+                            text: Plasmoid.configuration.bluetoothLabel
+                            placeholder: i18n("Bluetooth")
+                            onEdited: (v) => Plasmoid.configuration.bluetoothLabel = v.slice(0, 40)
+                        }
+                    }
+                }
+
+                Section {
                     title: i18n("Desk pet")
                     hint: i18n("Use the buttons on the tile to pet, feed, wash, clean up after, walk and play with it. Click the pet to pet it.")
                     SettingRow {

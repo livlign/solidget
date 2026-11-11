@@ -11,7 +11,9 @@ GlassTile {
 
     readonly property var devices: loader.item
 
-    title: i18n("Bluetooth")
+    readonly property var opt: app.bluetoothOptions || ({})
+
+    title: opt.label || i18n("Bluetooth")
     subtitle: !devices ? "" : !devices.on ? i18n("Off")
             : devices.count ? i18np("%1 connected", "%1 connected", devices.count) : ""
     accent: app.accent("bluetooth")

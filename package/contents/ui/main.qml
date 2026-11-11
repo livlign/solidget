@@ -745,6 +745,17 @@ PlasmoidItem {
         if (next === "image" && !uptimeOptions.image) next = uptimeScenes[(i + 2) % uptimeScenes.length];
         Plasmoid.configuration.uptimeScene = next;
     }
+    // ---- Bluetooth tile ----------------------------------------------------------
+    readonly property var bluetoothOptions: {
+        var c = Plasmoid.configuration;
+        return {
+            names: oneOf(c.bluetoothNames, ["name", "kind"], "name"),
+            colors: oneOf(c.bluetoothColors, ["accent", "rainbow", "charge"], "accent"),
+            low: oneOf(c.bluetoothLow, [0, 10, 20, 30], 20),
+            label: String(c.bluetoothLabel || "").slice(0, 40)
+        };
+    }
+
     // Longest uptime seen, checked every 10 minutes (saved rarely on purpose).
     readonly property int uptimeRecord: Plasmoid.configuration.uptimeRecord
     function checkUptimeRecord() {

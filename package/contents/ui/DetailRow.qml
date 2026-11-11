@@ -56,6 +56,8 @@ Item {
             font.capitalization: row.readout || row.kind === "caps" ? Font.AllUppercase : Font.MixedCase
             font.letterSpacing: row.readout || row.kind === "caps" ? row.u * 0.05 : 0
             Layout.fillWidth: !row.readout
+            // A readout's label gives way to its value when both won't fit.
+            Layout.maximumWidth: row.readout ? Math.max(0, row.width - valueText.implicitWidth - row.u * (row.dot.a > 0 ? 1.6 : 0.8)) : Number.POSITIVE_INFINITY
             elide: Text.ElideRight
         }
         // Instrument: a dotted leader from the label to the value.
@@ -79,6 +81,7 @@ Item {
             }
         }
         PlasmaComponents.Label {
+            id: valueText
             textFormat: Text.PlainText
             text: row.value
             font.family: row.readout && row.family ? row.family : Kirigami.Theme.defaultFont.family

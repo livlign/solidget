@@ -23,6 +23,12 @@ ColumnLayout {
     // and the heat in its square; anything else = label and colored value.
     property string detailKind: ""
     property string family: ""
+    // For readings that aren't heat (Bluetooth batteries): where the
+    // Instrument scale ends, whether to draw the bar at all (it keeps its
+    // space), and whether the readout gets its colored square.
+    property color scaleEnd: Palette.heat(1)
+    property bool showBar: true
+    property bool showDot: true
 
     readonly property real frac: Math.max(0, Math.min(1, celsius / 100))
     Layout.fillWidth: true
@@ -34,7 +40,7 @@ ColumnLayout {
         u: bar.u
         label: bar.label
         value: bar.valueText
-        dot: bar.hotColor
+        dot: bar.showDot ? bar.hotColor : "transparent"
         kind: "readout"
         family: bar.family
     }
@@ -63,6 +69,7 @@ ColumnLayout {
     // solid), "needle" (a marker on a cool→hot scale) or "segments" (Pixel).
     Item {
         id: track
+        opacity: bar.showBar ? 1 : 0
         Layout.fillWidth: true
         Layout.preferredHeight: Math.max(bar.kind === "hairline" ? 2 : 3, bar.u * ({ hairline: 0.1, square: 0.5, pill: 0.55, needle: 0.45, segments: 0.6 }[bar.kind] || 0.32))
         readonly property color wash: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.08)
@@ -107,7 +114,7 @@ ColumnLayout {
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop { position: 0; color: bar.coolColor }
-                GradientStop { position: 1; color: Palette.heat(1) }
+                GradientStop { position: 1; color: bar.scaleEnd }
             }
         }
         Repeater {   // scale marks every 10°

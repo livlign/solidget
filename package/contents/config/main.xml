@@ -220,5 +220,22 @@
     <entry name="uptimeRecord" type="Int">
       <default>0</default>
     </entry>
+    <!-- Bluetooth tile -->
+    <!-- Device names: name (as the device calls itself) or kind (Headset, Mouse…) -->
+    <entry name="bluetoothNames" type="String">
+      <default>name</default>
+    </entry>
+    <!-- accent (the tile's color), rainbow (one per device) or charge (green, amber, orange) -->
+    <entry name="bluetoothColors" type="String">
+      <default>accent</default>
+    </entry>
+    <!-- Turn a device red at or below this battery percent: 0 (never), 10, 20 or 30 -->
+    <entry name="bluetoothLow" type="Int">
+      <default>20</default>
+    </entry>
+    <!-- The tile's title; empty means "Bluetooth" -->
+    <entry name="bluetoothLabel" type="String">
+      <default></default>
+    </entry>
   </group>
 </kcfg>
