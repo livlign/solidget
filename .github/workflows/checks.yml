@@ -37,7 +37,7 @@ jobs:
         include:
           - name: Arch
             image: archlinux:latest
-            setup: pacman -Sy --noconfirm python
+            setup: pacman -Syu --noconfirm python
           - name: Debian 13
             image: debian:trixie
             setup: apt-get update -qq && apt-get install -y -qq python3 tzdata
