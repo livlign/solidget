@@ -1,5 +1,21 @@
 # What's new
 
+## 0.10.6
+
+- **Bluetooth, redrawn to match the board.** Each device is a readout row
+  ("Headset ···· 72%") over a battery bar drawn like the look's
+  temperature bars, and a single device's charge is shown in big figures,
+  like Temperatures. Many devices fit: rows shrink, a wide tile adds a
+  second column only when it needs one, and past that the last row says
+  "+2 more". Nothing connected, or Bluetooth off, shows a quiet Bluetooth
+  mark.
+- **Bluetooth settings.** In Settings → Personal: show device names or just
+  their kind, one color or a rainbow or colors by charge, when to warn
+  about a low battery (the device turns red and the tile glows), and your
+  own title.
+- **Readouts fit.** In Instrument Panel, a long label gives way to its
+  value instead of running past the tile's edge.
+
 ## 0.10.5
 
 - **A calmer Soft Bento.** Cards are colored by what they're for: one tint
